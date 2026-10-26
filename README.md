@@ -34,7 +34,7 @@ Build: `dotnet publish -c Release -r win-x64 --self-contained false -o publish` 
 ## Pair a phone
 
 1. Phone icon → **Pair a new phone**. A QR code appears (valid 5 minutes, single use).
-2. Scan it with the phone camera. The phone shows a 4-digit code and asks for access.
+2. On the phone open the Levity web app (on iPhone, add it to the Home Screen first and open it from there) and tap **Scan QR code**. Scan from inside the app, not with the Camera app: the Camera opens the link in a separate browser sheet whose storage the app cannot see. The phone shows a 4-digit code and asks for access. If the camera is unavailable, use **Paste a link instead**.
 3. On the PC an approval dialog shows the phone name and the same code. Approve only if they match.
 4. The PC hands that phone its own random key. Add the page to the Home Screen if you like.
 

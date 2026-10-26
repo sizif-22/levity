@@ -24,6 +24,18 @@ export function readPairingLink(hash: string): PairingLink | null {
   return { p, r };
 }
 
+/**
+ * Accepts the text of a scanned QR code or a pasted link. Only links that point at this very site are
+ * accepted, so a random QR code cannot steer the app to someone else's relay.
+ */
+export function parsePairingText(text: string, origin: string): { link: PairingLink } | { error: string } {
+  let url: URL;
+  try { url = new URL(text.trim()); } catch { return { error: 'That is not a Levity link.' }; }
+  if (url.origin !== origin) return { error: 'That QR code is not from Levity on this site.' };
+  const link = readPairingLink(url.hash);
+  return link ? { link } : { error: 'That link is incomplete or has expired. Create a new QR code on your PC.' };
+}
+
 export function deviceNameGuess(): string {
   const ua = navigator.userAgent;
   const os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android phone' : 'Phone';

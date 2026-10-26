@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { deviceNameGuess, requestPairing, type PairingLink } from '../lib/pairing';
+import { Suspense, lazy, useEffect, useRef, useState, type ReactNode } from 'react';
+import { deviceNameGuess, parsePairingText, requestPairing, type PairingLink } from '../lib/pairing';
+// The QR decoder is only needed while pairing, so keep it out of the first load.
+const Scanner = lazy(() => import('./Scanner').then((m) => ({ default: m.Scanner })));
 import type { DeviceRecord } from '../lib/store';
 import { clearPin, hasPin, setPin, verifyPin } from '../lib/pin';
 import { canPromptInstall, isIos, isStandalone, onInstallChange, promptInstall } from '../lib/install';
@@ -19,8 +21,13 @@ export const Center = ({ children }: { children: ReactNode }) => (
   </div>
 );
 
-/** Shown when the page is opened without credentials, or with a pairing QR. */
-export function PairScreen({ link, onPaired }: { link: PairingLink | null; onPaired: (d: DeviceRecord) => void }) {
+/** Shown until this device is paired: scan the QR from inside the app, or paste the link. */
+export function PairScreen({ link: initial, onPaired }: { link: PairingLink | null; onPaired: (d: DeviceRecord) => void }) {
+  const [link, setLink] = useState<PairingLink | null>(initial);
+  const [scanning, setScanning] = useState(false);
+  const [pasting, setPasting] = useState(false);
+  const [pasted, setPasted] = useState('');
+  const [problem, setProblem] = useState('');
   const [name, setName] = useState(deviceNameGuess());
   const [phase, setPhase] = useState<'idle' | 'waiting' | 'denied' | 'timeout' | 'network'>('idle');
   const [code] = useState(() => String(crypto.getRandomValues(new Uint32Array(1))[0] % 10000).padStart(4, '0'));
@@ -28,12 +35,44 @@ export function PairScreen({ link, onPaired }: { link: PairingLink | null; onPai
 
   useEffect(() => () => abort.current?.abort(), []);
 
+  const accept = (text: string) => {
+    const parsed = parsePairingText(text, location.origin);
+    if ('error' in parsed) { setProblem(parsed.error); return; }
+    setProblem('');
+    setPasting(false);
+    setLink(parsed.link);
+  };
+
+  if (scanning) {
+    return (
+      <Suspense fallback={<Center><span className="spinner" /></Center>}>
+        <Scanner onResult={(text) => { setScanning(false); accept(text); }} onCancel={() => setScanning(false)} />
+      </Suspense>
+    );
+  }
+
   if (!link) {
     return (
       <Center>
         <Logo small />
         <h3>Pair this phone</h3>
-        <p>On your PC open Levity, tap the phone icon, choose <strong>Pair a new phone</strong>, then scan the QR code with this phone's camera.</p>
+        <p>On your PC open Levity, tap the phone icon, choose <strong>Pair a new phone</strong>, then scan its QR code here.</p>
+        {problem && <p style={{ color: 'var(--destructive)' }}>{problem}</p>}
+        <button className="btn primary full" onClick={() => { setProblem(''); setScanning(true); }}>Scan QR code</button>
+        {pasting ? (
+          <div style={{ marginTop: 12 }}>
+            <label className="field">
+              <input value={pasted} placeholder="Paste the pairing link" spellCheck={false} autoCapitalize="off" autoCorrect="off"
+                style={{ fontFamily: 'var(--mono)', fontSize: 16 }} onChange={(e) => setPasted(e.target.value)} />
+            </label>
+            <button className="btn ghost full" disabled={!pasted.trim()} onClick={() => accept(pasted)}>Use link</button>
+          </div>
+        ) : (
+          <button className="link-btn" onClick={() => setPasting(true)}>Paste a link instead</button>
+        )}
+        {isIos() && !isStandalone() && (
+          <p style={{ marginTop: 18, fontSize: 12 }}>Tip: tap Share, then Add to Home Screen, and open Levity from there before scanning. That way the pairing is saved in the app.</p>
+        )}
       </Center>
     );
   }
@@ -71,6 +110,7 @@ export function PairScreen({ link, onPaired }: { link: PairingLink | null; onPai
           {phase === 'timeout' && <p style={{ color: 'var(--destructive)' }}>The pairing QR expired. Create a new one on your PC.</p>}
           {phase === 'network' && <p style={{ color: 'var(--destructive)' }}>Could not reach the relay. Check your connection and that the QR is still valid.</p>}
           <button className="btn primary full" onClick={start}>Request access</button>
+          <button className="link-btn" onClick={() => { abort.current?.abort(); setLink(null); setPhase('idle'); }}>Scan a different code</button>
         </>
       )}
     </Center>
