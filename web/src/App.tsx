@@ -35,6 +35,21 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
+  // iOS does not resize the layout when the keyboard opens: follow the visible viewport so the composer stays in view.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const root = document.documentElement;
+    const update = () => {
+      const keyboardOpen = window.innerHeight - vv.height > 120;
+      if (keyboardOpen) root.style.setProperty('--app-h', `${vv.height}px`); else root.style.removeProperty('--app-h');
+      if (keyboardOpen) window.scrollTo(0, 0);
+    };
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    return () => { vv.removeEventListener('resize', update); vv.removeEventListener('scroll', update); root.style.removeProperty('--app-h'); };
+  }, []);
+
   // Re-lock after the app has been in the background for a minute.
   useEffect(() => {
     const onVisibility = () => {

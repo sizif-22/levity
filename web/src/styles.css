@@ -503,3 +503,27 @@ body.remote .scroll-bottom-btn { bottom: 120px; }
   * { animation: none !important; transition: none !important; }
 }
 .overlay-card h3 { margin-bottom: 8px; }
+
+
+/* ---------- Native-app feel (phone) ---------- */
+html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+/* The app shell follows the visible viewport (kept in sync with the on-screen keyboard from App.tsx). */
+.app { height: var(--app-h, 100dvh); }
+
+/* Landscape / notched phones: keep content clear of the cut-outs. */
+.app { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+
+/* Buttons and chrome behave like native controls; reading content stays selectable. */
+body.remote { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+body.remote .agent-bubble, body.remote .user-bubble, body.remote .sync-detail, body.remote .thinking-content,
+body.remote textarea, body.remote input, body.remote code { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+
+/* Standalone window: no browser chrome, so give the header the status-bar inset it already pads for. */
+@media (display-mode: standalone) {
+  body.remote { background: var(--background); }
+  .chat-viewport { overscroll-behavior: contain; }
+}
+
+/* Momentum scrolling inside panes only. */
+.chat-viewport, .sheet-body { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }

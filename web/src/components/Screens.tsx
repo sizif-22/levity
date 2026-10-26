@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { deviceNameGuess, requestPairing, type PairingLink } from '../lib/pairing';
 import type { DeviceRecord } from '../lib/store';
 import { clearPin, hasPin, setPin, verifyPin } from '../lib/pin';
+import { canPromptInstall, isIos, isStandalone, onInstallChange, promptInstall } from '../lib/install';
 
 export const Logo = ({ small }: { small?: boolean }) => (
   <div className={small ? 'hero small' : 'hero'}>
@@ -115,6 +116,9 @@ export function SettingsSheet({ device, onClose, onUnpair, confirm, toast }: {
 }) {
   const [pinSet, setPinSet] = useState(hasPin());
   const [pin, setValue] = useState('');
+  const [, bump] = useState(0);
+  useEffect(() => onInstallChange(() => bump((n) => n + 1)), []);
+  const installed = isStandalone();
 
   return (
     <section className="sheet open" aria-hidden="false">
@@ -125,6 +129,19 @@ export function SettingsSheet({ device, onClose, onUnpair, confirm, toast }: {
         </button>
       </div>
       <div className="sheet-body">
+        <div className="grp-title" style={{ marginTop: 0 }}>Install</div>
+        {installed ? (
+          <p className="empty" style={{ paddingTop: 0 }}>Running as an installed app.</p>
+        ) : canPromptInstall() ? (
+          <button className="btn primary full" onClick={async () => { if (await promptInstall()) toast('Installed'); }}>Install Levity</button>
+        ) : (
+          <p className="empty" style={{ paddingTop: 0 }}>
+            {isIos()
+              ? 'Tap the Share button in Safari, then "Add to Home Screen" to use Levity like an app.'
+              : 'Open the browser menu and choose "Install app" or "Add to Home screen".'}
+          </p>
+        )}
+
         <div className="grp-title">App passcode</div>
         <p className="empty" style={{ paddingTop: 0 }}>Locks Levity when you leave the app for a minute. Your phone's own lock screen is still the main protection.</p>
         {pinSet ? (
