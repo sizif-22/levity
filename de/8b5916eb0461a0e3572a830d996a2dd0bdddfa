@@ -1,0 +1,48 @@
+Services/RelayClient.cs
+  s_cc3f3c4e50f86e::t_e534135d1b87ad 97
+  s_cc3f3c4e50f86e::t_88d304788495c3 104
+README.md
+  s_cc3f3c4e50f86e::t_9f56401ba57f9e 32
+Services/RelayNet.cs
+  s_cc3f3c4e50f86e::t_eae9dfd8e70530 1-89
+wwwroot/app.js
+  s_cc3f3c4e50f86e::t_ab1647c4651bb3 83,655-656,705-745
+wwwroot/style.css
+  s_cc3f3c4e50f86e::t_4638e73191ad7c 408
+  s_cc3f3c4e50f86e::t_9f56401ba57f9e 433-435
+  s_cc3f3c4e50f86e::t_ab1647c4651bb3 418-427
+wwwroot/index.html
+  s_cc3f3c4e50f86e::t_ab1647c4651bb3 176-181,183-186,188
+Services/AppSettings.cs
+  s_cc3f3c4e50f86e::t_ce792848afbee2 18
+Create-DesktopShortcut.ps1
+  s_cc3f3c4e50f86e::t_75882769e962c6 1-4,6-9,11-26
+Services/MobileHub.cs
+  s_cc3f3c4e50f86e::t_e534135d1b87ad 95
+  s_cc3f3c4e50f86e::t_ab1647c4651bb3 3,5-6,69-94,96-121
+MainWindow.xaml.cs
+  s_cc3f3c4e50f86e::t_22dcad67c4fbe5 556-557,587-588,594,625-626
+  s_cc3f3c4e50f86e::t_ab1647c4651bb3 385-388,545-555,593,598
+  s_cc3f3c4e50f86e::t_4638e73191ad7c 617-620,623,627-639
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "de8b5916eb0461a0e3572a830d996a2dd0bdddfa",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_cc3f3c4e50f86e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "aff6ddc9-b2db-47e9-a1e1-fd9c6b94d78b",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
