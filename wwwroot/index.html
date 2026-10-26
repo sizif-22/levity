@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#09090b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Levity">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <title>Levity</title>
+  <link rel="stylesheet" href="github-dark.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-wrap">
+          <svg class="logo" viewBox="0 0 64 64" fill="none">
+            <circle class="logo-orb" cx="32" cy="13" r="6" />
+            <circle cx="32" cy="38" r="15" stroke-width="7" />
+          </svg>
+          <span class="status-dot online" id="statusDot" title="Engine status"></span>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">Levity</span>
+          <span class="status-label" id="statusLabel">Connecting…</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="icon-btn" id="projectsBtn" title="Projects &amp; review">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        </button>
+        <button class="icon-btn desktop-only" id="mobileBtn" title="Connect your phone">
+          <svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+          <span class="badge" id="mobileBadge" hidden>0</span>
+        </button>
+        <button class="icon-btn" id="newChatBtn" title="New conversation">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button class="icon-btn desktop-only" id="pinBtn" title="Pin (always on top)">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-2l-2-2V5a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v8l-2 2v2z"/></svg>
+        </button>
+        <button class="icon-btn desktop-only" id="closeBtn" title="Hide">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <button class="cwd-pill" id="cwdButton" title="Change project">
+      <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      <span id="cwdText">Loading…</span>
+      <svg class="chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+
+    <button class="sync-banner" id="syncBanner" hidden>
+      <span class="spinner" id="syncBannerSpin"></span>
+      <span class="sync-banner-text" id="syncBannerText"></span>
+      <span class="sync-banner-link">View</span>
+    </button>
+
+    <!-- Chat -->
+    <main class="chat-viewport" id="chatViewport">
+      <div class="welcome" id="welcomeScreen">
+        <div class="hero">
+          <svg viewBox="0 0 64 64" fill="none">
+            <circle class="logo-orb" cx="32" cy="13" r="6" />
+            <circle cx="32" cy="38" r="15" stroke-width="7" />
+          </svg>
+        </div>
+        <h2>What are we building?</h2>
+        <p class="welcome-sub">Levity runs the Antigravity CLI on this PC.<br><span class="remote-only">You are controlling it from your phone.</span></p>
+
+        <div class="chips">
+          <button class="chip chip-primary" id="chipReviewAll">
+            <span class="chip-ico"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg></span>
+            <span><strong>Review all my projects</strong><small>Refresh docs and skills across your drive</small></span>
+          </button>
+          <button class="chip" data-prompt="What files and structure are in the current working directory?"><span class="chip-ico"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span><span><strong>Inspect workspace</strong></span></button>
+          <button class="chip" data-prompt="Check the git status and recent commits of this repository."><span class="chip-ico"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 8v8M18 10c0 4-6 3-12 6"/></svg></span><span><strong>Git status</strong></span></button>
+          <button class="chip" data-prompt="Explain what this project does and recommend next steps."><span class="chip-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/></svg></span><span><strong>Project overview</strong></span></button>
+        </div>
+      </div>
+      <div class="messages-list" id="messagesList"></div>
+    </main>
+
+    <button class="scroll-bottom-btn" id="scrollBottomBtn" title="Scroll to bottom">
+      <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+
+    <!-- Composer -->
+    <footer class="composer-wrap">
+      <div class="quick-commands">
+        <span class="cmd-chip" data-cmd="/plan">/plan</span>
+        <span class="cmd-chip" data-cmd="/goal">/goal</span>
+        <span class="cmd-chip" data-cmd="/boost">/boost</span>
+        <span class="cmd-chip" data-cmd="/compact">/compact</span>
+        <span class="cmd-chip" data-cmd="/help">/help</span>
+      </div>
+      <div class="composer">
+        <textarea id="promptInput" placeholder="Ask Levity anything…" rows="1" enterkeyhint="send"></textarea>
+        <button class="send-btn" id="sendBtn" title="Send">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        </button>
+      </div>
+    </footer>
+
+    <!-- Projects sheet -->
+    <section class="sheet" id="projectsSheet" aria-hidden="true">
+      <div class="sheet-head">
+        <div>
+          <h3>Projects</h3>
+          <p class="sheet-sub" id="projSub">Scanning…</p>
+        </div>
+        <button class="icon-btn" data-close-sheet="projectsSheet" title="Close">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div id="projListView" class="sheet-body">
+        <div class="root-row">
+          <input id="rootInput" type="text" spellcheck="false" autocomplete="off" placeholder="D:\">
+          <button class="btn ghost" id="rescanBtn"><span class="spinner" hidden></span><span class="lbl">Scan</span></button>
+        </div>
+        <div class="list-tools">
+          <label class="check"><input type="checkbox" id="selectAll" checked><span>Select all</span></label>
+          <span class="legend"><i class="d ok"></i>has<i class="d miss"></i>missing &nbsp;README · AGENTS · Skills</span>
+        </div>
+        <div id="projList"></div>
+      </div>
+
+      <div id="syncView" class="sheet-body" hidden>
+        <div class="sync-result" id="syncResult" hidden></div>
+        <div class="progress"><div class="progress-bar" id="syncBar"></div></div>
+        <p class="sheet-sub" id="syncSummary"></p>
+        <ul class="sync-list" id="syncList"></ul>
+      </div>
+
+      <div class="sheet-foot" id="projFoot">
+        <div class="seg" id="modeSeg">
+          <button class="seg-btn active" data-mode="update">Update docs</button>
+          <button class="seg-btn" data-mode="report">Report only</button>
+        </div>
+        <button class="btn primary" id="startSyncBtn">Review projects</button>
+      </div>
+      <div class="sheet-foot" id="syncFoot" hidden>
+        <button class="btn ghost" id="syncBackBtn" hidden>Back to projects</button>
+        <button class="btn danger" id="syncCancelBtn" hidden>Stop</button>
+      </div>
+    </section>
+
+    <!-- Mobile connect sheet (desktop only) -->
+    <section class="sheet" id="mobileSheet" aria-hidden="true">
+      <div class="sheet-head">
+        <div>
+          <h3>Connect your phone</h3>
+          <p class="sheet-sub">Outbound-only and end-to-end encrypted. No port is opened on this PC.</p>
+        </div>
+        <button class="icon-btn" data-close-sheet="mobileSheet" title="Close">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="sheet-body">
+        <label class="switch-row">
+          <span><strong>Mobile access</strong><small id="mobileState">Off</small></span>
+          <span class="switch"><input type="checkbox" id="remoteToggle"><i></i></span>
+        </label>
+
+        <div id="setupBox" hidden>
+          <p class="center-text left">Deploy the relay (Cloudflare) and the phone app (Vercel) once, then paste their addresses. See the README.</p>
+          <label class="field"><span>Relay address</span><input id="relayInput" type="text" spellcheck="false" autocomplete="off" placeholder="wss://levity-relay.your-name.workers.dev"></label>
+          <label class="field"><span>Phone app address</span><input id="appInput" type="text" spellcheck="false" autocomplete="off" placeholder="https://levity.vercel.app"></label>
+          <button class="btn primary full" id="saveConfigBtn">Save</button>
+        </div>
+
+        <div id="devicesBox" hidden>
+          <div class="grp-title">Paired phones</div>
+          <ul class="proj-list" id="deviceList"></ul>
+          <p class="empty" id="noDevices" hidden>No phones paired yet.</p>
+
+          <button class="btn primary full" id="pairBtn">Pair a new phone</button>
+
+          <div id="pairBox" hidden>
+            <div class="qr-card"><div id="qrBox"></div></div>
+            <p class="center-text">Scan with your phone camera. Expires in <strong id="pairTimer">5:00</strong>, works once.<br>You will approve the phone here before it connects.</p>
+            <button class="btn ghost full" id="pairCancelBtn">Cancel pairing</button>
+          </div>
+
+          <ul class="notes">
+            <li>Each phone gets its own key. Revoke a lost phone here and it is cut off at once.</li>
+            <li>The key never reaches Vercel or the relay, so neither can read your chats or send commands.</li>
+            <li><code>agy</code> runs with permissions skipped, so only pair phones you control.</li>
+          </ul>
+          <button class="link-btn" id="editConfigBtn">Change relay or app address</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Remote: pairing / offline overlay -->
+    <div class="overlay" id="offlineOverlay" hidden>
+      <div class="overlay-card">
+        <div class="hero small">
+          <svg viewBox="0 0 64 64" fill="none"><circle class="logo-orb" cx="32" cy="13" r="6" /><circle cx="32" cy="38" r="15" stroke-width="7" /></svg>
+        </div>
+        <h3 id="offlineTitle">Not connected</h3>
+        <p id="offlineText"></p>
+        <button class="btn primary" id="retryBtn">Retry</button>
+      </div>
+    </div>
+
+    <!-- In-page confirm dialog: native confirm() steals focus and makes the sidebar auto-hide -->
+    <div class="overlay" id="confirmOverlay" hidden>
+      <div class="dialog" role="alertdialog" aria-modal="true">
+        <h3 id="confirmTitle"></h3>
+        <p id="confirmText"></p>
+        <div class="dialog-foot">
+          <button class="btn ghost" id="confirmCancel">Cancel</button>
+          <button class="btn primary" id="confirmOk">Continue</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status"></div>
+  </div>
+
+  <script src="marked.min.js"></script>
+  <script src="highlight.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

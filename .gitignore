@@ -1,0 +1,18 @@
+# build output
+bin/
+obj/
+publish/
+*.user
+.vs/
+
+# node
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+
+# logs and local state
+*.log
+settings.json
+.env
+.env.*
