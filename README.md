@@ -29,7 +29,7 @@ Build: `dotnet publish -c Release -r win-x64 --self-contained false -o publish` 
    ```
    Note the address it prints, e.g. `wss://levity-relay.<you>.workers.dev` (use `wss://`).
 2. **Phone app** (Vercel): import the repo, set **Root Directory** to `web`, framework **Vite**. Or `cd web && npx vercel --prod`.
-3. In Levity: header phone icon → paste the relay address and the Vercel address → Save.
+3. In Levity: header phone icon → paste the relay address (the Vercel address is prefilled; change it if you redeploy elsewhere) → Save.
 
 ## Pair a phone
 

@@ -1,14 +1,26 @@
-$WshShell = New-Object -ComObject WScript.Shell
-$DesktopPath = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop)
-$ShortcutPath = Join-Path $DesktopPath "Levity.lnk"
-$TargetPath = "C:\Users\sheri\source\repos\AntigravitySidebar\publish\Levity.exe"
-$IconPath = "C:\Users\sheri\source\repos\AntigravitySidebar\Assets\app.ico"
+# Creates Desktop and Start Menu shortcuts for Levity so it shows up in Windows Search.
+$root = $PSScriptRoot
+$target = Join-Path $root "publish\Levity.exe"
+$icon = Join-Path $root "Assets\app.ico"
 
-$Shortcut = $WshShell.CreateShortcut($ShortcutPath)
-$Shortcut.TargetPath = $TargetPath
-$Shortcut.WorkingDirectory = "C:\Users\sheri\source\repos\AntigravitySidebar\publish"
-$Shortcut.IconLocation = "$IconPath, 0"
-$Shortcut.Description = "Levity - Antigravity CLI sidebar and mobile control"
-$Shortcut.Save()
+if (-not (Test-Path $target)) {
+    Write-Host "Levity.exe not found. Build it first: dotnet publish -c Release -r win-x64 --self-contained false -o publish" -ForegroundColor Red
+    exit 1
+}
 
-Write-Host "Desktop shortcut created successfully at: $ShortcutPath" -ForegroundColor Green
+$shell = New-Object -ComObject WScript.Shell
+$locations = @(
+    [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop),
+    (Join-Path ([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Programs)) "")
+)
+
+foreach ($dir in $locations) {
+    $path = Join-Path $dir "Levity.lnk"
+    $lnk = $shell.CreateShortcut($path)
+    $lnk.TargetPath = $target
+    $lnk.WorkingDirectory = Split-Path $target
+    $lnk.IconLocation = "$icon, 0"
+    $lnk.Description = "Levity - Antigravity CLI sidebar and mobile control"
+    $lnk.Save()
+    Write-Host "Created $path" -ForegroundColor Green
+}

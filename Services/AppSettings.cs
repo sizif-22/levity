@@ -15,7 +15,7 @@ namespace AntigravitySidebar.Services
         // Mobile access through the relay (off until the user turns it on)
         public bool RemoteEnabled { get; set; } = false;
         public string? RelayUrl { get; set; }       // wss://levity-relay.<account>.workers.dev
-        public string? MobileAppUrl { get; set; }   // https://<project>.vercel.app
+        public string? MobileAppUrl { get; set; } = "https://levity.sheriflotfy.dev";
         public List<PairedDevice> Devices { get; set; } = new();
 
         // Project review

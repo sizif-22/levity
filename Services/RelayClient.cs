@@ -94,14 +94,14 @@ namespace AntigravitySidebar.Services
 
                 try
                 {
-                    await socket.ConnectAsync(new Uri($"{baseUrl}/ws?room={room}&role=host"), ct);
+                    await socket.ConnectAsync(new Uri($"{baseUrl}/ws?room={room}&role=host"), RelayNet.Invoker, ct);
                     attempt = 0;
                     LastError = "";
                     OnStateChanged?.Invoke();
                     await ReceiveLoopAsync(socket, ct);
                 }
                 catch (OperationCanceledException) { break; }
-                catch (Exception ex) { LastError = ex.Message; }
+                catch (Exception ex) { while (ex.InnerException != null) ex = ex.InnerException; LastError = ex.Message; }
                 finally { socket.Dispose(); }
 
                 lock (_lock) _clients.Clear();

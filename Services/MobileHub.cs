@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Net.WebSockets;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -61,6 +64,59 @@ namespace AntigravitySidebar.Services
                 _clients.Clear();
             }
             OnChanged?.Invoke();
+        }
+
+        // ---- Relay health ------------------------------------------------------------------
+
+        /// <summary>off | idle (no link needed yet) | connecting | connected | error</summary>
+        public (string State, string Error) Health()
+        {
+            if (!IsRunning) return ("off", "");
+
+            var links = new List<RelayClient>();
+            lock (_lock) links.AddRange(_clients.Values);
+            if (_pairing != null) links.Add(_pairing);
+
+            if (links.Count == 0) return ("idle", "");
+            if (links.Any(c => c.IsConnected)) return ("connected", "");
+            string? error = links.Select(c => c.LastError).FirstOrDefault(e => e.Length > 0);
+            return error != null ? ("error", Friendly(error)) : ("connecting", "");
+        }
+
+        /// <summary>Opens a throwaway connection to a random room and waits for the relay's greeting.</summary>
+        public static async Task<(bool Ok, long Ms, string Error)> TestAsync(string relayUrl)
+        {
+            var sw = Stopwatch.StartNew();
+            using var socket = new ClientWebSocket();
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+            try
+            {
+                string room = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
+                await socket.ConnectAsync(new Uri($"{relayUrl.TrimEnd('/')}/ws?room={room}&role=phone"), RelayNet.Invoker, cts.Token);
+
+                var buffer = new byte[1024];
+                var result = await socket.ReceiveAsync(buffer, cts.Token);
+                string greeting = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                long ms = sw.ElapsedMilliseconds;
+
+                try { await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "test", CancellationToken.None); } catch { }
+                return greeting.Contains("\"ev\":\"host\"")
+                    ? (true, ms, "")
+                    : (false, ms, "Connected, but the address is not a Levity relay.");
+            }
+            catch (OperationCanceledException) { return (false, sw.ElapsedMilliseconds, "Timed out after 8 seconds. Check your internet connection."); }
+            catch (Exception ex) { return (false, sw.ElapsedMilliseconds, Friendly(Innermost(ex).Message)); }
+        }
+
+        private static Exception Innermost(Exception ex) { while (ex.InnerException != null) ex = ex.InnerException; return ex; }
+
+        private static string Friendly(string message)
+        {
+            if (message.Contains("resolved", StringComparison.OrdinalIgnoreCase) || message.Contains("No such host", StringComparison.OrdinalIgnoreCase))
+                return "This PC cannot resolve the relay address (DNS). Wait a few minutes, or set your DNS to 1.1.1.1.";
+            if (message.Contains("404") || message.Contains("400"))
+                return "The address answered but is not the Levity relay. Check the address.";
+            return message;
         }
 
         // ---- Devices ----------------------------------------------------------------------

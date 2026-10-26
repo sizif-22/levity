@@ -382,6 +382,10 @@ namespace AntigravitySidebar
                         SetRemoteEnabled(root.TryGetProperty("enabled", out var en) && en.ValueKind == JsonValueKind.True);
                         break;
 
+                    case "relay_test" when !remote:
+                        _ = TestRelayAsync();
+                        break;
+
                     case "remote_config" when !remote:
                         SaveRemoteConfig(GetString(root, "relayUrl"), GetString(root, "appUrl"));
                         break;
@@ -538,6 +542,19 @@ namespace AntigravitySidebar
             PostJsonToWeb(BuildRemoteInfo());
         }
 
+        private async Task TestRelayAsync()
+        {
+            string relay = _settings.RelayUrl ?? "";
+            if (relay.Length == 0)
+            {
+                PostJsonToWeb(new { type = "relay_test_result", ok = false, ms = 0L, error = "Set the relay address first." });
+                return;
+            }
+
+            var (ok, ms, error) = await MobileHub.TestAsync(relay);
+            PostJsonToWeb(new { type = "relay_test_result", ok, ms, error });
+        }
+
         private void SaveRemoteConfig(string relayUrl, string appUrl)
         {
             relayUrl = relayUrl.Trim().TrimEnd('/');
@@ -567,14 +584,18 @@ namespace AntigravitySidebar
             object? pairing = null;
             if (_hub.PairingKey != null && _hub.PairingExpiresUtc != null && !string.IsNullOrEmpty(_settings.MobileAppUrl))
             {
-                string url = $"{_settings.MobileAppUrl}/#p={_hub.PairingKey}&r={Uri.EscapeDataString(_settings.RelayUrl ?? "")}";
+                // ":" and "/" are legal in a fragment, so the relay address stays unescaped: a shorter link means a simpler QR.
+                string url = $"{_settings.MobileAppUrl}/#p={_hub.PairingKey}&r={_settings.RelayUrl}";
                 if (_qrCacheKey != url) { _qrCacheSvg = MakeQrSvg(url); _qrCacheKey = url; }
                 pairing = new { qr = _qrCacheSvg, expiresAt = _hub.PairingExpiresUtc };
             }
 
+            var (relayState, relayError) = _hub.Health();
+
             return new
             {
                 type = "remote_info",
+                relay = new { state = relayState, error = relayError },
                 enabled = _hub.IsRunning,
                 configured = !string.IsNullOrWhiteSpace(_settings.RelayUrl) && !string.IsNullOrWhiteSpace(_settings.MobileAppUrl),
                 relayUrl = _settings.RelayUrl ?? "",
@@ -593,12 +614,29 @@ namespace AntigravitySidebar
             };
         }
 
+        /// <summary>
+        /// Draws the QR ourselves so the viewBox is exactly square with an even quiet zone on all four sides
+        /// (the library's SVG sizing left uneven white space).
+        /// </summary>
         private static string MakeQrSvg(string text)
         {
+            const int quiet = 4; // modules of white border required by the QR spec
             using var generator = new QRCoder.QRCodeGenerator();
-            using var data = generator.CreateQrCode(text, QRCoder.QRCodeGenerator.ECCLevel.M);
-            var svg = new QRCoder.SvgQRCode(data);
-            return svg.GetGraphic(4, "#09090b", "#ffffff", true);
+            // Level L: shown on a screen, so redundancy for print damage is not needed and fewer modules scan faster.
+            using var data = generator.CreateQrCode(text, QRCoder.QRCodeGenerator.ECCLevel.L);
+
+            var matrix = data.ModuleMatrix;
+            int n = matrix.Count;
+            int size = n + quiet * 2;
+
+            var sb = new System.Text.StringBuilder();
+            sb.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 {size} {size}\" shape-rendering=\"crispEdges\">");
+            sb.Append($"<rect width=\"{size}\" height=\"{size}\" fill=\"#ffffff\"/><path fill=\"#09090b\" d=\"");
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                    if (matrix[y][x]) sb.Append($"M{x + quiet},{y + quiet}h1v1h-1z");
+            sb.Append("\"/></svg>");
+            return sb.ToString();
         }
 
         // ---- Chat plumbing ----------------------------------------------------------------

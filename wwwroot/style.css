@@ -405,7 +405,7 @@ input[type="checkbox"].cb, .check input { width: 16px; height: 16px; accent-colo
 .switch input:checked + i::after { transform: translateX(16px); }
 .switch input:checked + i::after { background: var(--primary-foreground); }
 
-.qr-card { width: 208px; margin: 0 auto 12px; padding: 10px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); }
+.qr-card { width: 236px; margin: 0 auto 12px; padding: 0; overflow: hidden; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); }
 .qr-card svg { display: block; width: 100%; height: auto; stroke: none; fill: initial; }
 .center-text { text-align: center; color: var(--muted-foreground); font-size: 13px; margin-bottom: 12px; }
 .addr-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 12px; }
@@ -415,11 +415,24 @@ input[type="checkbox"].cb, .check input { width: 16px; height: 16px; accent-colo
 .link-row code { flex: 1; min-width: 0; height: 36px; line-height: 34px; padding: 0 12px; border-radius: calc(var(--radius) - 2px); background: var(--muted); font-family: var(--mono); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted-foreground); }
 .notes { margin: 16px 0 0 18px; color: var(--muted-foreground); font-size: 12.5px; display: grid; gap: 6px; }
 
+/* Relay status */
+.relay-status { display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin: -4px 0 16px; border: 1px solid var(--border); border-radius: var(--radius); }
+.relay-status .d { margin: 0; width: 9px; height: 9px; flex-shrink: 0; }
+.relay-status .d.err { background: var(--destructive); }
+.relay-status .d.wait { background: var(--warning); animation: pulse 1.2s ease-in-out infinite; }
+.relay-text { flex: 1; min-width: 0; }
+.relay-text strong { display: block; font-weight: 500; font-size: 13.5px; }
+.relay-text small { display: block; color: var(--muted-foreground); font-size: 12px; overflow-wrap: anywhere; }
+.relay-status .btn { height: 30px; padding: 0 12px; font-size: 12.5px; }
+
 /* Phone pairing panel */
 .field { display: grid; gap: 6px; margin-bottom: 12px; font-size: 12.5px; font-weight: 500; }
 .field input { height: 36px; padding: 0 12px; border-radius: calc(var(--radius) - 2px); border: 1px solid var(--input); background: transparent; box-shadow: var(--shadow-sm); outline: 0; font-family: var(--mono); font-size: 12.5px; }
 .field input:focus { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 35%, transparent); }
 .btn.full { width: 100%; }
+.steps { margin: 0 0 16px 18px; display: grid; gap: 8px; font-size: 13px; color: var(--muted-foreground); }
+.steps strong { color: var(--foreground); font-weight: 500; }
+.steps code { padding: 1px 5px; border-radius: 4px; background: var(--muted); font-family: var(--mono); font-size: 12px; color: var(--foreground); }
 #pairBtn { margin-top: 14px; }
 #pairBox { margin-top: 16px; }
 #pairBox .btn { margin-top: 4px; }

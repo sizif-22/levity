@@ -173,10 +173,19 @@
           <span class="switch"><input type="checkbox" id="remoteToggle"><i></i></span>
         </label>
 
+        <div class="relay-status" id="relayStatus" hidden>
+          <i class="d off" id="relayDot"></i>
+          <div class="relay-text"><strong id="relayTitle">Relay</strong><small id="relayDetail"></small></div>
+          <button class="btn ghost" id="relayTestBtn"><span class="spinner" hidden></span><span class="lbl">Test</span></button>
+        </div>
+
         <div id="setupBox" hidden>
-          <p class="center-text left">Deploy the relay (Cloudflare) and the phone app (Vercel) once, then paste their addresses. See the README.</p>
+          <ol class="steps">
+            <li><strong>Phone app</strong> (Vercel): already set below. Change it only if you redeploy elsewhere.</li>
+            <li><strong>Relay</strong> (Cloudflare): in a terminal run <code>cd relay</code>, <code>npx wrangler login</code>, <code>npx wrangler deploy</code>, then paste the <code>wss://…workers.dev</code> address it prints.</li>
+          </ol>
           <label class="field"><span>Relay address</span><input id="relayInput" type="text" spellcheck="false" autocomplete="off" placeholder="wss://levity-relay.your-name.workers.dev"></label>
-          <label class="field"><span>Phone app address</span><input id="appInput" type="text" spellcheck="false" autocomplete="off" placeholder="https://levity.vercel.app"></label>
+          <label class="field"><span>Phone app address</span><input id="appInput" type="text" spellcheck="false" autocomplete="off" placeholder="https://levity.sheriflotfy.dev"></label>
           <button class="btn primary full" id="saveConfigBtn">Save</button>
         </div>
 

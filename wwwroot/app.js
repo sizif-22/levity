@@ -80,6 +80,7 @@ function handleHostMessage(msg) {
     case 'projects': renderProjects(msg); break;
     case 'sync_state': renderSync(msg); break;
     case 'remote_info': renderRemote(msg); break;
+    case 'relay_test_result': showRelayTest(msg); break;
     case 'open_panel': openSheet(msg.panel === 'mobile' ? 'mobileSheet' : 'projectsSheet'); break;
   }
 }
@@ -651,6 +652,8 @@ function renderRemote(info) {
   badge.hidden = !online;
   badge.textContent = online;
 
+  renderRelayStatus(info);
+
   const showSetup = !info.configured || editingConfig;
   $('setupBox').hidden = !showSetup;
   if (showSetup && document.activeElement !== $('relayInput') && document.activeElement !== $('appInput')) {
@@ -698,6 +701,47 @@ function renderRemote(info) {
 
   (info.pending || []).forEach(askToApprove);
 }
+
+const RELAY_TEXT = {
+  off: ['Relay off', 'Turn on Mobile access to connect.', 'off'],
+  idle: ['Relay ready', 'The link opens when you pair a phone. Use Test to check it now.', 'off'],
+  connecting: ['Connecting to relay…', 'Trying to reach the relay.', 'wait'],
+  connected: ['Relay connected', 'End-to-end encrypted. Phones can reach this PC.', 'ok'],
+  error: ['Cannot reach relay', '', 'err'],
+};
+let relayTestNote = '';
+
+function renderRelayStatus(info) {
+  const box = $('relayStatus');
+  box.hidden = !info.configured;
+  if (!info.configured) return;
+  const st = info.relay || { state: 'off', error: '' };
+  const [title, detail, cls] = RELAY_TEXT[st.state] || RELAY_TEXT.off;
+  $('relayDot').className = 'd ' + cls;
+  $('relayTitle').textContent = title;
+  $('relayDetail').textContent = relayTestNote || st.error || detail;
+}
+
+function showRelayTest(res) {
+  const btn = $('relayTestBtn');
+  btn.classList.remove('busy');
+  btn.querySelector('.spinner').hidden = true;
+  btn.querySelector('.lbl').textContent = 'Test';
+  relayTestNote = res.ok ? `Test passed in ${res.ms} ms.` : `Test failed: ${res.error}`;
+  $('relayDot').className = 'd ' + (res.ok ? 'ok' : 'err');
+  $('relayTitle').textContent = res.ok ? 'Relay reachable' : 'Cannot reach relay';
+  $('relayDetail').textContent = relayTestNote;
+  setTimeout(() => { relayTestNote = ''; if (remoteInfo) renderRelayStatus(remoteInfo); }, 15000);
+}
+
+$('relayTestBtn').addEventListener('click', () => {
+  const btn = $('relayTestBtn');
+  btn.classList.add('busy');
+  btn.querySelector('.spinner').hidden = false;
+  btn.querySelector('.lbl').textContent = 'Testing…';
+  relayTestNote = '';
+  postToHost({ type: 'relay_test' });
+});
 
 // A phone that scanned the QR shows a 4-digit code; approving here confirms it is the phone in your hand.
 async function askToApprove(req) {
