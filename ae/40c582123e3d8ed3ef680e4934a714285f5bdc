@@ -1,0 +1,42 @@
+web/vercel.json
+  s_cc3f3c4e50f86e::t_246940d7c4b3cd 6
+web/src/lib/install.ts
+  s_cc3f3c4e50f86e::t_246940d7c4b3cd 1-40
+web/src/styles.css
+  s_cc3f3c4e50f86e::t_246940d7c4b3cd 506-529
+web/public/manifest.webmanifest
+  s_cc3f3c4e50f86e::t_246940d7c4b3cd 2,6-7,9,13-14,16-18
+web/src/App.tsx
+  s_cc3f3c4e50f86e::t_246940d7c4b3cd 38-52
+web/index.html
+  s_cc3f3c4e50f86e::t_246940d7c4b3cd 5-10
+web/src/vite-env.d.ts
+  s_cc3f3c4e50f86e::t_246940d7c4b3cd 1
+web/public/sw.js
+  s_cc3f3c4e50f86e::t_246940d7c4b3cd 1-37
+web/src/main.tsx
+  s_cc3f3c4e50f86e::t_246940d7c4b3cd 11-16
+web/src/components/Screens.tsx
+  s_cc3f3c4e50f86e::t_246940d7c4b3cd 5,119-121,132-144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ae40c582123e3d8ed3ef680e4934a714285f5bdc",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_cc3f3c4e50f86e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "aff6ddc9-b2db-47e9-a1e1-fd9c6b94d78b",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
