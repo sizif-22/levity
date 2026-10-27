@@ -1,0 +1,44 @@
+tests/Levity.Tests/Levity.Tests.csproj
+  s_d7448d4eb56c88::t_7e65bad3a56b6f 41
+  s_d7448d4eb56c88::t_286de8b6c6a7c0 42
+Services/DiagramService.cs
+  s_d7448d4eb56c88::t_6673e9c17dca6b 213,265
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_898ac096a6da5f 582,584-585
+  s_d7448d4eb56c88::t_b63dd7706bab99 82,333-365,587-593,595,615,870-878,880-988
+  s_d7448d4eb56c88::t_b53ea54ab69349 879
+  s_d7448d4eb56c88::t_94dbc56d3c4720 580-581
+  s_d7448d4eb56c88::t_19acf9df5d7f00 989
+tests/Levity.Tests/FolderAccessTests.cs
+  s_d7448d4eb56c88::t_5156638477a71f 1-62
+Services/DiagramDocs.cs
+  s_d7448d4eb56c88::t_563b323ba66635 34
+  s_d7448d4eb56c88::t_fc84547b9082f2 1-33,35-120
+tests/Levity.Tests/DiagramDocsTests.cs
+  s_d7448d4eb56c88::t_63efab1d94dcff 1-200
+Services/DiagramIngest.cs
+  s_d7448d4eb56c88::t_eb74ee05f0ecf1 254-255,257,262,271,274-290
+Services/FolderAccess.cs
+  s_d7448d4eb56c88::t_98b9966a197a8b 1-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "060f070d699692bae9011c05034059b1397f35d6",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
