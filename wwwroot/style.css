@@ -630,9 +630,11 @@ body.remote .composer-hl { font-size: 16px; } /* match the textarea (iOS zoom gu
 .diag-sw5 { background: #ccfbf1; border-color: #0f766e; }
 
 /* Diagram: readable type, spinner on the buttons that start a run, and the full-window view */
-.diag-stage svg text, .diag-stage svg .nodeLabel, .diag-stage svg .edgeLabel { font-weight: 500; }
-.diag-stage svg .cluster-label text, .diag-stage svg .cluster text { font-weight: 600; }
-.diag-stage svg .edgeLabel rect { opacity: 0.9; }
+/* Text must keep the size and spacing Mermaid measured it with: no inherited letter or word spacing, no weight changes. */
+.diag-stage svg text, .diag-stage svg tspan { letter-spacing: normal; word-spacing: normal; font-weight: 400; text-rendering: geometricPrecision; }
+/* Components are always drawn on light fills, so their text is dark in both themes (some browsers ignore the colour Mermaid is given). */
+.diag-stage svg g.node text, .diag-stage svg g.node tspan { fill: #0f172a !important; }
+.diag-stage svg .edgeLabel rect { stroke: none; opacity: 0.92; }
 .diag-panel .btn.busy, .diag-actions .btn.busy, .diag-stale .btn.busy { display: inline-flex; align-items: center; }
 .diag-expand[aria-pressed="true"] { background: var(--accent); }
 

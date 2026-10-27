@@ -12,7 +12,9 @@ export function diagramMermaidConfig(dark: boolean): Record<string, unknown> {
     secure: ['secure', 'securityLevel', 'startOnLoad', 'maxTextSize', 'htmlLabels', 'flowchart'],
     theme: 'base',
     htmlLabels: false,
-    fontFamily: 'Montserrat, "Segoe UI", ui-sans-serif, system-ui, sans-serif',
+    // A system font, not the web font the pages use: Mermaid measures every label once while drawing, and a web font that
+    // arrives later (or a different weight) makes the text wider than the boxes it was measured for.
+    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
     flowchart: { htmlLabels: false, curve: 'basis', useMaxWidth: false, padding: 12, nodeSpacing: 40, rankSpacing: 48, wrappingWidth: 180 },
     themeVariables: {
       background: 'transparent',
