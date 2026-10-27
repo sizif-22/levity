@@ -364,8 +364,10 @@ document.querySelectorAll('.chip[data-prompt]').forEach(chip => {
 });
 document.querySelectorAll('.cmd-chip').forEach(cmd => {
   cmd.addEventListener('click', () => {
-    promptInput.value = cmd.dataset.cmd + ' ';
+    const c = cmd.dataset.cmd;
+    promptInput.value = c.endsWith('{}') ? c : c + ' ';
     promptInput.focus();
+    if (c.endsWith('{}')) promptInput.setSelectionRange(c.length - 1, c.length - 1); // caret between the braces
   });
 });
 

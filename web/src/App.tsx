@@ -92,6 +92,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const stick = useRef(true);
   const toastTimer = useRef<number>();
   const syncRef = useRef<SyncState | null>(null);
+  const composer = useRef<HTMLTextAreaElement | null>(null);
   syncRef.current = sync;
 
   const toast = useCallback((t: string) => {
@@ -294,10 +295,11 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           {['/plan', '/goal', '/boost', '/compact', '/help'].map((c) => (
             <span key={c} className="cmd-chip" onClick={() => setDraft(c + ' ')}>{c}</span>
           ))}
+          <span className="cmd-chip" title="Run a CLI command, e.g. /cmd{git status}" onClick={() => { setDraft('/cmd{}'); setTimeout(() => { composer.current?.focus(); composer.current?.setSelectionRange(5, 5); }, 0); }}>/cmd</span>
         </div>
         <div className="composer">
           <textarea
-            rows={1} value={draft} placeholder={online ? 'Ask Levity anything… or /cmd{git status}' : 'Waiting for your PC…'}
+            ref={composer} rows={1} value={draft} placeholder={online ? 'Ask Levity anything… or /cmd{git status}' : 'Waiting for your PC…'}
             onChange={(e) => { setDraft(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 180) + 'px'; }}
           />
           <button className="send-btn" disabled={!draft.trim() || generating || !online} onClick={submit} title="Send">
