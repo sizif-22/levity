@@ -651,7 +651,7 @@ body.remote .composer-hl { font-size: 16px; } /* match the textarea (iOS zoom gu
 
 /* Diagram: readable type, spinner on the buttons that start a run, and the full-window view */
 /* Text must keep the size and spacing Mermaid measured it with: no inherited letter or word spacing, no weight changes. */
-.diag-stage svg text, .diag-stage svg tspan { letter-spacing: normal; word-spacing: normal; font-weight: 400; text-rendering: geometricPrecision; }
+.diag-stage svg text, .diag-stage svg tspan { letter-spacing: normal; word-spacing: normal; font-weight: 400; stroke: none; text-rendering: geometricPrecision; }
 .diag-stage svg .edgeLabel rect { stroke: none; opacity: 0.92; }
 .diag-panel .btn.busy, .diag-actions .btn.busy, .diag-stale .btn.busy { display: inline-flex; align-items: center; }
 .diag-expand[aria-pressed="true"] { background: var(--accent); }

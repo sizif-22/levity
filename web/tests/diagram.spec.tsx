@@ -443,11 +443,12 @@ describe('DiagramSheet: waiting spinner and full screen', () => {
 
 describe('DiagramSheet: black and white', () => {
   it('draws components as gray boxes with white text, whatever colours Mermaid gave them', async () => {
-    const coloured = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200"><g class="node" id="flowchart-n1-0"><rect width="60" height="30" style="fill:#dbeafe !important"/><text style="fill:#0f172a !important">Entry</text></g></svg>';
+    const coloured = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200"><g class="node" id="flowchart-n1-0"><rect width="60" height="30" style="fill:#dbeafe !important"/><text style="fill:#0f172a !important;stroke:#334155 !important;stroke-width:1.5px">Entry</text></g></svg>';
     const { container } = setup({ data: diagram(), mermaid: fakeMermaid(coloured).api });
     await drawn(container);
     const rect = container.querySelector('g.node rect') as SVGElement, text = container.querySelector('g.node text') as SVGElement;
     expect(rect.style.getPropertyValue('fill')).toBe('#525252');
     expect(text.style.getPropertyValue('fill')).toBe('#ffffff');
+    expect(text.style.getPropertyValue('stroke')).toBe('none');
   });
 });

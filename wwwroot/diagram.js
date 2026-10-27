@@ -242,6 +242,8 @@ function sanitizeSvg(svgText) {
 // (the colour is what shows a component's group there) but gets dark text so it stays readable on its light fills.
 function paintNodes(svg, flat) {
   const put = (el, prop, value) => el.style.setProperty(prop, value, 'important');
+  // Mermaid copies a component's outline (stroke and stroke-width) onto its text too, which turns the letters into blobs.
+  svg.querySelectorAll('text, tspan').forEach(t => { put(t, 'stroke', 'none'); put(t, 'stroke-width', '0'); put(t, 'font-weight', '400'); });
   svg.querySelectorAll('g.node').forEach(g => {
     if (!flat) g.querySelectorAll('rect, path, polygon, circle, ellipse').forEach(s => { put(s, 'fill', '#525252'); put(s, 'stroke', '#a3a3a3'); });
     g.querySelectorAll('text, tspan').forEach(t => put(t, 'fill', flat ? '#0f172a' : '#ffffff'));

@@ -569,7 +569,7 @@ test('opening the diagram asks the PC to pin the sidebar and closing it releases
 
 test('components are drawn as gray boxes with white text, whatever colours Mermaid gave them', async () => {
   const coloured = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
-    <g class="node" id="flowchart-n1-0"><rect width="60" height="30" style="fill:#dbeafe !important"/><text style="fill:#0f172a !important">Entry</text></g></svg>`;
+    <g class="node" id="flowchart-n1-0"><rect width="60" height="30" style="fill:#dbeafe !important"/><text style="fill:#0f172a !important;stroke:#334155 !important;stroke-width:1.5px">Entry</text></g></svg>`;
   const ui = await open({ mermaid: fakeMermaid(coloured) });
   await openDiagramFor(ui);
   ui.deliver(diagram());
@@ -578,4 +578,5 @@ test('components are drawn as gray boxes with white text, whatever colours Merma
   assert.equal(rect.style.getPropertyValue('fill'), '#525252');
   assert.equal(rect.style.getPropertyPriority('fill'), 'important');
   assert.equal(text.style.getPropertyValue('fill'), '#ffffff');
+  assert.equal(text.style.getPropertyValue('stroke'), 'none', 'outlined letters turn into blobs');
 });
