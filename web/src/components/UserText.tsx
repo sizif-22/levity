@@ -1,5 +1,5 @@
 /** "/cmd$cd ../..;" or "/cmd{$cd ../..}" (aliases /cli /run /sh): the wrapper is dimmed and the command word coloured and bold. */
-export const CMD_RE = /^(\/(?:cmd|cli|run|sh)(?:\{|\s+|(?=\$))\s*\$?\s*)([^\s};]+)([\s\S]*)$/i;
+export const CMD_RE = /^(\/(?:cmd|cli|run|sh)(?:\{|\s+|(?=\$))\s*\$?\s*)((?!\$)[^\s};]+)([\s\S]*)$/i;
 
 /** Renders message text; a command message gets its command word and "-b" background flag styled. */
 export function UserText({ text }: { text: string }) {

@@ -336,7 +336,7 @@ function finishCurrentAssistantMessage(resultData) {
 }
 
 // "/cmd$cd ../..;" (or "/cmd{$cd ../..}"): dim the wrapper, colour and embolden the command word.
-const CMD_RE = /^(\/(?:cmd|cli|run|sh)(?:\{|\s+|(?=\$))\s*\$?\s*)([^\s};]+)([\s\S]*)$/i;
+const CMD_RE = /^(\/(?:cmd|cli|run|sh)(?:\{|\s+|(?=\$))\s*\$?\s*)((?!\$)[^\s};]+)([\s\S]*)$/i;
 function userBubbleHtml(text) {
   const m = CMD_RE.exec(text);
   if (!m) return escapeHtml(text);

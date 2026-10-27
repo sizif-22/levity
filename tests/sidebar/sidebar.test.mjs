@@ -78,14 +78,14 @@ test('typing a command colours the word inside the message box', async () => {
   assert.equal(box.spellcheck, true);
 });
 
-test('the /cmd chip fills "/cmd{$}" with the caret between $ and }', async () => {
+test('the /cmd chip fills "/cmd$;" with the caret between $ and ;', async () => {
   const ui = await open();
-  const chip = ui.qa('.cmd-chip').find((c) => c.dataset.cmd === '/cmd{$}');
+  const chip = ui.qa('.cmd-chip').find((c) => c.dataset.cmd === '/cmd$;');
   assert.ok(chip, 'the /cmd chip exists');
   ui.click(chip);
   const box = ui.$('promptInput');
-  assert.equal(box.value, '/cmd{$}');
-  assert.equal(box.selectionStart, 6);
+  assert.equal(box.value, '/cmd$;');
+  assert.equal(box.selectionStart, 5);
 });
 
 test('sending posts the prompt, clears the box and resets the highlight', async () => {
