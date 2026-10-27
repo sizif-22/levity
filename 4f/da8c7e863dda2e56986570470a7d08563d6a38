@@ -1,0 +1,33 @@
+README.md
+  s_d7448d4eb56c88::t_163c970a59c92a 4-5,40-41,44,46,48,50,52-53,55,57,59,61,63,65-72,75-82,85,89
+  s_d7448d4eb56c88::t_f93466a56a4ccc 1,7-32,51
+  s_d7448d4eb56c88::t_d4b2c255d328f3 6
+docs/USING.md
+  s_d7448d4eb56c88::t_f93466a56a4ccc 7-22
+  s_d7448d4eb56c88::t_3a1855a75d05c8 1-6,23-63
+docs/PHONE.md
+  s_d7448d4eb56c88::t_d5a13624e8ee9b 1-45
+docs/RUNNING.md
+  s_d7448d4eb56c88::t_872e38d84b60ef 69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4fda8c7e863dda2e56986570470a7d08563d6a38",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
