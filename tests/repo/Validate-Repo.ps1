@@ -87,6 +87,36 @@ Check "Install-Skills installs, skips, forces and uninstalls cleanly" {
     } finally { Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue }
 }
 
+Check "Fast Learner's announce.ps1 logs skills, docs and notes, and rejects bad kinds" {
+    $script = Join-Path $root "agent\skills\fast-learner\scripts\announce.ps1"
+    $log = Join-Path ([System.IO.Path]::GetTempPath()) ("levity-learned-" + [guid]::NewGuid().ToString("N") + ".jsonl")
+    try {
+        $out = & $script -Kind start -Message "begin" -LogPath $log
+        if ("$out" -notmatch "Fast Learner: running - begin") { "start printed '$out'" }
+        if (Test-Path $log) { "start must not write to the log" }
+
+        & $script -Kind skill -Name demo-skill -Message "Saved the demo" -LogPath $log | Out-Null
+        & $script -Kind docs -Path AGENTS.md -Message "Documented the build" -LogPath $log | Out-Null
+        & $script -Kind notes -Message "Not verified: it's a 'quoted' note" -LogPath $log | Out-Null
+        & $script -Kind done -Message "finished" -LogPath $log | Out-Null
+
+        $lines = @(Get-Content $log)
+        if ($lines.Count -ne 3) { "expected 3 log lines (skill, docs, notes), found $($lines.Count)" }
+        else {
+            $entries = $lines | ForEach-Object { $_ | ConvertFrom-Json }
+            if (($entries.kind -join ",") -ne "skill,docs,notes") { "kinds were '$($entries.kind -join ',')'" }
+            if ($entries[0].name -ne "demo-skill") { "skill name was not logged" }
+            if ($entries[1].path -ne "AGENTS.md") { "docs path was not logged" }
+            if ($entries[2].message -notmatch "quoted") { "the note text was mangled: $($entries[2].message)" }
+            if (-not $entries[0].time -or -not $entries[0].cwd) { "entries need a time and a working folder" }
+        }
+
+        $rejected = $false
+        try { & $script -Kind explode -LogPath $log *> $null } catch { $rejected = $true }
+        if (-not $rejected) { "an unknown -Kind was accepted" }
+    } finally { Remove-Item $log -ErrorAction SilentlyContinue }
+}
+
 Check ".env.example, the code and the docs agree on configuration keys" {
     $example = Get-Content (Join-Path $root ".env.example")
     $exampleKeys = $example | Where-Object { $_ -match '^[A-Z][A-Z0-9_]*=' } | ForEach-Object { ($_ -split '=', 2)[0] }

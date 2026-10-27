@@ -29,6 +29,7 @@
     <Compile Include="..\..\Services\ProjectSyncService.cs" Link="Services\ProjectSyncService.cs" />
     <Compile Include="..\..\Services\AgyProcessManager.cs" Link="Services\AgyProcessManager.cs" />
     <Compile Include="..\..\Services\RelayCrypto.cs" Link="Services\RelayCrypto.cs" />
+    <Compile Include="..\..\Services\FastLearnerDetector.cs" Link="Services\FastLearnerDetector.cs" />
   </ItemGroup>
 
 </Project>

@@ -1182,7 +1182,27 @@ namespace AntigravitySidebar
                     Publish(new { type = "agy_event", payload = doc.RootElement });
                 }
                 catch { }
+                PublishFastLearner(rawJson);
             });
+        }
+
+        private string? _lastFastLearnerKey;
+        private DateTime _lastFastLearnerAt;
+
+        /// <summary>Tells the sidebar, the phone and (if the sidebar is hidden) Windows when Fast Learner starts working.</summary>
+        private void PublishFastLearner(string rawJson)
+        {
+            var notice = FastLearnerDetector.Inspect(rawJson);
+            if (notice == null) return;
+
+            // "announce skill X" followed by the write into skill X's folder is one event, not two.
+            string key = $"{notice.Phase}|{notice.Kind}|{notice.Detail}";
+            if (key == _lastFastLearnerKey && (DateTime.UtcNow - _lastFastLearnerAt).TotalSeconds < 60) return;
+            _lastFastLearnerKey = key;
+            _lastFastLearnerAt = DateTime.UtcNow;
+
+            Publish(new { type = "fast_learner", phase = notice.Phase, kind = notice.Kind, detail = notice.Detail, path = notice.Path, source = notice.Source, text = notice.Text });
+            if (!_isSidebarVisible) _trayManager.ShowNotification("Levity · Fast Learner", notice.Text);
         }
 
         private void HandleAgyStatus(string statusText)
@@ -1216,7 +1236,7 @@ namespace AntigravitySidebar
         private void Publish(object obj)
         {
             string json = JsonSerializer.Serialize(obj);
-            if (json.StartsWith("{\"type\":\"agy_event\"") || json.StartsWith("{\"type\":\"user_message\""))
+            if (json.StartsWith("{\"type\":\"agy_event\"") || json.StartsWith("{\"type\":\"user_message\"") || json.StartsWith("{\"type\":\"fast_learner\""))
             {
                 _history.Add(json);
                 if (_history.Count > MaxHistory) _history.RemoveRange(0, _history.Count - MaxHistory);

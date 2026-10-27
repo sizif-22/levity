@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "check": "node --check ../../wwwroot/app.js",
-    "test": "node --check ../../wwwroot/app.js && node --test sidebar.test.mjs"
+    "test": "node --check ../../wwwroot/app.js && node --test *.test.mjs"
   },
   "devDependencies": {
     "jsdom": "^25.0.1"

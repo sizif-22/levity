@@ -60,4 +60,14 @@ Header grid icon (or tray, **Review All Projects...**). It keeps README, `AGENTS
 
 ## Skills that make it faster over time
 
-`agent/skills` includes **Fast Learner**: when a simple task (downloading an image, changing the wallpaper, a CLI quirk) takes unexpectedly long, the agent saves the working solution as a reusable skill so the next run is one quick step. Install with `.\Install-Skills.ps1`. More in [RUNNING.md](RUNNING.md#6-agent-skills).
+`agent/skills` includes **Fast Learner**: when a simple task (downloading an image, changing the wallpaper, a CLI quirk) takes unexpectedly long, the assistant records what it learned so the next run is one quick step. It chooses one of three outcomes:
+
+| Outcome | When | Where it goes |
+|---|---|---|
+| **Skill** | the fix is verified and reusable | `%USERPROFILE%\.gemini\config\skills\<name>\` |
+| **Docs** | the learning belongs to this project | a short "Learned" section in the project's `AGENTS.md` |
+| **Note for later** | not verified yet, or not worth a skill | `learned.jsonl` next to the skill, to be promoted later |
+
+**You are told when it happens.** A card appears inside the reply ("Fast Learner · Learning", "Saving a skill: windows-wallpaper-manager", "Updating docs", "Taking a note for later", "Finished"), with a toast. If the sidebar is hidden you get a Windows notification. The phone shows the same cards, and they are kept when you reopen the chat.
+
+How it works: the assistant runs the skill's small `announce.ps1` script before it saves anything, and Levity recognises that call in the agent's activity. If a skill is written without an announcement, Levity still notices the write into a skills folder and shows a "Skills" card. Re-run `.\Install-Skills.ps1 -Name fast-learner -Force` after updating Levity to refresh the skill the assistant uses. More in [RUNNING.md](RUNNING.md#6-agent-skills).

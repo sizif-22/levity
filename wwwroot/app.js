@@ -79,6 +79,7 @@ function handleHostMessage(msg) {
         requestScan(false); postToHost({ type: 'list_projects' });
       }
       break;
+    case 'fast_learner': renderFastLearner(msg); break;
     case 'sessions': renderSessions(msg); break;
     case 'queue': renderQueue(msg); break;
     case 'jobs': renderJobs(msg); break;
@@ -205,8 +206,8 @@ function renderAssistantContent() {
   const contentEl = currentAssistantMessageElement.querySelector('.agent-content');
   if (!contentEl) return;
 
-  // Keep tool pills and the error banner (appended to the content node) while the text re-renders.
-  const pills = Array.from(contentEl.querySelectorAll(':scope > .tool-pill, :scope > .error-banner'));
+  // Keep tool pills, Fast Learner cards and the error banner (appended to the content node) while the text re-renders.
+  const pills = Array.from(contentEl.querySelectorAll(':scope > .tool-pill, :scope > .error-banner, :scope > .fl-card'));
   const wasThinkingOpen = contentEl.querySelector('.thinking-box') ? contentEl.querySelector('.thinking-box').open : true;
 
   let html = '';
@@ -275,11 +276,13 @@ function renderToolExecution(su) {
 
 function finishCurrentAssistantMessage(resultData) {
   renderAssistantContent();
+  // A learning step that never announced "done" must not pulse forever once the turn is over.
+  settleFastLearnerCards(messagesList);
   const target = currentAssistantMessageElement || messagesList.querySelector('.message-row.agent:last-child');
   if (target) {
     target.querySelectorAll('.typing').forEach(t => t.remove());
     // A turn that produced nothing visible (only empty steps) leaves no empty row behind.
-    if (!currentAssistantText && !currentThinkingText && !target.querySelector('.tool-pill, .error-banner')) {
+    if (!currentAssistantText && !currentThinkingText && !target.querySelector('.tool-pill, .error-banner, .fl-card')) {
       target.remove();
       currentAssistantMessageElement = null;
       currentAssistantText = '';
@@ -415,6 +418,40 @@ function scrollToBottom(force = false) {
 // ---------------------------------------------------------------------------
 // Sheets
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Fast Learner notices
+// ---------------------------------------------------------------------------
+
+const FL_LABEL = { run: 'Learning', skill: 'Saving a skill', docs: 'Updating docs', notes: 'Taking a note for later' };
+const FL_SVG = '<svg viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>';
+
+// Cards still pulsing when the work is over stop and read "Learned" instead of "Learning".
+function settleFastLearnerCards(scope) {
+  scope.querySelectorAll('.fl-card.running').forEach(c => {
+    c.classList.replace('running', 'done');
+    const title = c.querySelector('.fl-title');
+    if (title) title.textContent = title.textContent.replace(' · Learning', ' · Learned');
+  });
+}
+
+function renderFastLearner(msg) {
+  ensureAssistantMessageRow();
+  const content = currentAssistantMessageElement && currentAssistantMessageElement.querySelector('.agent-content');
+  if (!content) return;
+  if (msg.phase === 'done') settleFastLearnerCards(content);
+
+  const card = document.createElement('div');
+  card.className = `fl-card fl-${msg.kind} ${msg.phase === 'running' ? 'running' : 'done'}`;
+  card.setAttribute('role', 'status');
+  card.innerHTML = `<span class="fl-ico">${FL_SVG}</span><div class="fl-body"><span class="fl-title"></span><span class="fl-detail"></span></div>`;
+  const label = msg.phase === 'done' ? 'Finished' : (FL_LABEL[msg.kind] || 'Working');
+  card.querySelector('.fl-title').textContent = `${msg.source === 'path' ? 'Skills' : 'Fast Learner'} · ${label}`;
+  card.querySelector('.fl-detail').textContent = msg.detail ? ' ' + msg.detail : '';
+  content.appendChild(card);
+  if (msg.text) toast(msg.text);
+  scrollToBottom();
+}
 
 // ---------------------------------------------------------------------------
 // Queue and background jobs

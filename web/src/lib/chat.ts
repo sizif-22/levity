@@ -2,12 +2,25 @@
 
 export interface ToolCall { key: number; name: string; args: string; running: boolean }
 
+/** A Fast Learner notice: it is running, saving a skill, updating docs, taking a note, or finished. */
+export interface Learn {
+  id: number;
+  phase: 'running' | 'saving' | 'done';
+  kind: 'run' | 'skill' | 'docs' | 'notes';
+  detail: string;
+  /** announce = the agent said so; path = a skills folder was written to. */
+  source?: string;
+  /** The closing "done" notice. */
+  final?: boolean;
+}
+
 export interface Msg {
   id: number;
   role: 'user' | 'agent';
   text: string;
   thinking: string;
   tools: ToolCall[];
+  learn?: Learn[];
   done: boolean;
   stats?: string;
   error?: string;
@@ -106,6 +119,7 @@ function agyEvent(s: ChatState, ev: Json): ChatState {
     const next = patchLast(s1, {
       done: true,
       tools: cur.tools.map((t) => ({ ...t, running: false })),
+      learn: cur.learn?.map((l) => (l.phase === 'running' ? { ...l, phase: 'done' as const } : l)),
       stats: parts.length ? parts.join(' · ') : cur.stats,
       error: res.status === 'ERROR' ? String(res.error || 'This turn ended with an error.') : cur.error,
     });
@@ -124,6 +138,13 @@ export function applyHostMessage(s: ChatState, msg: Json): ChatState {
       const user: Msg = { id: s.nextId, role: 'user', text: String(msg.text ?? ''), thinking: '', tools: [], done: true, source: msg.source };
       const agent: Msg = { id: s.nextId + 1, role: 'agent', text: '', thinking: '', tools: [], done: false };
       return { ...s, nextId: s.nextId + 2, msgs: [...s.msgs, user, agent] };
+    }
+
+    case 'fast_learner': {
+      const [s1, cur] = openAgent(s);
+      const before = (cur.learn ?? []).map((l) => (msg.phase === 'done' && l.phase === 'running' ? { ...l, phase: 'done' as const } : l));
+      const entry: Learn = { id: before.length + 1, phase: msg.phase, kind: msg.kind, detail: String(msg.detail ?? ''), source: msg.source, final: msg.phase === 'done' };
+      return patchLast(s1, { learn: [...before, entry] });
     }
 
     case 'agy_event':

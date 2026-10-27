@@ -9,6 +9,7 @@ import { Markdown } from './components/Markdown';
 import { JobsSheet, type Job } from './components/JobsSheet';
 import { SessionsSheet, type SessionsMsg } from './components/SessionsSheet';
 import { CMD_RE, UserText } from './components/UserText';
+import { FastLearnerCard } from './components/FastLearnerCard';
 import { ProjectsSheet, syncCounts, type ProjectsMsg, type SyncState } from './components/ProjectsSheet';
 import { Center, ConfirmDialog, Logo, LockScreen, PairScreen, SettingsSheet } from './components/Screens';
 
@@ -18,7 +19,7 @@ type Json = Record<string, unknown>;
 const LOCK_AFTER_MS = 60_000;
 
 /** A finished reply with nothing in it (agy emits empty steps) is not worth a row. */
-const visible = (m: Msg) => m.role === 'user' || !m.done || !!(m.text || m.thinking || m.tools.length || m.error);
+const visible = (m: Msg) => m.role === 'user' || !m.done || !!(m.text || m.thinking || m.tools.length || m.learn?.length || m.error);
 
 export default function App() {
   const [phase, setPhase] = useState<Phase>('loading');
@@ -125,6 +126,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
       onMessage: (msg) => {
         const type = msg.type as string;
         if (type === 'sessions') { setSessions(msg as unknown as SessionsMsg); return; }
+        if (type === 'fast_learner') { toast(String(msg.text ?? '')); dispatch(msg); return; }
         if (type === 'queue') { setQueue((msg.items as { id: number; text: string }[]) ?? []); return; }
         if (type === 'jobs') { setJobs((msg.jobs as Job[]) ?? []); return; }
         if (type === 'projects') { setProjects(msg as unknown as ProjectsMsg); setScanning(false); return; }
@@ -302,6 +304,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
                         {t.running && <span className="spinner mini" />}<strong>{t.name}</strong> {t.args}
                       </div>
                     ))}
+                    {(m.learn ?? []).map((l) => <FastLearnerCard key={l.id} l={l} />)}
                     {!m.text && !m.done && <div className="typing" aria-label="Levity is typing"><i /><i /><i /></div>}
                     {m.error && <div className="error-banner">{m.error}</div>}
                   </div>

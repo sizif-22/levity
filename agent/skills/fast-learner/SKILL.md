@@ -2,43 +2,63 @@
 name: fast-learner
 description: >-
   Autonomous capability that detects when simple or routine tasks (OS settings, downloads, tool quirks, CLI workflows)
-  require prolonged troubleshooting or trial-and-error (>2-3 attempts or excessive time/tokens), and codifies the
-  verified solution into a permanent, reusable skill under ~/.gemini/config/skills/.
+  require prolonged troubleshooting or trial-and-error (>2-3 attempts or excessive time/tokens), then records what was
+  learned as a reusable skill, a project-docs update, or a note for later, and tells the user which one it is doing.
 ---
 
 # Fast Learner
 
-The **Fast Learner** feature ensures that whenever a routine, simple, or OS-level task takes significant time, effort, or tokens to solve, it is immediately synthesized into a reusable, zero-friction skill.
+Whenever a routine, simple, or OS-level task takes significant time, effort, or tokens, turn what you learned into something reusable so the next run is one quick step. **Always tell the user what you are doing** (section 3): they see it as a notice in Levity.
 
 ---
 
 ## 1. Trigger Criteria
 
-Activate the Fast Learner workflow automatically when:
-- A routine task (e.g. changing an OS setting, querying an API, downloading specific media, handling CLI quirks) took multiple failed tool calls or back-and-forth debugging (>2 attempts).
-- The solution required discovering non-obvious platform behavior (e.g. Windows 11 COM APIs vs legacy Win32, obscure CLI flags, credential handshakes).
-- The user expresses frustration with task duration (e.g. "this took 500+ seconds").
+Activate when:
+- A routine task (changing an OS setting, calling an API, downloading media, handling CLI quirks) took multiple failed tool calls or back-and-forth debugging (more than 2 attempts).
+- The solution required discovering non-obvious platform behavior (Windows 11 COM APIs vs legacy Win32, obscure CLI flags, credential handshakes).
+- The user expresses frustration with task duration (for example "this took 500+ seconds").
 
 ---
 
-## 2. Learning Procedure
+## 2. Choose one outcome
 
-When a task completes after overcoming friction:
+| Outcome | When | Where it goes |
+|---|---|---|
+| **skill** | The fix is verified, deterministic and reusable across projects | `$env:USERPROFILE\.gemini\config\skills\<skill-name>\SKILL.md`, with scripts under `scripts\` |
+| **docs** | The learning belongs to the current project (its commands, setup, gotchas) | A short "Learned" section in the project's `AGENTS.md` (create it if missing). Documentation only, never source code |
+| **notes** | The solution is not verified yet, uncertain, or a one-off not worth a skill | Saved for later by `announce.ps1` (section 3). Do not create a skill |
 
-1. **Identify the Ground Truth:**
-   - What was the initial failure mode? (e.g. legacy API silent failure, incorrect query format).
-   - What is the minimal, deterministic code/command that works 100% of the time?
+If a note from an earlier task now has a verified solution, promote it to a skill.
 
-2. **Package into an Executable Skill:**
-   - Target location: `$env:USERPROFILE\.gemini\config\skills\<skill-name>\`
-   - Create `SKILL.md` with:
-     - Clear YAML frontmatter (`name`, concise third-person `description` explaining exact trigger conditions).
-     - Explanation of the platform quirk or root issue.
-     - Copy-paste ready CLI commands or script invocations.
-   - If automation requires more than 3-4 lines of code, create a dedicated standalone script under `scripts/` (e.g. `scripts/run.ps1` or `scripts/helper.py`).
+### Making a skill
+1. Identify the ground truth: what failed first, and the minimal command or script that works every time.
+2. Write `SKILL.md` with YAML front matter (`name` matching the folder, a third-person `description` saying exactly when to use it), the root cause, and copy-paste commands. If the automation needs more than 3-4 lines, put it in a script under `scripts\`.
+3. Run the script once to confirm it exits with code 0 without manual changes.
 
-3. **Verify the Script:**
-   - Execute the helper script once to ensure it runs with code 0 and requires zero manual adjustments.
+---
 
-4. **Confirm to the User:**
-   - Briefly state that the skill has been codified and saved to the global skills registry, ready for future 1-turn instant execution.
+## 3. Tell the user (required)
+
+Run the announcement script, in PowerShell. It shows a notice in Levity (sidebar, phone, and a Windows notification when the sidebar is hidden) and keeps a log of skills, docs updates and notes.
+
+```powershell
+$a = "$env:USERPROFILE\.gemini\config\skills\fast-learner\scripts\announce.ps1"
+& $a -Kind start -Message "Wallpaper took 8 attempts; saving what worked"   # when you decide to learn
+& $a -Kind skill -Name windows-wallpaper-manager -Message "Set wallpaper via IDesktopWallpaper"
+& $a -Kind docs  -Path AGENTS.md -Message "Added the build command and the port gotcha"
+& $a -Kind notes -Message "yt-dlp needs --cookies-from-browser for this site; not verified yet"
+& $a -Kind done  -Message "Saved 1 skill"                                   # when finished
+```
+
+Rules:
+- Send `start` once, as soon as you decide to learn (before the work), and `done` once at the end.
+- Send exactly one of `skill`, `docs` or `notes` for each thing you save, **before** you write it.
+- Keep each message to one short sentence. Use at most 3-4 announcements in total, to save tokens.
+- Notes are appended to `learned.jsonl` next to this skill. To reuse an earlier note, search it first with `Select-String -Path "$env:USERPROFILE\.gemini\config\skills\fast-learner\learned.jsonl" -Pattern "<keyword>"`.
+
+---
+
+## 4. Confirm to the user
+
+After `done`, say in one sentence what was learned and where it is saved, so the next request can be handled in a single step.
