@@ -1,0 +1,27 @@
+web/src/styles.css
+  s_d7448d4eb56c88::t_f7e297f554fc7e 1-662,664-667
+web/src/App.tsx
+  s_d7448d4eb56c88::t_f7e297f554fc7e 407
+  s_d7448d4eb56c88::t_b1fb3471f57ba9 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "43050e526366e5ad007de3af6366924a979d72da",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
