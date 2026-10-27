@@ -56,7 +56,7 @@ Not covered: a malicious Vercel deployment could serve altered JavaScript. Only 
 
 ## Run a CLI command
 
-Type `/cmd{git status}` (or `/cmd git status`; aliases `/cli`, `/run`, `/sh`) to make the agent run that exact command in the current folder and show the output. Text after the brace is a follow-up, e.g. `/cmd{npm test} summarize failures`. Works from the phone too.
+Type `/cmd{git status}` (or `/cmd git status`; aliases `/cli`, `/run`, `/sh`) to run that command directly in PowerShell in the current folder, with no AI and no tokens (120 s limit). `cd` changes the working folder. Text after the brace is a follow-up and hands the command to the agent instead, e.g. `/cmd{npm test} summarize failures`. Works from the phone too.
 
 ## Project review
 

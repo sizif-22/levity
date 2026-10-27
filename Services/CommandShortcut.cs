@@ -10,15 +10,16 @@ namespace AntigravitySidebar.Services
     {
         private static readonly string[] Names = { "/cmd", "/cli", "/run", "/sh" };
 
-        public static string Expand(string prompt, string cwd)
+        /// <summary>Splits "/cmd{...} follow-up" into the command and the trailing text. False when the prompt is not a command shortcut.</summary>
+        public static bool TryParse(string prompt, out string command, out string after)
         {
+            command = after = "";
             string text = prompt.Trim();
             foreach (string name in Names)
             {
                 if (!text.StartsWith(name, StringComparison.OrdinalIgnoreCase)) continue;
                 string rest = text.Substring(name.Length);
 
-                string command, after = "";
                 if (rest.StartsWith("{"))
                 {
                     int depth = 0, end = -1;
@@ -27,24 +28,29 @@ namespace AntigravitySidebar.Services
                         if (rest[i] == '{') depth++;
                         else if (rest[i] == '}' && --depth == 0) { end = i; break; }
                     }
-                    if (end < 0) { command = rest.Substring(1); }
-                    else { command = rest.Substring(1, end - 1); after = rest.Substring(end + 1); }
+                    if (end < 0) command = rest.Substring(1);
+                    else { command = rest.Substring(1, end - 1); after = rest.Substring(end + 1).Trim(); }
                 }
                 else if (rest.Length > 0 && char.IsWhiteSpace(rest[0])) command = rest;
                 else continue; // e.g. "/cmdx": not our command
 
                 command = command.Trim();
-                if (command.Length == 0) return prompt;
-
-                string expanded =
-                    $"Run this exact command in the shell with the working directory {cwd}. " +
-                    "Do not change, extend or substitute it. Show its output and exit code. " +
-                    "If it fails, show the error and stop; do not try workarounds.\n\n" +
-                    $"Command:\n```\n{command}\n```";
-                if (after.Trim().Length > 0) expanded += $"\n\nThen: {after.Trim()}";
-                return expanded;
+                return command.Length > 0;
             }
-            return prompt;
+            return false;
+        }
+
+        /// <summary>Instruction for the agent to run the command; used only when a follow-up needs the AI.</summary>
+        public static string Expand(string prompt, string cwd)
+        {
+            if (!TryParse(prompt, out string command, out string after)) return prompt;
+            string expanded =
+                $"Run this exact command in the shell with the working directory {cwd}. " +
+                "Do not change, extend or substitute it. Show its output and exit code. " +
+                "If it fails, show the error and stop; do not try workarounds.\n\n" +
+                $"Command:\n```\n{command}\n```";
+            if (after.Length > 0) expanded += $"\n\nThen: {after}";
+            return expanded;
         }
     }
 }

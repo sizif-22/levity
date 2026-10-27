@@ -308,6 +308,12 @@ namespace AntigravitySidebar
                     case "send_prompt":
                         string prompt = GetString(root, "text").Trim();
                         if (prompt.Length == 0) break;
+                        if (CommandShortcut.TryParse(prompt, out string shellCmd, out string shellAfter) && shellAfter.Length == 0)
+                        {
+                            // Plain /cmd{...}: run it directly, no AI, no tokens.
+                            _ = RunDirectCommandAsync(prompt, shellCmd, remote, clientId);
+                            break;
+                        }
                         if (_agyManager.IsBusy)
                         {
                             Reply(clientId, new { type = "toast", text = "Levity is still working on the previous turn." });
@@ -586,7 +592,7 @@ namespace AntigravitySidebar
             RawPublish(_lastSyncJson);
         }
 
-        private void SwitchProject(string path, string? clientId)
+        private bool SwitchProject(string path, string? clientId)
         {
             bool allowed = !string.IsNullOrWhiteSpace(path) && Directory.Exists(path);
             if (allowed && clientId != null)
@@ -601,7 +607,7 @@ namespace AntigravitySidebar
             if (!allowed)
             {
                 Reply(clientId, new { type = "toast", text = "That folder is not available." });
-                return;
+                return false;
             }
 
             _settings.WorkingDirectory = path;
@@ -611,6 +617,56 @@ namespace AntigravitySidebar
             ClearHistory();
             Publish(new { type = "config", cwd = path, isPinned = _settings.IsPinned });
             Publish(new { type = "clear_chat" });
+            return true;
+        }
+
+        private bool _shellBusy;
+
+        /// <summary>Runs "/cmd{...}" in PowerShell without the AI and shows it as a normal chat turn. "cd" changes the working folder.</summary>
+        private async Task RunDirectCommandAsync(string typed, string command, bool remote, string? clientId)
+        {
+            if (_shellBusy || _agyManager.IsBusy)
+            {
+                Reply(clientId, new { type = "toast", text = "Levity is busy. Try again in a moment." });
+                return;
+            }
+            _shellBusy = true;
+            string source = remote ? "mobile" : "desktop";
+            try
+            {
+                string cwd = _agyManager.CurrentWorkingDirectory;
+                string? cdTarget = DirectShell.ResolveCd(command, cwd);
+                if (cdTarget != null)
+                {
+                    if (!Directory.Exists(cdTarget))
+                    {
+                        Publish(new { type = "user_message", text = typed, source });
+                        FinishDirectTurn($"Folder not found: `{cdTarget}`", 0, error: true);
+                        return;
+                    }
+                    if (!SwitchProject(cdTarget, clientId)) return;
+                    Publish(new { type = "user_message", text = typed, source });
+                    FinishDirectTurn($"Now working in `{cdTarget}`", 0);
+                    return;
+                }
+
+                Publish(new { type = "user_message", text = typed, source });
+                RawPublish(JsonSerializer.Serialize(new { type = "status", text = "Running command...", state = "busy" }));
+                var res = await DirectShell.RunAsync(command, cwd);
+
+                string fence = res.Output.Contains("```") ? "````" : "```";
+                string body = res.Output.Length == 0 ? "_(no output)_" : $"{fence}\n{res.Output}\n{fence}";
+                string head = res.TimedOut ? "**Timed out after 120s and stopped**" : $"**Exit code:** `{res.ExitCode}`";
+                FinishDirectTurn($"{body}\n\n{head}", res.Seconds);
+            }
+            finally { _shellBusy = false; }
+        }
+
+        private void FinishDirectTurn(string markdown, double seconds, bool error = false)
+        {
+            Publish(new { type = "agy_event", payload = new { @event = "step_update", step_update = new { step_type = "agent_response", state = "DONE", text_delta = markdown } } });
+            Publish(new { type = "agy_event", payload = new { @event = "result", result = new { status = error ? "ERROR" : "DONE", error = error ? "Command not run." : "", duration_seconds = seconds } } });
+            RawPublish(JsonSerializer.Serialize(new { type = "status", text = "Ready", state = "online" }));
         }
 
         // ---- Mobile access (relay + device pairing) ---------------------------------------
