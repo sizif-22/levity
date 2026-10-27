@@ -79,6 +79,8 @@ function handleHostMessage(msg) {
         requestScan(false); postToHost({ type: 'list_projects' });
       }
       break;
+    case 'queue': renderQueue(msg); break;
+    case 'jobs': renderJobs(msg); break;
     case 'projects': renderProjects(msg); break;
     case 'sync_state': renderSync(msg); break;
     case 'remote_info': renderRemote(msg); break;
@@ -106,7 +108,8 @@ function updateStatus(text, state) {
 
   const lower = (text || '').toLowerCase();
   isGenerating = state === 'busy' || lower.includes('thinking') || lower.includes('respond');
-  sendBtn.disabled = isGenerating;
+  sendBtn.disabled = false; // messages sent while busy are queued by the PC
+  $('stopBtn').hidden = !isGenerating;
 
   if (!isGenerating && currentAssistantMessageElement && !currentAssistantText && !currentThinkingText
       && !currentAssistantMessageElement.querySelector('.tool-pill')) {
@@ -328,13 +331,13 @@ function appendUserMessage(text, source) {
 
 function sendPrompt(text) {
   text = (text || '').trim();
-  if (!text || isGenerating) return;
+  if (!text) return;
   postToHost({ type: 'send_prompt', text });
 }
 
 function sendCurrentPrompt() {
   const text = promptInput.value;
-  if (!text.trim() || isGenerating) return;
+  if (!text.trim()) return;
   sendPrompt(text);
   promptInput.value = '';
   promptInput.style.height = 'auto';
@@ -397,6 +400,70 @@ function scrollToBottom(force = false) {
 // ---------------------------------------------------------------------------
 // Sheets
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Queue and background jobs
+// ---------------------------------------------------------------------------
+
+function renderQueue(msg) {
+  const items = msg.items || [];
+  const host = $('queueList');
+  host.hidden = items.length === 0;
+  host.innerHTML = '';
+  items.forEach(q => {
+    const row = document.createElement('div');
+    row.className = 'queue-item';
+    row.innerHTML = `<span class="queue-tag">Queued</span><span class="queue-text">${escapeHtml(q.text)}</span>
+      <button class="icon-btn" title="Remove from queue"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+    row.querySelector('button').addEventListener('click', () => postToHost({ type: 'queue_remove', id: q.id }));
+    host.appendChild(row);
+  });
+}
+
+function jobElapsed(j) {
+  const s = Math.max(0, Math.round(((j.ended ? new Date(j.ended) : new Date()) - new Date(j.started)) / 1000));
+  return s < 60 ? `${s}s` : s < 3600 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+}
+
+function renderJobs(msg) {
+  const jobs = msg.jobs || [];
+  const running = jobs.filter(j => j.state === 'running').length;
+  $('jobsBadge').hidden = running === 0;
+  $('jobsBadge').textContent = running;
+  $('jobsSub').textContent = jobs.length ? `${running} running · ${jobs.length - running} finished` : 'Nothing running. Start one with /cmd{$bun run dev}.';
+
+  const list = $('jobList');
+  const keep = new Set(jobs.map(j => String(j.id)));
+  Array.from(list.children).forEach(li => { if (!keep.has(li.dataset.id)) li.remove(); });
+
+  jobs.forEach(j => {
+    let li = list.querySelector(`[data-id="${j.id}"]`);
+    if (!li) {
+      li = document.createElement('li');
+      li.className = 'job';
+      li.dataset.id = j.id;
+      li.innerHTML = `<div class="job-head"><i class="job-dot"></i><code class="job-cmd"></code><span class="job-meta"></span>
+        <button class="btn danger job-stop">Stop</button></div><pre class="job-out"></pre>`;
+      li.querySelector('.job-cmd').textContent = `#${j.id} ${j.command}`;
+      li.querySelector('.job-stop').addEventListener('click', () => postToHost({ type: 'job_stop', id: j.id }));
+      list.prepend(li);
+    }
+    li.dataset.state = j.state;
+    li.querySelector('.job-meta').textContent = j.state === 'running' ? `running ${jobElapsed(j)}`
+      : `${j.state}${j.exitCode != null ? ` (exit ${j.exitCode})` : ''} · ${jobElapsed(j)}`;
+    li.querySelector('.job-stop').hidden = j.state !== 'running';
+    const pre = li.querySelector('.job-out');
+    const atBottom = pre.scrollHeight - pre.scrollTop - pre.clientHeight < 24;
+    if (pre.textContent !== j.tail) {
+      pre.textContent = j.tail || '(no output yet)';
+      if (atBottom) pre.scrollTop = pre.scrollHeight;
+    }
+  });
+}
+
+$('jobsBtn').addEventListener('click', () => openSheet('jobsSheet'));
+$('jobsClearBtn').addEventListener('click', () => postToHost({ type: 'job_clear' }));
+$('stopBtn').addEventListener('click', () => postToHost({ type: 'stop_response' }));
 
 function openSheet(id) {
   const sheet = $(id);

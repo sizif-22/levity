@@ -232,6 +232,9 @@ Not covered: a malicious Vercel deployment could serve altered JavaScript. Only 
 
  means direct; or `/cmd $git status`; aliases `/cli`, `/run`, `/sh`) to run that command directly in PowerShell in the current folder, with no AI and no tokens (120 s limit). `cd` changes the working folder. , or with text after the brace, the agent runs it instead, e.g. `/cmd{git status}` or `/cmd{$npm test} summarize failures`. Works from the phone too.
 
+**Background jobs, queue and stop.** A /cmd{$...} command still running after 3 s moves to the **Jobs** panel (terminal icon in the header): live output, a Stop button per job, "Clear finished". The chat stays free. Messages sent while Levity is busy are queued (shown above the box, removable) and sent in order. The red square next to Send stops the AI's current response; the conversation is kept.
+
+
 ## Project review
 
 Header grid icon (or tray → **Review All Projects...**):

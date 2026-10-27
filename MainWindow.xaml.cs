@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Interop;
@@ -76,6 +78,9 @@ namespace AntigravitySidebar
                 _trayManager.ShowNotification("Levity", $"\"{req.Name}\" wants to connect. Approve it in the sidebar.");
             }));
             _sync.OnProgress += () => Dispatcher.Invoke(PublishSyncState);
+            _jobs.Changed += ScheduleJobsPublish;
+            _jobs.BackgroundFinished += j => Dispatcher.BeginInvoke(new Action(() =>
+                RawPublish(JsonSerializer.Serialize(new { type = "toast", text = $"Job #{j.Id} {(j.State == JobState.Stopped ? "stopped" : j.ExitCode == 0 ? "finished" : $"failed (exit {j.ExitCode})")}" }))));
 
             // Agy Process Manager
             _agyManager = new AgyProcessManager(_settings.WorkingDirectory!);
@@ -307,21 +312,33 @@ namespace AntigravitySidebar
 
                     case "send_prompt":
                         string prompt = GetString(root, "text").Trim();
-                        if (prompt.Length == 0) break;
-                        if (CommandShortcut.TryParse(prompt, out string shellCmd, out string shellAfter, out bool shellDirect) && shellDirect && shellAfter.Length == 0)
+                        if (prompt.Length > 0) HandlePrompt(prompt, remote, clientId);
+                        break;
+
+                    case "stop_response":
+                        StopResponse();
+                        break;
+
+                    case "job_stop":
+                        if (root.TryGetProperty("id", out var jid) && jid.TryGetInt32(out int jobId)) _jobs.Stop(jobId);
+                        break;
+
+                    case "job_clear":
+                        _jobs.ClearFinished();
+                        PublishJobs();
+                        break;
+
+                    case "queue_remove":
+                        if (root.TryGetProperty("id", out var qid) && qid.TryGetInt32(out int queueId))
                         {
-                            // /cmd{$...}: run it directly, no AI, no tokens.
-                            _ = RunDirectCommandAsync(prompt, shellCmd, remote, clientId);
-                            break;
+                            _queue.RemoveAll(q => q.Id == queueId);
+                            PublishQueue();
                         }
-                        if (_agyManager.IsBusy)
-                        {
-                            Reply(clientId, new { type = "toast", text = "Levity is still working on the previous turn." });
-                            break;
-                        }
-                        _settings.RecordProjectUse(_agyManager.CurrentWorkingDirectory);
-                        Publish(new { type = "user_message", text = prompt, source = remote ? "mobile" : "desktop" });
-                        _agyManager.SendPrompt(CommandShortcut.Expand(prompt, _agyManager.CurrentWorkingDirectory));
+                        break;
+
+                    case "queue_clear":
+                        _queue.Clear();
+                        PublishQueue();
                         break;
 
                     case "new_chat":
@@ -620,17 +637,108 @@ namespace AntigravitySidebar
             return true;
         }
 
-        private bool _shellBusy;
+        // ---- Prompts: queue, direct commands, background jobs, stop -----------------------
 
-        /// <summary>Runs "/cmd{...}" in PowerShell without the AI and shows it as a normal chat turn. "cd" changes the working folder.</summary>
-        private async Task RunDirectCommandAsync(string typed, string command, bool remote, string? clientId)
+        private record QueuedPrompt(int Id, string Text, bool Remote, string? ClientId);
+
+        private readonly List<QueuedPrompt> _queue = new();
+        private readonly JobManager _jobs = new();
+        private int _nextQueueId = 1;
+        private int _jobsPending;
+        private string? _lastQueueJson;
+        private string? _lastJobsJson;
+        private bool _inlineShell;
+
+        private bool TurnBusy => _agyManager.IsBusy || _inlineShell;
+
+        /// <summary>Entry point for every typed message: runs it now, or queues it while a turn is in progress.</summary>
+        private void HandlePrompt(string prompt, bool remote, string? clientId)
         {
-            if (_shellBusy || _agyManager.IsBusy)
+            if (TurnBusy)
             {
-                Reply(clientId, new { type = "toast", text = "Levity is busy. Try again in a moment." });
+                _queue.Add(new QueuedPrompt(_nextQueueId++, prompt, remote, clientId));
+                PublishQueue();
                 return;
             }
-            _shellBusy = true;
+            RunPrompt(prompt, remote, clientId);
+        }
+
+        private void RunPrompt(string prompt, bool remote, string? clientId)
+        {
+            if (CommandShortcut.TryParse(prompt, out string shellCmd, out string shellAfter, out bool shellDirect) && shellDirect && shellAfter.Length == 0)
+            {
+                // /cmd{$...}: run it directly, no AI, no tokens.
+                _ = RunDirectCommandAsync(prompt, shellCmd, remote, clientId);
+                return;
+            }
+            _settings.RecordProjectUse(_agyManager.CurrentWorkingDirectory);
+            Publish(new { type = "user_message", text = prompt, source = remote ? "mobile" : "desktop" });
+            _agyManager.SendPrompt(CommandShortcut.Expand(prompt, _agyManager.CurrentWorkingDirectory));
+        }
+
+        /// <summary>Starts the next queued message once the current turn is over.</summary>
+        private void DrainQueue()
+        {
+            if (TurnBusy || _queue.Count == 0) return;
+            var next = _queue[0];
+            _queue.RemoveAt(0);
+            PublishQueue();
+            RunPrompt(next.Text, next.Remote, next.ClientId);
+        }
+
+        private void PublishQueue()
+        {
+            _lastQueueJson = JsonSerializer.Serialize(new { type = "queue", items = _queue.Select(q => new { id = q.Id, text = q.Text }) });
+            RawPublish(_lastQueueJson);
+        }
+
+        /// <summary>Cancels the AI's current response. The conversation is kept; queued messages carry on.</summary>
+        private void StopResponse()
+        {
+            if (!_agyManager.IsBusy) return;
+            _agyManager.Interrupt();
+            FinishDirectTurn("_Stopped._", 0, cancelled: true);
+            Dispatcher.BeginInvoke(new Action(DrainQueue), System.Windows.Threading.DispatcherPriority.Background);
+        }
+
+        private void PublishJobs()
+        {
+            _lastJobsJson = JsonSerializer.Serialize(new
+            {
+                type = "jobs",
+                jobs = _jobs.Background.Select(j => new
+                {
+                    id = j.Id,
+                    command = j.Command,
+                    cwd = j.Cwd,
+                    state = j.State.ToString().ToLowerInvariant(),
+                    exitCode = j.ExitCode,
+                    started = j.StartedUtc,
+                    ended = j.EndedUtc,
+                    tail = j.Tail(8000)
+                })
+            });
+            RawPublish(_lastJobsJson);
+        }
+
+        /// <summary>Output arrives line by line; coalesce into at most one update per 300 ms.</summary>
+        private void ScheduleJobsPublish()
+        {
+            if (Interlocked.Exchange(ref _jobsPending, 1) == 1) return;
+            _ = Task.Delay(300).ContinueWith(_ => Dispatcher.BeginInvoke(new Action(() =>
+            {
+                Interlocked.Exchange(ref _jobsPending, 0);
+                PublishJobs();
+            })));
+        }
+
+        /// <summary>
+        /// Runs "/cmd{$...}" in PowerShell without the AI and shows it as a normal chat turn. "cd" changes the working folder.
+        /// A command still running after 3 s moves to the Jobs panel so the chat stays free.
+        /// </summary>
+        private async Task RunDirectCommandAsync(string typed, string command, bool remote, string? clientId)
+        {
+            _inlineShell = true;
             string source = remote ? "mobile" : "desktop";
             try
             {
@@ -652,20 +760,33 @@ namespace AntigravitySidebar
 
                 Publish(new { type = "user_message", text = typed, source });
                 RawPublish(JsonSerializer.Serialize(new { type = "status", text = "Running command...", state = "busy" }));
-                var res = await DirectShell.RunAsync(command, cwd);
+                var job = _jobs.Start(command, cwd);
 
-                string fence = res.Output.Contains("```") ? "````" : "```";
-                string body = res.Output.Length == 0 ? "_(no output)_" : $"{fence}\n{res.Output}\n{fence}";
-                string head = res.TimedOut ? "**Timed out after 120s and stopped**" : $"**Exit code:** `{res.ExitCode}`";
-                FinishDirectTurn($"{body}\n\n{head}", res.Seconds);
+                if (!await job.WaitAsync(TimeSpan.FromSeconds(3)))
+                {
+                    job.Background = true;
+                    PublishJobs();
+                    FinishDirectTurn($"Still running, so it moved to the background as **job #{job.Id}**. Watch it or stop it from the **Jobs** button in the header. Chat is free.", 0);
+                    return;
+                }
+
+                _jobs.Discard(job);
+                string output = job.Tail(20000);
+                string fence = output.Contains("```") ? "````" : "```";
+                string body = output.Length == 0 ? "_(no output)_" : $"{fence}\n{output}\n{fence}";
+                FinishDirectTurn($"{body}\n\n**Exit code:** `{job.ExitCode}`", (job.EndedUtc!.Value - job.StartedUtc).TotalSeconds);
             }
-            finally { _shellBusy = false; }
+            finally
+            {
+                _inlineShell = false;
+                Dispatcher.BeginInvoke(new Action(DrainQueue), System.Windows.Threading.DispatcherPriority.Background);
+            }
         }
 
-        private void FinishDirectTurn(string markdown, double seconds, bool error = false)
+        private void FinishDirectTurn(string markdown, double seconds, bool error = false, bool cancelled = false)
         {
             Publish(new { type = "agy_event", payload = new { @event = "step_update", step_update = new { step_type = "agent_response", state = "DONE", text_delta = markdown } } });
-            Publish(new { type = "agy_event", payload = new { @event = "result", result = new { status = error ? "ERROR" : "DONE", error = error ? "Command not run." : "", duration_seconds = seconds } } });
+            Publish(new { type = "agy_event", payload = new { @event = "result", result = new { status = error ? "ERROR" : cancelled ? "CANCELLED" : "DONE", error = error ? "Command not run." : "", duration_seconds = seconds } } });
             RawPublish(JsonSerializer.Serialize(new { type = "status", text = "Ready", state = "online" }));
         }
 
@@ -797,6 +918,8 @@ namespace AntigravitySidebar
             });
             if (_lastStatusJson != null) ReplyRaw(clientId, _lastStatusJson);
             if (_lastSyncJson != null) ReplyRaw(clientId, _lastSyncJson);
+            if (_lastQueueJson != null) ReplyRaw(clientId, _lastQueueJson);
+            if (_lastJobsJson != null) ReplyRaw(clientId, _lastJobsJson);
             var lines = _history.ToArray();
             if (clientId == null)
             {
@@ -885,6 +1008,8 @@ namespace AntigravitySidebar
                 string json = JsonSerializer.Serialize(new { type = "status", text = statusText, state });
                 _lastStatusJson = json;
                 RawPublish(json);
+                // After the turn's result event has been shown, start the next queued message.
+                if (statusText == "Ready") Dispatcher.BeginInvoke(new Action(DrainQueue), System.Windows.Threading.DispatcherPriority.Background);
             });
         }
 
@@ -939,6 +1064,7 @@ namespace AntigravitySidebar
             _sync.Cancel();
             _agyManager?.Stop();
             try { _hub.Dispose(); } catch { }
+            try { _jobs.Dispose(); } catch { }
             _hotkeyManager?.Dispose();
             _trayManager?.Dispose();
             System.Windows.Application.Current.Shutdown();

@@ -57,7 +57,7 @@ namespace AntigravitySidebar.Services
             return "agy";
         }
 
-        public bool Start()
+        public bool Start(string? resumeConversationId = null)
         {
             lock (_lock)
             {
@@ -79,7 +79,8 @@ namespace AntigravitySidebar.Services
                     var psi = new ProcessStartInfo
                     {
                         FileName = agyPath,
-                        Arguments = "--dangerously-skip-permissions --input-format=stream-json --output-format=stream-json --print=\"\"",
+                        Arguments = "--dangerously-skip-permissions --input-format=stream-json --output-format=stream-json --print=\"\"" +
+                            (string.IsNullOrWhiteSpace(resumeConversationId) ? "" : $" --conversation {resumeConversationId}"),
                         WorkingDirectory = CurrentWorkingDirectory,
                         UseShellExecute = false,
                         RedirectStandardInput = true,
@@ -94,6 +95,7 @@ namespace AntigravitySidebar.Services
 
                     _process.Exited += (s, e) =>
                     {
+                        if (!ReferenceEquals(s, _process)) return; // a deliberate stop/restart, not a crash
                         IsBusy = false;
                         try { File.AppendAllText(logFile, $"[{DateTime.Now:HH:mm:ss}] agy.exe process exited. ExitCode={_process?.ExitCode}\n"); } catch { }
                         OnStatusChanged?.Invoke("Process Stopped");
@@ -136,6 +138,13 @@ namespace AntigravitySidebar.Services
                 CurrentWorkingDirectory = newWorkingDirectory;
             }
             Start();
+        }
+
+        /// <summary>Cancels the running turn by restarting agy on the same conversation, so context is kept.</summary>
+        public void Interrupt()
+        {
+            string? id = CurrentConversationId;
+            Start(id);
         }
 
         public void Stop()

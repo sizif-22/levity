@@ -557,3 +557,20 @@ body.remote textarea, body.remote input, body.remote code { -webkit-user-select:
 
 .spinner.mini { width: 10px; height: 10px; border-width: 1.5px; margin-right: 6px; vertical-align: -1px; }
 .tool-pill.running { border-color: var(--ring); }
+
+/* ---------- Queue, stop, background jobs ---------- */
+.queue { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; max-height: 96px; overflow-y: auto; }
+.queue-item { display: flex; align-items: center; gap: 8px; padding: 2px 4px 2px 10px; border: 1px dashed var(--border); border-radius: var(--radius); font-size: 12.5px; background: var(--card); }
+.queue-tag { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted-foreground); }
+.queue-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stop-btn { background: var(--destructive); color: var(--destructive-foreground); margin-right: 6px; }
+.job-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.job { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow-sm); overflow: hidden; }
+.job-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px; }
+.job-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--muted-foreground); }
+.job[data-state="running"] .job-dot { background: var(--success); animation: pulse 1.2s ease-in-out infinite; }
+.job[data-state="failed"] .job-dot { background: var(--destructive); }
+.job-cmd { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); font-size: 12.5px; font-weight: 600; }
+.job-meta { font-size: 11.5px; color: var(--muted-foreground); white-space: nowrap; }
+.job-stop { height: 28px; padding: 0 10px; font-size: 12px; }
+.job-out { margin: 0; padding: 8px 10px; max-height: 220px; overflow: auto; border-top: 1px solid var(--border); background: var(--code-bg); font-family: var(--mono); font-size: 11.5px; line-height: 1.45; white-space: pre-wrap; word-break: break-all; }

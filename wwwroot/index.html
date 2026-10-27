@@ -42,6 +42,10 @@
           <svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
           <span class="badge" id="mobileBadge" hidden>0</span>
         </button>
+        <button class="icon-btn" id="jobsBtn" title="Background jobs">
+          <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          <span class="badge" id="jobsBadge" hidden>0</span>
+        </button>
         <button class="icon-btn" id="newChatBtn" title="New conversation">
           <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
@@ -101,6 +105,7 @@
 
     <!-- Composer -->
     <footer class="composer-wrap">
+      <div class="queue" id="queueList" hidden></div>
       <div class="quick-commands">
         <span class="cmd-chip" data-cmd="/plan">/plan</span>
         <span class="cmd-chip" data-cmd="/goal">/goal</span>
@@ -111,7 +116,10 @@
       </div>
       <div class="composer">
         <textarea id="promptInput" placeholder="Ask Levity anything… or /cmd{$git status}" rows="1" enterkeyhint="send"></textarea>
-        <button class="send-btn" id="sendBtn" title="Send">
+        <button class="send-btn stop-btn" id="stopBtn" title="Stop the response" hidden>
+          <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>
+        </button>
+        <button class="send-btn" id="sendBtn" title="Send (queued while Levity is busy)">
           <svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
         </button>
       </div>
@@ -163,6 +171,21 @@
         <button class="btn ghost" id="syncBackBtn" hidden>Back to projects</button>
         <button class="btn danger" id="syncCancelBtn" hidden>Stop</button>
       </div>
+    </section>
+
+    <!-- Background jobs sheet -->
+    <section class="sheet" id="jobsSheet" aria-hidden="true">
+      <div class="sheet-head">
+        <div>
+          <h3>Background jobs</h3>
+          <p class="sheet-sub" id="jobsSub">Nothing running</p>
+        </div>
+        <button class="icon-btn" data-close-sheet="jobsSheet" title="Close">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="sheet-body"><ul class="job-list" id="jobList"></ul></div>
+      <div class="sheet-foot"><button class="btn ghost" id="jobsClearBtn">Clear finished</button></div>
     </section>
 
     <!-- Mobile connect sheet (desktop only) -->

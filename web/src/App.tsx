@@ -6,6 +6,7 @@ import { readPairingLink } from './lib/pairing';
 import { clearDevice, loadDevice, type DeviceRecord } from './lib/store';
 import { hasPin } from './lib/pin';
 import { Markdown } from './components/Markdown';
+import { JobsSheet, type Job } from './components/JobsSheet';
 import { ProjectsSheet, syncCounts, type ProjectsMsg, type SyncState } from './components/ProjectsSheet';
 import { Center, ConfirmDialog, Logo, LockScreen, PairScreen, SettingsSheet } from './components/Screens';
 
@@ -89,7 +90,9 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const [projects, setProjects] = useState<ProjectsMsg | null>(null);
   const [scanning, setScanning] = useState(false);
   const [sync, setSync] = useState<SyncState | null>(null);
-  const [sheet, setSheet] = useState<'none' | 'projects' | 'settings'>('none');
+  const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs'>('none');
+  const [queue, setQueue] = useState<{ id: number; text: string }[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [syncSeen, setSyncSeen] = useState(true);
   const [toastText, setToastText] = useState('');
   const [dialog, setDialog] = useState<{ title: string; text: string; ok: string; resolve: (v: boolean) => void } | null>(null);
@@ -125,6 +128,8 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
       },
       onMessage: (msg) => {
         const type = msg.type as string;
+        if (type === 'queue') { setQueue((msg.items as { id: number; text: string }[]) ?? []); return; }
+        if (type === 'jobs') { setJobs((msg.jobs as Job[]) ?? []); return; }
         if (type === 'projects') { setProjects(msg as unknown as ProjectsMsg); setScanning(false); return; }
         if (type === 'sync_state') {
           const next = msg as unknown as SyncState;
@@ -164,7 +169,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
 
   const submit = () => {
     const text = draft.trim();
-    if (!text || generating || !online) return;
+    if (!text || !online) return; // while busy the PC queues it
     send({ type: 'send_prompt', text });
     setDraft('');
   };
@@ -199,6 +204,10 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         <div className="header-actions">
           <button className="icon-btn" onClick={openProjects} title="Projects & review">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>
+          </button>
+          <button className="icon-btn" onClick={() => setSheet('jobs')} title="Background jobs">
+            <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" /></svg>
+            {jobs.some((j) => j.state === 'running') && <span className="badge">{jobs.filter((j) => j.state === 'running').length}</span>}
           </button>
           <button className="icon-btn" onClick={() => send({ type: 'new_chat' })} title="New conversation">
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
@@ -299,6 +308,18 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
       </main>
 
       <footer className="composer-wrap">
+        {queue.length > 0 && (
+          <div className="queue">
+            {queue.map((q) => (
+              <div key={q.id} className="queue-item">
+                <span className="queue-tag">Queued</span><span className="queue-text">{q.text}</span>
+                <button className="icon-btn" title="Remove from queue" onClick={() => send({ type: 'queue_remove', id: q.id })}>
+                  <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="quick-commands">
           {['/plan', '/goal', '/boost', '/compact', '/help'].map((c) => (
             <span key={c} className="cmd-chip" onClick={() => setDraft(c + ' ')}>{c}</span>
@@ -310,7 +331,12 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
             ref={composer} rows={1} value={draft} placeholder={online ? 'Ask Levity anything… or /cmd{$git status}' : 'Waiting for your PC…'}
             onChange={(e) => { setDraft(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 180) + 'px'; }}
           />
-          <button className="send-btn" disabled={!draft.trim() || generating || !online} onClick={submit} title="Send">
+          {generating && (
+            <button className="send-btn stop-btn" onClick={() => send({ type: 'stop_response' })} title="Stop the response">
+              <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" /></svg>
+            </button>
+          )}
+          <button className="send-btn" disabled={!draft.trim() || !online} onClick={submit} title="Send (queued while Levity is busy)">
             <svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>
           </button>
         </div>
@@ -326,6 +352,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           }}
         />
       )}
+      {sheet === 'jobs' && <JobsSheet jobs={jobs} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'settings' && (
         <SettingsSheet device={device} onClose={() => setSheet('none')} onUnpair={onUnpair} confirm={confirm} toast={toast} />
       )}
