@@ -1,0 +1,45 @@
+docs/RUNNING.md
+  s_d7448d4eb56c88::t_5522f30bcfdfa8 60-61
+Services/DiagramPrompt.cs
+  s_d7448d4eb56c88::t_929c0c710fc78f 1-65
+Services/DiagramIngest.cs
+  s_d7448d4eb56c88::t_164bbab171c059 351
+  s_d7448d4eb56c88::t_4af6bd0f4ed8b1 1-48,50-53,55-74,76-212,215-293,302-307,324-350,356-399,402-440,443-462,467-500
+  s_d7448d4eb56c88::t_e33dae417dd217 54
+  s_d7448d4eb56c88::t_b06891f036792c 49,294-298,300-301,308-310,318-323,352-355,400-401,441-442,463-466
+  s_d7448d4eb56c88::t_f517f25b76e833 75,299,311-317
+  s_d7448d4eb56c88::t_597a34a022ac76 213-214
+Services/DiagramService.cs
+  s_d7448d4eb56c88::t_9785df089171cf 1-320
+tests/Levity.Tests/Levity.Tests.csproj
+  s_d7448d4eb56c88::t_96b9232af77eeb 38-40
+tests/Levity.Tests/DiagramPipelineTests.cs
+  s_d7448d4eb56c88::t_ec96ba214f83b8 1-445
+.env.example
+  s_d7448d4eb56c88::t_5522f30bcfdfa8 30-35
+tests/Levity.Tests/DiagramIngestTests.cs
+  s_d7448d4eb56c88::t_8925d865b07de1 357-358
+  s_d7448d4eb56c88::t_94f33b1fe0249c 1-189,191-356,359-372
+  s_d7448d4eb56c88::t_465051212d4ff7 190
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4568df88052ac825ae3515defcdb5555ef6f8223",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
