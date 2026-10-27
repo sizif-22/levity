@@ -1,0 +1,25 @@
+Services/JobManager.cs
+  s_d7448d4eb56c88::t_9ddf7853141bdf 6,33,35-38,118-120,126,142-153,162,164,185,190-252
+  s_d7448d4eb56c88::t_4760a15e9f2399 253
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b2c195af8bb020c5b56147b2998173102a8fae28",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
