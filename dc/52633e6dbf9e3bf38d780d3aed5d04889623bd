@@ -1,0 +1,34 @@
+web/src/components/DiagramSheet.tsx
+  s_d7448d4eb56c88::t_326272cf07b067 4,133-134
+wwwroot/diagram-theme.js
+  s_d7448d4eb56c88::t_326272cf07b067 6-13,25-27
+wwwroot/diagram.js
+  s_d7448d4eb56c88::t_326272cf07b067 174-175
+wwwroot/index.html
+  s_d7448d4eb56c88::t_326272cf07b067 14
+web/index.html
+  s_d7448d4eb56c88::t_326272cf07b067 19
+web/src/lib/diagramTheme.ts
+  s_d7448d4eb56c88::t_326272cf07b067 4-11,23-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dc52633e6dbf9e3bf38d780d3aed5d04889623bd",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
