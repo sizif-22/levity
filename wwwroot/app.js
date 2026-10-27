@@ -9,6 +9,8 @@ let currentThinkingText = '';
 let isGenerating = false;
 let autoScroll = true;
 let renderQueued = false;
+let segmentDone = false;                 // the last text segment ended; the next one starts a new paragraph
+const toolPills = new Map();             // step_index -> pill element, so ACTIVE -> DONE updates in place
 
 const $ = (id) => document.getElementById(id);
 const chatViewport = $('chatViewport');
@@ -128,17 +130,27 @@ function processAgyEvent(ev) {
     const su = ev.step_update || {};
     const delta = su.text_delta;
 
+    // One reply row per turn: agy reports an empty agent_response between tool steps, which must not create rows.
     if (su.step_type === 'agent_response') {
-      ensureAssistantMessageRow();
-      if (delta) { currentAssistantText += delta; scheduleRender(); }
-      if (su.state === 'DONE') finishCurrentAssistantMessage(su);
+      if (delta) {
+        ensureAssistantMessageRow();
+        if (segmentDone && currentAssistantText) currentAssistantText += '\n\n';
+        currentAssistantText += delta;
+        segmentDone = su.state === 'DONE';
+        scheduleRender();
+      } else if (su.state === 'DONE') {
+        segmentDone = true;
+      }
     } else if (su.step_type === 'thinking' || su.thought || su.thinking_delta) {
+      const thoughtDelta = su.thought || su.thinking_delta || delta || '';
+      if (thoughtDelta) {
+        ensureAssistantMessageRow();
+        currentThinkingText += thoughtDelta;
+        scheduleRender();
+      }
+    } else if (su.step_type === 'tool' || su.step_type === 'tool_call' || su.step_type === 'tool_use') {
       ensureAssistantMessageRow();
-      currentThinkingText += su.thought || su.thinking_delta || delta || '';
-      scheduleRender();
-    } else if (su.step_type === 'tool_call' || su.step_type === 'tool_use') {
-      ensureAssistantMessageRow();
-      renderToolExecution(su.tool_name || su.name || 'tool', su.args || su.parameters);
+      renderToolExecution(su);
     }
   } else if (ev.event === 'result') {
     const res = ev.result || {};
@@ -173,6 +185,8 @@ function ensureAssistantMessageRow() {
   currentAssistantMessageElement = row;
   currentAssistantText = '';
   currentThinkingText = '';
+  segmentDone = false;
+  toolPills.clear();
   scrollToBottom();
 }
 
@@ -225,22 +239,34 @@ function renderAssistantContent() {
   if (autoScroll) scrollToBottom();
 }
 
-function renderToolExecution(toolName, args) {
+function toolSummary(su) {
+  const p = (su.tool_info && su.tool_info.parameters) || su.args || su.parameters || {};
+  let pick = typeof p === 'string' ? p
+    : p.CommandLine || p.command || p.AbsolutePath || p.path || p.Query || p.query || p.Url || p.url
+      || Object.values(p).find(v => typeof v === 'string') || '';
+  pick = String(pick).replace(/\s+/g, ' ').trim();
+  return pick.length > 70 ? pick.slice(0, 67) + '…' : pick;
+}
+
+function renderToolExecution(su) {
   if (!currentAssistantMessageElement) return;
   const contentEl = currentAssistantMessageElement.querySelector('.agent-content');
   if (!contentEl) return;
 
-  let argStr = '';
-  try {
-    argStr = typeof args === 'string' ? args : JSON.stringify(args || '');
-    if (argStr.length > 60) argStr = argStr.slice(0, 57) + '…';
-  } catch (e) {}
+  const key = su.step_index !== undefined ? su.step_index : toolPills.size;
+  const running = su.state === 'ACTIVE' || su.state === 'RUNNING';
+  const name = su.tool_name || su.name || (su.tool_info && su.tool_info.name) || 'tool';
 
-  const pill = document.createElement('div');
-  pill.className = 'tool-pill';
-  pill.innerHTML = `<strong>${escapeHtml(toolName)}</strong> ${escapeHtml(argStr)}`;
-  const typing = contentEl.querySelector('.typing');
-  if (typing) contentEl.insertBefore(pill, typing); else contentEl.appendChild(pill);
+  let pill = toolPills.get(key);
+  if (!pill) {
+    pill = document.createElement('div');
+    toolPills.set(key, pill);
+    const typing = contentEl.querySelector('.typing');
+    if (typing) contentEl.insertBefore(pill, typing); else contentEl.appendChild(pill);
+  }
+  pill.className = 'tool-pill' + (running ? ' running' : '');
+  pill.innerHTML = `${running ? '<span class="spinner mini"></span>' : ''}<strong>${escapeHtml(name)}</strong> ${escapeHtml(toolSummary(su) || (pill.dataset.args || ''))}`;
+  if (toolSummary(su)) pill.dataset.args = toolSummary(su);
   if (autoScroll) scrollToBottom();
 }
 
@@ -249,6 +275,17 @@ function finishCurrentAssistantMessage(resultData) {
   const target = currentAssistantMessageElement || messagesList.querySelector('.message-row.agent:last-child');
   if (target) {
     target.querySelectorAll('.typing').forEach(t => t.remove());
+    // A turn that produced nothing visible (only empty steps) leaves no empty row behind.
+    if (!currentAssistantText && !currentThinkingText && !target.querySelector('.tool-pill, .error-banner')) {
+      target.remove();
+      currentAssistantMessageElement = null;
+      currentAssistantText = '';
+      currentThinkingText = '';
+      isGenerating = false;
+      sendBtn.disabled = false;
+      return;
+    }
+    target.querySelectorAll('.tool-pill.running').forEach(p => { p.classList.remove('running'); const sp = p.querySelector('.spinner'); if (sp) sp.remove(); });
 
     if (resultData && (resultData.duration_seconds || resultData.usage) && !target.querySelector('.turn-stats')) {
       const parts = [];

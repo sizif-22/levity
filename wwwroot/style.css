@@ -515,3 +515,6 @@ body.remote .scroll-bottom-btn { bottom: 120px; }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+.spinner.mini { width: 10px; height: 10px; border-width: 1.5px; margin-right: 6px; vertical-align: -1px; }
+.tool-pill.running { border-color: var(--ring); }

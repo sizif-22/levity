@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { SecureChannel } from './lib/crypto';
-import { applyHostMessage, initialChat, isGenerating } from './lib/chat';
+import { applyHostMessage, initialChat, isGenerating, type Msg } from './lib/chat';
 import { RelayConnection, type LinkState } from './lib/relay';
 import { readPairingLink } from './lib/pairing';
 import { clearDevice, loadDevice, type DeviceRecord } from './lib/store';
@@ -13,6 +13,9 @@ type Phase = 'loading' | 'pair' | 'locked' | 'main';
 type Json = Record<string, unknown>;
 
 const LOCK_AFTER_MS = 60_000;
+
+/** A finished reply with nothing in it (agy emits empty steps) is not worth a row. */
+const visible = (m: Msg) => m.role === 'user' || !m.done || !!(m.text || m.thinking || m.tools.length || m.error);
 
 export default function App() {
   const [phase, setPhase] = useState<Phase>('loading');
@@ -246,7 +249,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           </div>
         ) : (
           <div className="messages-list">
-            {chat.msgs.map((m) => m.role === 'user' ? (
+            {chat.msgs.filter(visible).map((m) => m.role === 'user' ? (
               <div key={m.id} className="message-row user">
                 <div className="user-bubble">{m.text}</div>
                 {m.source === 'desktop' && <span className="via">from your PC</span>}
@@ -266,7 +269,11 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
                       </details>
                     )}
                     {m.text && <Markdown text={m.text} />}
-                    {m.tools.map((t, i) => <div key={i} className="tool-pill"><strong>{t.name}</strong> {t.args}</div>)}
+                    {m.tools.map((t) => (
+                      <div key={t.key} className={`tool-pill ${t.running ? 'running' : ''}`}>
+                        {t.running && <span className="spinner mini" />}<strong>{t.name}</strong> {t.args}
+                      </div>
+                    ))}
                     {!m.text && !m.done && <div className="typing" aria-label="Levity is typing"><i /><i /><i /></div>}
                     {m.error && <div className="error-banner">{m.error}</div>}
                   </div>

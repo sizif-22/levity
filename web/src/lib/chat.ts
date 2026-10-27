@@ -1,6 +1,6 @@
 /** Chat state driven by the PC's message protocol (same events the desktop sidebar renders). */
 
-export interface ToolCall { name: string; args: string }
+export interface ToolCall { key: number; name: string; args: string; running: boolean }
 
 export interface Msg {
   id: number;
@@ -12,6 +12,8 @@ export interface Msg {
   stats?: string;
   error?: string;
   source?: string;
+  /** The last text segment ended (agent_response DONE); a new segment starts on a new paragraph. */
+  segDone?: boolean;
 }
 
 export interface ChatState {
@@ -41,6 +43,16 @@ function patchLast(s: ChatState, patch: Partial<Msg>): ChatState {
   return { ...s, msgs };
 }
 
+/** One-line summary of a tool call's parameters for the activity pill. */
+function toolArgs(su: Json): string {
+  const p: Json = su.tool_info?.parameters ?? su.args ?? su.parameters ?? {};
+  const pick = typeof p === 'string' ? p
+    : p.CommandLine ?? p.command ?? p.AbsolutePath ?? p.path ?? p.Query ?? p.query ?? p.Url ?? p.url
+      ?? Object.values(p).find((v) => typeof v === 'string') ?? '';
+  const text = String(pick).replace(/\s+/g, ' ').trim();
+  return text.length > 70 ? text.slice(0, 67) + '…' : text;
+}
+
 function agyEvent(s: ChatState, ev: Json): ChatState {
   if (ev.event === 'init') {
     return { ...s, cwd: ev.init?.cwd ?? s.cwd, status: { text: 'Ready', state: 'online' } };
@@ -48,40 +60,56 @@ function agyEvent(s: ChatState, ev: Json): ChatState {
 
   if (ev.event === 'step_update') {
     const su: Json = ev.step_update ?? {};
-    const [s1, cur] = openAgent(s);
+    const type = su.step_type;
 
-    if (su.step_type === 'agent_response') {
-      const next = patchLast(s1, { text: cur.text + (su.text_delta ?? ''), done: su.state === 'DONE' ? true : cur.done });
-      return next;
+    // One reply row per turn: text, thinking and tool activity all land in it.
+    if (type === 'agent_response') {
+      const delta: string = su.text_delta ?? '';
+      if (!delta) {
+        // Steps report an empty agent_response between tools: remember the segment ended, never create a row.
+        const last = s.msgs[s.msgs.length - 1];
+        return su.state === 'DONE' && last && last.role === 'agent' && !last.done ? patchLast(s, { segDone: true }) : s;
+      }
+      const [s1, cur] = openAgent(s);
+      const sep = cur.segDone && cur.text ? '\n\n' : '';
+      return patchLast(s1, { text: cur.text + sep + delta, segDone: su.state === 'DONE' });
     }
-    if (su.step_type === 'thinking' || su.thought || su.thinking_delta) {
-      return patchLast(s1, { thinking: cur.thinking + (su.thought || su.thinking_delta || su.text_delta || '') });
+
+    if (type === 'thinking' || su.thought || su.thinking_delta) {
+      const chunk = su.thought || su.thinking_delta || su.text_delta || '';
+      if (!chunk) return s;
+      const [s1, cur] = openAgent(s);
+      return patchLast(s1, { thinking: cur.thinking + chunk });
     }
-    if (su.step_type === 'tool_call' || su.step_type === 'tool_use') {
-      let args = '';
-      try {
-        const a = su.args ?? su.parameters ?? '';
-        args = typeof a === 'string' ? a : JSON.stringify(a);
-        if (args.length > 60) args = args.slice(0, 57) + '…';
-      } catch { /* ignore */ }
-      return patchLast(s1, { tools: [...cur.tools, { name: su.tool_name || su.name || 'tool', args }] });
+
+    if (type === 'tool' || type === 'tool_call' || type === 'tool_use') {
+      const [s1, cur] = openAgent(s);
+      const key = Number(su.step_index ?? cur.tools.length);
+      const running = su.state === 'ACTIVE' || su.state === 'RUNNING';
+      const call: ToolCall = { key, name: su.tool_name || su.name || su.tool_info?.name || 'tool', args: toolArgs(su), running };
+      const i = cur.tools.findIndex((t) => t.key === key);
+      const tools = i >= 0
+        ? cur.tools.map((t, j) => (j === i ? { ...t, running, args: call.args || t.args } : t))
+        : [...cur.tools, call];
+      return patchLast(s1, { tools });
     }
+
     return s;
   }
 
   if (ev.event === 'result') {
     const res: Json = ev.result ?? {};
-    let [s1] = openAgent(s);
-    const last = s1.msgs[s1.msgs.length - 1];
+    const [s1, cur] = openAgent(s);
     const parts: string[] = [];
     if (res.duration_seconds) parts.push(`${Number(res.duration_seconds).toFixed(1)}s`);
     if (res.usage?.total_tokens) parts.push(`${Number(res.usage.total_tokens).toLocaleString()} tokens`);
-    s1 = patchLast(s1, {
+    const next = patchLast(s1, {
       done: true,
-      stats: parts.length ? parts.join(' · ') : last.stats,
-      error: res.status === 'ERROR' ? String(res.error || 'This turn ended with an error.') : last.error,
+      tools: cur.tools.map((t) => ({ ...t, running: false })),
+      stats: parts.length ? parts.join(' · ') : cur.stats,
+      error: res.status === 'ERROR' ? String(res.error || 'This turn ended with an error.') : cur.error,
     });
-    return { ...s1, status: { text: 'Ready', state: 'online' } };
+    return { ...next, status: { text: 'Ready', state: 'online' } };
   }
 
   return s;
