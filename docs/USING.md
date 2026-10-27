@@ -8,10 +8,10 @@
 
 | I want to | Do this |
 |---|---|
-| See repo state or run git quickly | `/cmd$git status;`, `/cmd$git log -5;`: instant, no tokens |
+| See repo state or run git quickly | `/cmd$git status`, `/cmd$git log -5`: instant, no tokens |
 | Run tests and understand failures | `/cmd{$npm test} summarize the failures` |
-| Keep a dev server or watcher running | `/cmd$bun run dev -b;`; watch or stop it in **Jobs**, on the PC or the phone |
-| Work on another repo | click the folder bar and pick it, or `/cmd$cd ../other-repo;` |
+| Keep a dev server or watcher running | `/cmd$bun run dev`; watch or stop it in **Jobs**, on the PC or the phone |
+| Work on another repo | click the folder bar and pick it, or `/cmd$cd ../other-repo` |
 | Open the code in the editor | the **Open in Antigravity IDE** button, next to each project |
 | Ask something unrelated to any repo | folder bar, **No project** |
 | Return to an earlier investigation | clock icon, **Open**: same folder, same conversation |
@@ -19,7 +19,7 @@
 | Keep README, `AGENTS.md` and skills current | grid icon, **Project review** |
 | Understand how a project fits together | `/diagram`: components, verified relationships, click to open files |
 
-Direct `/cmd$...;` commands run in Windows PowerShell with the repo as the working directory. A bare `cd` is handled by Levity (the assistant follows you); chained lines such as `cd .. && dir` go to PowerShell as written.
+Direct `/cmd$...` commands run in Windows PowerShell with the repo as the working directory. A bare `cd` is handled by Levity (the assistant follows you); chained lines such as `cd .. && dir` go to PowerShell as written.
 
 ## Architecture diagrams
 
@@ -55,10 +55,10 @@ Folders you pick by hand are remembered. The same list is available on the phone
 
 ## Run a command without spending tokens
 
-- `/cmd$git status;` (aliases `/cli`, `/run`, `/sh`): the `$` runs it directly in PowerShell in the current folder, with no AI. Output and exit code appear in the chat. `cd` changes the working folder (the path bar follows). Everything after the `$` is the command, so a line like `/cmd$cd app; npm install;` works too: only one `;` at the very end is the end marker, and it is optional.
+- `/cmd$git status` (aliases `/cli`, `/run`, `/sh`): the `$` runs it directly in PowerShell in the current folder, with no AI. Output and exit code appear in the chat. `cd` changes the working folder (the path bar follows). Everything after the `$` is the command, so a line like `/cmd$cd app; npm install` works too (`;` inside the line is plain PowerShell).
 - `/cmd{git status}` without the `$`, or with text after the brace (`/cmd{$npm test} summarize the failures`): the agent runs it and can reason about the result. The older `/cmd{$git status}` form still works.
-- **Background jobs:** a `$` command still running after 3 seconds moves to the **Jobs** panel (terminal icon) with live output and a Stop button, so the chat stays free. Add `-b` to start it in the background at once: `/cmd$bun run dev -b;`. Stopping a job ends everything it started, including child processes. Jobs also show on the phone.
-- The command word is highlighted in the box as you type; the `-b` flag is dimmed.
+- **Background jobs:** a `$` command still running after 3 seconds moves to the **Jobs** panel (terminal icon) with live output and a Stop button, so the chat stays free. There is nothing to add: `/cmd$bun run dev` just works. Stopping a job ends everything it started, including child processes. Jobs also show on the phone.
+- The command word is highlighted in the box as you type.
 
 ## Chat history
 
@@ -100,7 +100,7 @@ Next to `/diagram` and `/cmd` two more chips appear when they make sense for the
   **New branch…**, Stash, Stash pop. **Commit…** asks for a message first and can stage everything before committing. The message is passed
   to git in a temporary file, so quotes, `$` and accents can never break or change the command.
 
-Both run like a `/cmd$...;` command: the result appears in the chat, and anything still running after a few seconds moves to the Jobs panel.
+Both run like a `/cmd$...` command: the result appears in the chat, and anything still running after a few seconds moves to the Jobs panel.
 Phones get the same two chips.
 
 ## Commands that ask questions
@@ -109,7 +109,7 @@ Some tools stop and ask you things (`bun convex deploy`, `npm create vite`, `gh 
 in a pseudo-console instead of plain pipes. Levity recognises the common ones; for any other command put `-i` in front:
 
 ```
-/cmd$-i bun convex deploy;
+/cmd$-i bun convex deploy
 ```
 
 The command moves to the **Jobs** panel (it opens by itself) where you can:

@@ -42,7 +42,7 @@ For development use `dotnet run` (it reads `.env` from the build output folder; 
 - `Win + Alt + A` shows or hides the sidebar; the tray icon has the same actions.
 - The **folder bar** under the header shows where the agent works. Click it to switch projects, **Choose folder...** for any folder, or **No project** for a general chat.
 - Type a message and press Enter. Messages sent while the AI is busy are **queued**; the red square stops the current response.
-- `/cmd$git status;` runs a command directly in PowerShell, with no AI and no tokens. `cd` changes the working folder. Add `-b` to start a long command in the background (`/cmd$npm run dev -b;`), then watch or stop it in the **Jobs** panel. Without the `$` the agent runs the command.
+- `/cmd$git status` runs a command directly in PowerShell, with no AI and no tokens. `cd` changes the working folder. A long-running command (`/cmd$npm run dev`) moves to the **Jobs** panel by itself after a few seconds, where you can watch or stop it. Without the `$` the agent runs the command.
 - The clock icon is **Chat history**: every chat is saved and can be reopened or deleted.
 - The grid icon **reviews projects**: one agent session per project to refresh README, `AGENTS.md` and skills. It uses tokens, so pick projects first.
 

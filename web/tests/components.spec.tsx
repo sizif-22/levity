@@ -7,16 +7,11 @@ import { CMD_RE, UserText } from '../src/components/UserText';
 afterEach(cleanup);
 
 describe('UserText', () => {
-  it('styles the command word and dims the -b flag after the brace', () => {
-    const { container } = render(<UserText text="/cmd{$bun run dev} -b" />);
+  it('styles the command word and dims the wrapper, losing nothing', () => {
+    const { container } = render(<UserText text="/cmd{$bun run dev} summarize" />);
     expect(container.querySelector('.cmd-word')?.textContent).toBe('bun');
-    expect(container.querySelector('.cmd-flag')?.textContent).toBe('-b');
-    expect(container.textContent).toBe('/cmd{$bun run dev} -b');
-  });
-
-  it('dims -b inside the braces too', () => {
-    const { container } = render(<UserText text="/cmd{$npm start -b}" />);
-    expect(container.querySelector('.cmd-flag')?.textContent).toBe('-b');
+    expect(container.querySelector('.cmd-flag')).toBeNull();
+    expect(container.textContent).toBe('/cmd{$bun run dev} summarize');
   });
 
   it('leaves ordinary text alone and never interprets it as HTML', () => {
@@ -26,15 +21,14 @@ describe('UserText', () => {
     expect(container.textContent).toBe('<img src=x onerror=alert(1)> hello');
   });
 
-  it('styles the short form: command word, -b flag and the closing semicolon', () => {
-    const { container } = render(<UserText text="/cmd$bun run dev -b;" />);
+  it('styles the short form: dimmed "/cmd$" and the command word', () => {
+    const { container } = render(<UserText text="/cmd$bun run dev" />);
     expect(container.querySelector('.cmd-word')?.textContent).toBe('bun');
-    expect(container.querySelector('.cmd-flag')?.textContent).toBe('-b');
-    expect(Array.from(container.querySelectorAll('.cmd-pre')).map((e) => e.textContent)).toEqual(['/cmd$', ';']);
-    expect(container.textContent).toBe('/cmd$bun run dev -b;');
+    expect(Array.from(container.querySelectorAll('.cmd-pre')).map((e) => e.textContent)).toEqual(['/cmd$']);
+    expect(container.textContent).toBe('/cmd$bun run dev');
   });
 
-  it('shows the short form with no closing semicolon and a semicolon inside the command unchanged', () => {
+  it('shows a semicolon inside or after the command unchanged', () => {
     const a = render(<UserText text="/cmd$git status" />);
     expect(a.container.querySelector('.cmd-word')?.textContent).toBe('git');
     expect(a.container.textContent).toBe('/cmd$git status');

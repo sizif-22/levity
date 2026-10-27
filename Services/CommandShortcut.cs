@@ -3,10 +3,10 @@ using System;
 namespace Levity.Services
 {
     /// <summary>
-    /// Turns "/cmd$git status;" (or "/cmd{$git status}", "/cmd git status"; aliases /cli /run /sh) into an instruction
+    /// Turns "/cmd$git status" (or "/cmd{$git status}", "/cmd git status"; aliases /cli /run /sh) into an instruction
     /// telling the agent to run that exact command. Text after the closing brace is kept as a follow-up.
-    /// The short form "/cmd$command;" has no follow-up: everything after the "$" is the command (semicolons inside it are
-    /// part of a PowerShell line, like "cd app; npm i"), and one trailing ";" just marks the end.
+    /// The short form "/cmd$command" has no follow-up: everything after the "$" is the command (semicolons inside it are
+    /// part of a PowerShell line, like "cd app; npm i"). A single trailing ";" typed out of habit is ignored.
     /// </summary>
     public static class CommandShortcut
     {
@@ -41,9 +41,8 @@ namespace Levity.Services
                 command = command.Trim();
                 // "$" in front means: run it directly in PowerShell, no AI.
                 if (command.StartsWith("$")) { direct = true; command = command.Substring(1).Trim(); }
-                // One trailing ";" is the end marker of the short form, not part of the command.
+                // A trailing ";" typed out of habit is not part of the command.
                 if (direct && after.Length == 0 && command.EndsWith(";")) command = command.Substring(0, command.Length - 1).TrimEnd();
-                if (direct && after == "-b") { command += " -b"; after = ""; }
                 return command.Length > 0;
             }
             return false;

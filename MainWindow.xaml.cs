@@ -1213,7 +1213,7 @@ namespace Levity
             try
             {
                 string cwd = _agyManager.CurrentWorkingDirectory;
-                DirectShell.StripFlags(command, out command, out bool forceBackground, out bool wantInteractive);
+                DirectShell.StripFlags(command, out command, out bool wantInteractive);
                 bool interactive = wantInteractive || InteractiveCommands.LooksInteractive(command);
                 string? cdTarget = DirectShell.ResolveCd(command, cwd);
                 if (cdTarget != null)
@@ -1234,7 +1234,7 @@ namespace Levity
                 RawPublish(JsonSerializer.Serialize(new { type = "status", text = "Running command...", state = "busy" }));
                 var job = interactive ? _jobs.StartInteractive(command, cwd) : _jobs.Start(command, cwd);
 
-                if (forceBackground || !await job.WaitAsync(TimeSpan.FromSeconds(interactive ? 2 : 3)))
+                if (!await job.WaitAsync(TimeSpan.FromSeconds(interactive ? 2 : 3)))
                 {
                     job.Background = true;
                     PublishJobs();
@@ -1244,7 +1244,7 @@ namespace Levity
                         FinishDirectTurn($"**Job #{job.Id}** is running and may ask you something. Answer it in the **Jobs** panel (it just opened): type a reply, or use the arrow, Enter and Space buttons for menus. Chat is free.", 0);
                     }
                     else
-                        FinishDirectTurn($"{(forceBackground ? "Started in the background as" : "Still running, so it moved to the background as")} **job #{job.Id}**. Watch it or stop it from the **Jobs** button in the header. Chat is free.", 0);
+                        FinishDirectTurn($"Still running, so it moved to the background as **job #{job.Id}**. Watch it or stop it from the **Jobs** button in the header. Chat is free.", 0);
                     return;
                 }
 

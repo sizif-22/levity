@@ -290,34 +290,32 @@ test('each project card keeps its buttons together, and the pin button (not the 
 
 // ---- the short command form: /cmd$command; ----
 
-test('the /cmd chip puts "/cmd$;" in the box with the caret before the semicolon', async () => {
+test('the /cmd chip puts "/cmd$" in the box, ready to type the command', async () => {
   const ui = await open();
-  const chip = ui.qa('.cmd-chip').find((c) => c.dataset.cmd === '/cmd$;');
+  const chip = ui.qa('.cmd-chip').find((c) => c.dataset.cmd === '/cmd$');
   assert.ok(chip, 'the chip inserts the short form');
   ui.click(chip);
   const box = ui.$('promptInput');
-  assert.equal(box.value, '/cmd$;');
+  assert.equal(box.value, '/cmd$');
   assert.equal(box.selectionStart, 5);
-  assert.equal(box.selectionEnd, 5);
 });
 
 test('a typed /cmd$command; is highlighted as a command and sent unchanged', async () => {
   const ui = await open();
-  ui.type('/cmd$bun run dev -b;');
+  ui.type('/cmd$bun run dev');
   assert.ok(ui.$('promptInput').classList.contains('hl-on'), 'the box shows the command word styled');
   assert.equal(ui.$('promptHl').querySelector('.cmd-word').textContent, 'bun');
-  assert.equal(ui.$('promptHl').querySelector('.cmd-flag').textContent, '-b');
 
   ui.click(ui.$('sendBtn'));
-  assert.deepEqual(ui.sent('send_prompt'), [{ type: 'send_prompt', text: '/cmd$bun run dev -b;' }]);
+  assert.deepEqual(ui.sent('send_prompt'), [{ type: 'send_prompt', text: '/cmd$bun run dev' }]);
 });
 
-test('the user bubble for the short form is a command bubble with the semicolon dimmed', async () => {
+test('the user bubble for the short form is a command bubble with the wrapper dimmed', async () => {
   const ui = await open();
-  ui.deliver({ type: 'user_message', text: '/cmd$git status;', source: 'desktop' });
+  ui.deliver({ type: 'user_message', text: '/cmd$git status', source: 'desktop' });
   const bubble = ui.q('.user-bubble');
   assert.ok(bubble.classList.contains('cmd-bubble'));
   assert.equal(bubble.querySelector('.cmd-word').textContent, 'git');
-  assert.deepEqual(Array.from(bubble.querySelectorAll('.cmd-pre')).map((e) => e.textContent), ['/cmd$', ';']);
-  assert.equal(bubble.textContent, '/cmd$git status;');
+  assert.deepEqual(Array.from(bubble.querySelectorAll('.cmd-pre')).map((e) => e.textContent), ['/cmd$']);
+  assert.equal(bubble.textContent, '/cmd$git status');
 });

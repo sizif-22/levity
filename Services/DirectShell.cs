@@ -8,31 +8,17 @@ namespace Levity.Services
     {
         private static readonly Regex CdPattern = new(@"^(?:cd|chdir|set-location|sl)(?:\s+/d)?(?:\s+(?<p>.+))?$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly Regex BackgroundFlag = new(@"(?:^-b\s+|\s+-b$)", RegexOptions.Compiled);
-
-        /// <summary>"-b" at the start or end asks for a background job straight away. Returns the command without the flag.</summary>
-        public static bool StripBackgroundFlag(string command, out string stripped)
-        {
-            stripped = BackgroundFlag.Replace(command.Trim(), "").Trim();
-            return stripped.Length > 0 && stripped != command.Trim();
-        }
-
         /// <summary>
-        /// Reads the flags in front of or after a command: "-b" (background) and "-i" (interactive, the command can ask questions).
-        /// "-i" is only recognised at the start, because it is a real option of many tools (grep -i, sed -i).
+        /// Reads the "-i" flag in front of a command (interactive: it can ask questions, so it runs in a terminal of its own).
+        /// Only at the start, because "-i" is a real option of many tools (grep -i, sed -i). A slow command needs no flag: anything
+        /// still running after a few seconds moves to the Jobs panel by itself.
         /// </summary>
-        public static void StripFlags(string command, out string stripped, out bool background, out bool interactive)
+        public static void StripFlags(string command, out string stripped, out bool interactive)
         {
             string s = (command ?? "").Trim();
-            background = interactive = false;
-            while (true)
-            {
-                if (s.StartsWith("-i ", StringComparison.Ordinal)) { interactive = true; s = s.Substring(3).TrimStart(); continue; }
-                if (s.StartsWith("-b ", StringComparison.Ordinal)) { background = true; s = s.Substring(3).TrimStart(); continue; }
-                if (s.EndsWith(" -b", StringComparison.Ordinal)) { background = true; s = s.Substring(0, s.Length - 3).TrimEnd(); continue; }
-                break;
-            }
-            if (s.Length == 0) { stripped = (command ?? "").Trim(); background = interactive = false; return; }
+            interactive = false;
+            while (s.StartsWith("-i ", StringComparison.Ordinal)) { interactive = true; s = s.Substring(3).TrimStart(); }
+            if (s.Length == 0) { stripped = (command ?? "").Trim(); interactive = false; return; }
             stripped = s;
         }
 

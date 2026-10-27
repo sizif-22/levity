@@ -98,28 +98,26 @@ public class VtScreenTests
 public class DirectShellFlagTests
 {
     [Theory]
-    [InlineData("-i bun convex deploy", "bun convex deploy", false, true)]
-    [InlineData("-b npm run dev", "npm run dev", true, false)]
-    [InlineData("npm run dev -b", "npm run dev", true, false)]
-    [InlineData("-i -b npm start", "npm start", true, true)]
-    [InlineData("grep -i foo file.txt", "grep -i foo file.txt", false, false)]
-    [InlineData("sed -i s/a/b/ f", "sed -i s/a/b/ f", false, false)]
-    [InlineData("git status", "git status", false, false)]
-    public void Flags_are_read_only_where_they_cannot_be_part_of_the_command(string input, string expected, bool background, bool interactive)
+    [InlineData("-i bun convex deploy", "bun convex deploy", true)]
+    [InlineData("-i -i npm start", "npm start", true)]
+    [InlineData("-b npm run dev", "-b npm run dev", false)]
+    [InlineData("npm run dev -b", "npm run dev -b", false)]
+    [InlineData("grep -i foo file.txt", "grep -i foo file.txt", false)]
+    [InlineData("sed -i s/a/b/ f", "sed -i s/a/b/ f", false)]
+    [InlineData("git status", "git status", false)]
+    public void Only_a_leading_dash_i_is_a_flag_and_dash_b_is_no_longer_one(string input, string expected, bool interactive)
     {
-        DirectShell.StripFlags(input, out string stripped, out bool bg, out bool inter);
+        DirectShell.StripFlags(input, out string stripped, out bool inter);
         Assert.Equal(expected, stripped);
-        Assert.Equal(background, bg);
         Assert.Equal(interactive, inter);
     }
 
     [Fact]
     public void A_flag_with_no_command_after_it_is_left_alone()
     {
-        DirectShell.StripFlags("-i", out string stripped, out bool bg, out bool inter);
+        DirectShell.StripFlags("-i", out string stripped, out bool inter);
         Assert.Equal("-i", stripped);
         Assert.False(inter);
-        Assert.False(bg);
     }
 
     [Theory]

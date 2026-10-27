@@ -21,7 +21,7 @@ public class CommandShortcutTests
     [InlineData("  /cmd$ls;  ", "ls", "", true)]
     [InlineData("/cmd$cd app; npm install;", "cd app; npm install", "", true)]
     [InlineData("/cmd$cd app; npm install", "cd app; npm install", "", true)]
-    [InlineData("/cmd$bun run dev -b;", "bun run dev -b", "", true)]
+    [InlineData("/cmd$bun run dev;", "bun run dev", "", true)]
     [InlineData("/cmd$-i bun convex deploy;", "-i bun convex deploy", "", true)]
     [InlineData("/cmd$git commit -m \"a;b\";", "git commit -m \"a;b\"", "", true)]
     [InlineData("/CMD$whoami;", "whoami", "", true)]
@@ -56,20 +56,21 @@ public class CommandShortcutTests
     }
 
     [Fact]
-    public void A_lone_dash_b_after_the_brace_is_the_background_flag_not_a_follow_up()
+    public void There_is_no_background_flag_so_text_after_the_brace_is_always_a_follow_up()
     {
+        // A slow command moves to the Jobs panel by itself; "-b" is no longer special.
         Assert.True(CommandShortcut.TryParse("/cmd{$bun run dev} -b", out string c, out string a, out bool d));
-        Assert.Equal("bun run dev -b", c);
-        Assert.Equal("", a);
+        Assert.Equal("bun run dev", c);
+        Assert.Equal("-b", a);
         Assert.True(d);
     }
 
     [Fact]
-    public void Dash_b_after_the_brace_without_a_dollar_stays_a_follow_up()
+    public void A_dash_b_inside_the_short_form_is_just_part_of_the_command()
     {
-        Assert.True(CommandShortcut.TryParse("/cmd{bun run dev} -b", out _, out string a, out bool d));
-        Assert.Equal("-b", a);
-        Assert.False(d);
+        Assert.True(CommandShortcut.TryParse("/cmd$git status -b", out string c, out string a, out _));
+        Assert.Equal("git status -b", c);
+        Assert.Equal("", a);
     }
 
     [Theory]
@@ -159,17 +160,6 @@ public class DirectShellTests
         Assert.Null(DirectShell.ResolveCd(command, Cwd));
     }
 
-    [Theory]
-    [InlineData("bun run dev -b", true, "bun run dev")]
-    [InlineData("-b bun run dev", true, "bun run dev")]
-    [InlineData("bun run dev", false, "bun run dev")]
-    [InlineData("git branch -bad", false, "git branch -bad")]
-    [InlineData("-b", false, "-b")]
-    public void Background_flag_is_stripped_only_at_the_edges(string input, bool flagged, string stripped)
-    {
-        Assert.Equal(flagged, DirectShell.StripBackgroundFlag(input, out string result));
-        Assert.Equal(stripped, result);
-    }
 }
 
 public class ShortCommandFormTests
@@ -211,10 +201,9 @@ public class ShortCommandFormTests
     [Fact]
     public void Flags_inside_the_short_form_are_read_like_everywhere_else()
     {
-        Assert.True(CommandShortcut.TryParse("/cmd$-i -b bun convex dev;", out string c, out _, out _));
-        DirectShell.StripFlags(c, out string stripped, out bool background, out bool interactive);
+        Assert.True(CommandShortcut.TryParse("/cmd$-i bun convex dev;", out string c, out _, out _));
+        DirectShell.StripFlags(c, out string stripped, out bool interactive);
         Assert.Equal("bun convex dev", stripped);
-        Assert.True(background);
         Assert.True(interactive);
     }
 }

@@ -379,7 +379,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           {!!chat.cwd && <span className="cmd-chip" title="Open this folder in the Antigravity IDE on your PC" onClick={() => send({ type: 'open_ide', path: chat.cwd })}>/open-ide</span>}
           {!!actions?.scripts.length && <span className="cmd-chip" title="Run a script from this folder's package.json" onClick={() => setSheet('run')}>/run</span>}
           {!!actions?.git.repo && <span className="cmd-chip" title="Common git steps: add, commit, push..." onClick={() => { setGitState(null); setSheet('git'); }}>/git</span>}
-          <span className="cmd-chip" title="Run a CLI command directly (no AI), e.g. /cmd$git status;. Add -b to run it in the background." onClick={() => { setDraft('/cmd$;'); setTimeout(() => { composer.current?.focus(); composer.current?.setSelectionRange(5, 5); }, 0); }}>/cmd</span>
+          <span className="cmd-chip" title="Run a CLI command directly (no AI), e.g. /cmd$git status. A slow command moves to the Jobs panel by itself." onClick={() => { setDraft('/cmd$'); setTimeout(() => { composer.current?.focus(); composer.current?.setSelectionRange(5, 5); }, 0); }}>/cmd</span>
         </div>
         <div className="composer">
           <div className="input-stack">
@@ -387,7 +387,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           <textarea
             className={CMD_RE.test(draft) ? 'hl-on' : ''} spellCheck={!CMD_RE.test(draft)} autoCorrect="off" autoCapitalize="off"
             onScroll={(e) => { if (hl.current) hl.current.scrollTop = e.currentTarget.scrollTop; }}
-            ref={composer} rows={1} value={draft} placeholder={online ? 'Ask Levity anything… or /cmd$git status;' : 'Waiting for your PC…'}
+            ref={composer} rows={1} value={draft} placeholder={online ? 'Ask Levity anything… or /cmd$git status' : 'Waiting for your PC…'}
             onChange={(e) => { setDraft(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 180) + 'px'; }}
           />
           </div>

@@ -43,20 +43,18 @@ test('message text can never inject markup', async () => {
   assert.equal(ui.window.__pwned, undefined);
 });
 
-test('a /cmd bubble highlights the command word and dims the -b flag', async () => {
+test('a /cmd bubble highlights the command word', async () => {
   const ui = await open();
-  ui.deliver({ type: 'user_message', text: '/cmd{$bun run dev} -b', source: 'desktop' });
+  ui.deliver({ type: 'user_message', text: '/cmd{$bun run dev}', source: 'desktop' });
   const bubble = ui.q('.user-bubble');
   assert.ok(bubble.classList.contains('cmd-bubble'));
   assert.equal(ui.q('.cmd-word', bubble).textContent, 'bun');
-  assert.equal(ui.q('.cmd-flag', bubble).textContent, '-b');
-  assert.equal(bubble.textContent, '/cmd{$bun run dev} -b'); // nothing lost or reordered
+  assert.equal(bubble.textContent, '/cmd{$bun run dev}'); // nothing lost or reordered
 });
 
-test('the -b flag inside the braces is dimmed too, and plain messages are not styled', async () => {
+test('plain messages are not styled as commands', async () => {
   const ui = await open();
-  ui.deliver({ type: 'user_message', text: '/cmd{$npm start -b}', source: 'desktop' });
-  assert.equal(ui.q('.cmd-flag').textContent, '-b');
+  ui.deliver({ type: 'user_message', text: '/cmd{$npm start}', source: 'desktop' });
   ui.deliver({ type: 'user_message', text: 'just talking', source: 'desktop' });
   const bubbles = ui.qa('.user-bubble');
   assert.equal(bubbles[1].querySelector('.cmd-word'), null);
@@ -66,10 +64,9 @@ test('the -b flag inside the braces is dimmed too, and plain messages are not st
 test('typing a command colours the word inside the message box', async () => {
   const ui = await open();
   const box = ui.$('promptInput');
-  ui.type('/cmd{$bun run dev} -b');
+  ui.type('/cmd{$bun run dev}');
   assert.ok(box.classList.contains('hl-on'));
   assert.equal(ui.q('.cmd-word', ui.$('promptHl')).textContent, 'bun');
-  assert.equal(ui.q('.cmd-flag', ui.$('promptHl')).textContent, '-b');
   assert.equal(box.spellcheck, false);
 
   ui.type('hello');
@@ -78,13 +75,13 @@ test('typing a command colours the word inside the message box', async () => {
   assert.equal(box.spellcheck, true);
 });
 
-test('the /cmd chip fills "/cmd$;" with the caret between $ and ;', async () => {
+test('the /cmd chip fills "/cmd$" with the caret at the end', async () => {
   const ui = await open();
-  const chip = ui.qa('.cmd-chip').find((c) => c.dataset.cmd === '/cmd$;');
+  const chip = ui.qa('.cmd-chip').find((c) => c.dataset.cmd === '/cmd$');
   assert.ok(chip, 'the /cmd chip exists');
   ui.click(chip);
   const box = ui.$('promptInput');
-  assert.equal(box.value, '/cmd$;');
+  assert.equal(box.value, '/cmd$');
   assert.equal(box.selectionStart, 5);
 });
 
