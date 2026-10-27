@@ -14,6 +14,13 @@
     <Description>Levity - desktop and mobile control surface for the Antigravity CLI</Description>
   </PropertyGroup>
 
+  <!-- Other projects in this repo (tests, phone app, relay) are not part of the desktop app. -->
+  <ItemGroup>
+    <Compile Remove="tests\**;web\**;relay\**;publish\**" />
+    <EmbeddedResource Remove="tests\**;web\**;relay\**;publish\**" />
+    <None Remove="tests\**;web\**;relay\**;publish\**" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
     <PackageReference Include="QRCoder" Version="1.6.0" />

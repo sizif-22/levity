@@ -205,8 +205,8 @@ function renderAssistantContent() {
   const contentEl = currentAssistantMessageElement.querySelector('.agent-content');
   if (!contentEl) return;
 
-  // Keep tool pills (they are appended to the content node) while the text re-renders.
-  const pills = Array.from(contentEl.querySelectorAll(':scope > .tool-pill'));
+  // Keep tool pills and the error banner (appended to the content node) while the text re-renders.
+  const pills = Array.from(contentEl.querySelectorAll(':scope > .tool-pill, :scope > .error-banner'));
   const wasThinkingOpen = contentEl.querySelector('.thinking-box') ? contentEl.querySelector('.thinking-box').open : true;
 
   let html = '';

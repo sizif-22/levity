@@ -17,3 +17,6 @@ settings.json
 .env
 .env.*
 !.env.example
+
+TestResults/
+*.trx

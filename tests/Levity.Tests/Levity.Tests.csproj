@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>Levity.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+    <PackageReference Include="System.Management" Version="8.0.0" />
+  </ItemGroup>
+
+  <!-- Compile the UI-free service sources directly so the tests need no WPF host. -->
+  <ItemGroup>
+    <Compile Include="..\..\Services\CommandShortcut.cs" Link="Services\CommandShortcut.cs" />
+    <Compile Include="..\..\Services\DirectShell.cs" Link="Services\DirectShell.cs" />
+    <Compile Include="..\..\Services\DotEnv.cs" Link="Services\DotEnv.cs" />
+    <Compile Include="..\..\Services\AppSettings.cs" Link="Services\AppSettings.cs" />
+    <Compile Include="..\..\Services\JobManager.cs" Link="Services\JobManager.cs" />
+    <Compile Include="..\..\Services\SessionStore.cs" Link="Services\SessionStore.cs" />
+    <Compile Include="..\..\Services\ProjectScanner.cs" Link="Services\ProjectScanner.cs" />
+    <Compile Include="..\..\Services\ProjectSyncService.cs" Link="Services\ProjectSyncService.cs" />
+    <Compile Include="..\..\Services\AgyProcessManager.cs" Link="Services\AgyProcessManager.cs" />
+    <Compile Include="..\..\Services\RelayCrypto.cs" Link="Services\RelayCrypto.cs" />
+  </ItemGroup>
+
+</Project>

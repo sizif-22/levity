@@ -1,5 +1,7 @@
 # Levity
 
+[![CI](https://github.com/sizif-22/levity/actions/workflows/ci.yml/badge.svg)](https://github.com/sizif-22/levity/actions/workflows/ci.yml)
+
 Desktop sidebar and phone app for the **Antigravity CLI** (`agy`). Formerly "Antigravity Sidebar".
 
 - **Desktop**: tray widget that slides in from the right edge (`Win + Alt + A`). WPF + WebView2.
@@ -31,6 +33,10 @@ Copy `.env.example` to `.env` (all values optional): relay and phone-app address
 ## Agent skills
 
 `agent/skills` ships skills for the agent, including **Fast Learner**: when a simple task (downloading an image, changing the wallpaper, a CLI quirk) takes unexpectedly long, the agent saves the working solution as a reusable skill so the next run is one quick step. Install with `.\Install-Skills.ps1` (`-Force` to replace, `-Uninstall` to remove). Details in [docs/RUNNING.md](docs/RUNNING.md#6-agent-skills).
+
+## Tests and CI
+
+`.\Run-Tests.ps1` runs every suite: the relay (integration tests against the real Worker), the phone app, the desktop sidebar UI, the C# services (including real PowerShell jobs and encryption compatibility with the phone app), and repository checks for scripts, skills, config and docs. GitHub Actions (`.github/workflows/ci.yml`) runs the same suites on every push to `main` or `staging` and on pull requests. Details: [docs/TESTING.md](docs/TESTING.md).
 
 ## Set up phone access (once)
 
@@ -105,7 +111,9 @@ wwwroot/                   desktop sidebar UI (WebView2)
 relay/                     Cloudflare Worker + Durable Object (room per key)
 web/                       React + Vite phone app (deploy to Vercel or any static host)
 agent/                     agent skills and the Fast Learner rule (installed by Install-Skills.ps1)
-docs/RUNNING.md            how to build, configure and run
+docs/RUNNING.md, docs/TESTING.md   how to build, configure, run and test
+tests/                     C# service tests, sidebar UI tests, repository checks
+.github/workflows/ci.yml   CI
 Setup.ps1, Install-Skills.ps1, Create-DesktopShortcut.ps1, run.ps1
 .env.example               configuration template
 ```

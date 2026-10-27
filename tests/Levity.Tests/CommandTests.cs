@@ -1,0 +1,154 @@
+using AntigravitySidebar.Services;
+using Xunit;
+
+namespace Levity.Tests;
+
+public class CommandShortcutTests
+{
+    [Theory]
+    [InlineData("/cmd{git status}", "git status", "", false)]
+    [InlineData("/cmd{$git status}", "git status", "", true)]
+    [InlineData("/cmd $git status", "git status", "", true)]
+    [InlineData("/cmd git status", "git status", "", false)]
+    [InlineData("/cli{ls}", "ls", "", false)]
+    [InlineData("/run{$dir}", "dir", "", true)]
+    [InlineData("/sh{$whoami}", "whoami", "", true)]
+    [InlineData("/CMD{$git status}", "git status", "", true)]
+    [InlineData("  /cmd{$ls}  ", "ls", "", true)]
+    public void Parses_the_command_forms(string input, string command, string after, bool direct)
+    {
+        Assert.True(CommandShortcut.TryParse(input, out string c, out string a, out bool d));
+        Assert.Equal(command, c);
+        Assert.Equal(after, a);
+        Assert.Equal(direct, d);
+    }
+
+    [Fact]
+    public void Nested_braces_stay_inside_the_command()
+    {
+        Assert.True(CommandShortcut.TryParse("/cmd{$echo ${HOME}}", out string c, out string a, out bool d));
+        Assert.Equal("echo ${HOME}", c);
+        Assert.Equal("", a);
+        Assert.True(d);
+    }
+
+    [Fact]
+    public void Text_after_the_brace_is_a_follow_up_for_the_agent()
+    {
+        Assert.True(CommandShortcut.TryParse("/cmd{$npm test} summarize failures", out string c, out string a, out _));
+        Assert.Equal("npm test", c);
+        Assert.Equal("summarize failures", a);
+    }
+
+    [Fact]
+    public void A_lone_dash_b_after_the_brace_is_the_background_flag_not_a_follow_up()
+    {
+        Assert.True(CommandShortcut.TryParse("/cmd{$bun run dev} -b", out string c, out string a, out bool d));
+        Assert.Equal("bun run dev -b", c);
+        Assert.Equal("", a);
+        Assert.True(d);
+    }
+
+    [Fact]
+    public void Dash_b_after_the_brace_without_a_dollar_stays_a_follow_up()
+    {
+        Assert.True(CommandShortcut.TryParse("/cmd{bun run dev} -b", out _, out string a, out bool d));
+        Assert.Equal("-b", a);
+        Assert.False(d);
+    }
+
+    [Theory]
+    [InlineData("hello")]
+    [InlineData("/cmdx{ls}")]
+    [InlineData("/cmd")]
+    [InlineData("/cmd{}")]
+    [InlineData("/cmd{$}")]
+    [InlineData("/cmd   ")]
+    [InlineData("/plan do it")]
+    [InlineData("")]
+    public void Rejects_things_that_are_not_commands(string input)
+    {
+        Assert.False(CommandShortcut.TryParse(input, out _, out _, out _));
+    }
+
+    [Fact]
+    public void Unclosed_brace_takes_the_rest_as_the_command()
+    {
+        Assert.True(CommandShortcut.TryParse("/cmd{$git status", out string c, out _, out bool d));
+        Assert.Equal("git status", c);
+        Assert.True(d);
+    }
+
+    [Fact]
+    public void Expand_builds_an_instruction_with_the_exact_command_and_folder()
+    {
+        string text = CommandShortcut.Expand("/cmd{git log -1} then explain", @"C:\proj");
+        Assert.Contains(@"C:\proj", text);
+        Assert.Contains("git log -1", text);
+        Assert.Contains("do not try workarounds", text);
+        Assert.EndsWith("Then: then explain", text);
+    }
+
+    [Fact]
+    public void Expand_leaves_ordinary_prompts_alone()
+    {
+        Assert.Equal("explain this repo", CommandShortcut.Expand("explain this repo", @"C:\x"));
+    }
+}
+
+public class DirectShellTests
+{
+    private const string Cwd = @"C:\Work\proj\sub";
+
+    [Theory]
+    [InlineData("cd ..", @"C:\Work\proj")]
+    [InlineData("cd ../..", @"C:\Work")]
+    [InlineData("cd child", @"C:\Work\proj\sub\child")]
+    [InlineData("CD child", @"C:\Work\proj\sub\child")]
+    [InlineData("cd /d D:\\Other", @"D:\Other")]
+    [InlineData("cd \"D:\\My Folder\"", @"D:\My Folder")]
+    [InlineData("Set-Location ..", @"C:\Work\proj")]
+    [InlineData("sl ..", @"C:\Work\proj")]
+    [InlineData("chdir ..", @"C:\Work\proj")]
+    public void Resolves_cd_targets(string command, string expected)
+    {
+        Assert.Equal(expected, DirectShell.ResolveCd(command, Cwd));
+    }
+
+    [Theory]
+    [InlineData("cd")]
+    [InlineData("cd ~")]
+    public void Plain_cd_and_tilde_go_home(string command)
+    {
+        Assert.Equal(AppSettings.HomeFolder, DirectShell.ResolveCd(command, Cwd));
+    }
+
+    [Fact]
+    public void Tilde_paths_expand_under_home()
+    {
+        Assert.Equal(Path.Combine(AppSettings.HomeFolder, "src"), DirectShell.ResolveCd("cd ~/src", Cwd));
+    }
+
+    [Theory]
+    [InlineData("git status")]
+    [InlineData("cdx foo")]
+    [InlineData("echo cd ..")]
+    [InlineData("cd .. && dir")]
+    public void Other_commands_are_not_cd(string command)
+    {
+        // "cd .. && dir" is a real shell line; only a bare cd is intercepted.
+        Assert.Null(DirectShell.ResolveCd(command, Cwd));
+    }
+
+    [Theory]
+    [InlineData("bun run dev -b", true, "bun run dev")]
+    [InlineData("-b bun run dev", true, "bun run dev")]
+    [InlineData("bun run dev", false, "bun run dev")]
+    [InlineData("git branch -bad", false, "git branch -bad")]
+    [InlineData("-b", false, "-b")]
+    public void Background_flag_is_stripped_only_at_the_edges(string input, bool flagged, string stripped)
+    {
+        Assert.Equal(flagged, DirectShell.StripBackgroundFlag(input, out string result));
+        Assert.Equal(stripped, result);
+    }
+}

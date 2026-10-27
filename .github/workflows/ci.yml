@@ -1,0 +1,152 @@
+name: CI
+
+# Runs every test suite on each push to main or staging, and on pull requests into them.
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
+  workflow_dispatch:
+
+# A newer push to the same branch cancels the older run.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+  DOTNET_VERSION: "8.0.x"
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  WRANGLER_SEND_METRICS: "false"
+  CI: "true"
+
+jobs:
+  # Cloudflare Worker: typecheck, bundle, and integration tests against the real Worker running locally.
+  relay:
+    name: Relay (typecheck, bundle, integration)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: relay
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: relay/package-lock.json
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Bundle (wrangler dry run)
+        run: npm run bundle
+      - name: Integration tests (wrangler dev + WebSockets)
+        run: npm test
+
+  # Phone app: typecheck, production build, logic tests (Node runner) and component tests (Vitest + jsdom).
+  web:
+    name: Phone app (typecheck, build, tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - name: Typecheck and build
+        run: npm run build
+      - name: Tests
+        run: npm test
+
+  # Desktop sidebar UI (wwwroot): the real page in jsdom with a fake WebView2 bridge.
+  sidebar:
+    name: Sidebar UI (wwwroot)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tests/sidebar
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: tests/sidebar/package-lock.json
+      - run: npm ci
+      - name: Syntax check and UI tests
+        run: npm test
+
+  # Desktop app and its services: build, unit and process tests (real PowerShell, job control, crypto interop with the phone app).
+  desktop:
+    name: Desktop app and services (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - uses: actions/setup-node@v4          # the crypto interop test runs the phone app's TypeScript through Node
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Build the desktop app
+        run: dotnet build AntigravitySidebar.csproj -c Release
+      - name: Test services
+        run: dotnet test tests/Levity.Tests/Levity.Tests.csproj -c Release --logger "trx;LogFileName=results.trx" --results-directory TestResults
+      - name: Publish
+        run: dotnet publish AntigravitySidebar.csproj -c Release -r win-x64 --self-contained false -o publish
+      - name: Check the published layout
+        shell: pwsh
+        run: |
+          foreach ($f in 'Levity.exe', 'wwwroot\index.html', 'wwwroot\app.js', '.env.example') {
+            if (-not (Test-Path "publish\$f")) { throw "publish\$f is missing" }
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-desktop
+          path: TestResults
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push'
+        with:
+          name: levity-win-x64-${{ github.sha }}
+          path: publish
+          retention-days: 7
+
+  # Scripts, skills, config template, docs and hygiene checks.
+  repo:
+    name: Scripts, skills, config and docs
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate repository
+        shell: pwsh
+        run: ./tests/repo/Validate-Repo.ps1
+
+  # One required check to point branch protection at.
+  ci-ok:
+    name: CI passed
+    if: always()
+    needs: [relay, web, sidebar, desktop, repo]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every job to succeed
+        run: |
+          echo '${{ toJSON(needs) }}'
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}" = "true" ]; then
+            echo "One or more jobs did not pass."; exit 1
+          fi

@@ -8,6 +8,7 @@ import { hasPin } from './lib/pin';
 import { Markdown } from './components/Markdown';
 import { JobsSheet, type Job } from './components/JobsSheet';
 import { SessionsSheet, type SessionsMsg } from './components/SessionsSheet';
+import { CMD_RE, UserText } from './components/UserText';
 import { ProjectsSheet, syncCounts, type ProjectsMsg, type SyncState } from './components/ProjectsSheet';
 import { Center, ConfirmDialog, Logo, LockScreen, PairScreen, SettingsSheet } from './components/Screens';
 
@@ -17,15 +18,6 @@ type Json = Record<string, unknown>;
 const LOCK_AFTER_MS = 60_000;
 
 /** A finished reply with nothing in it (agy emits empty steps) is not worth a row. */
-// "/cmd{$cd ../..}": dim the wrapper, colour and embolden the command word.
-const CMD_RE = /^(\/(?:cmd|cli|run|sh)(?:\{|\s+)\s*\$?\s*)([^\s}]+)([\s\S]*)$/i;
-function UserText({ text }: { text: string }) {
-  const m = CMD_RE.exec(text);
-  if (!m) return <>{text}</>;
-  const f = /^([\s\S]*?\s|)(-b)(\}?\s*)$/.exec(m[3]); // the background flag reads as secondary
-  return <><span className="cmd-pre">{m[1]}</span><b className="cmd-word">{m[2]}</b>{f ? <>{f[1]}<span className="cmd-flag">{f[2]}</span>{f[3]}</> : m[3]}</>;
-}
-
 const visible = (m: Msg) => m.role === 'user' || !m.done || !!(m.text || m.thinking || m.tools.length || m.error);
 
 export default function App() {

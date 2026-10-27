@@ -1,0 +1,13 @@
+{
+  "name": "levity-sidebar-tests",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "check": "node --check ../../wwwroot/app.js",
+    "test": "node --check ../../wwwroot/app.js && node --test sidebar.test.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.1"
+  }
+}

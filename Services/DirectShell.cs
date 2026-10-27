@@ -22,7 +22,10 @@ namespace AntigravitySidebar.Services
         {
             var m = CdPattern.Match(command.Trim());
             if (!m.Success) return null;
-            string p = m.Groups["p"].Success ? m.Groups["p"].Value.Trim().Trim('"', '\'') : "";
+            string raw = m.Groups["p"].Success ? m.Groups["p"].Value.Trim() : "";
+            // "cd .. && dir" is a real shell line, not a folder change: leave it to PowerShell.
+            if (raw.IndexOfAny(new[] { '&', '|', ';', '<', '>' }) >= 0) return null;
+            string p = raw.Trim('"', '\'');
             if (p.Length == 0 || p == "~") return AppSettings.HomeFolder;
             if (p.StartsWith("~/") || p.StartsWith("~\\")) p = Path.Combine(AppSettings.HomeFolder, p.Substring(2));
             try { return Path.GetFullPath(Path.IsPathRooted(p) ? p : Path.Combine(cwd, p)); }
