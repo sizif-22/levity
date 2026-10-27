@@ -297,7 +297,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         </div>
         <div className="composer">
           <textarea
-            rows={1} value={draft} placeholder={online ? 'Ask Levity anything…' : 'Waiting for your PC…'}
+            rows={1} value={draft} placeholder={online ? 'Ask Levity anything… or /cmd{git status}' : 'Waiting for your PC…'}
             onChange={(e) => { setDraft(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 180) + 'px'; }}
           />
           <button className="send-btn" disabled={!draft.trim() || generating || !online} onClick={submit} title="Send">

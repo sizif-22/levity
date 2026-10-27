@@ -315,7 +315,7 @@ namespace AntigravitySidebar
                         }
                         _settings.RecordProjectUse(_agyManager.CurrentWorkingDirectory);
                         Publish(new { type = "user_message", text = prompt, source = remote ? "mobile" : "desktop" });
-                        _agyManager.SendPrompt(prompt);
+                        _agyManager.SendPrompt(CommandShortcut.Expand(prompt, _agyManager.CurrentWorkingDirectory));
                         break;
 
                     case "new_chat":

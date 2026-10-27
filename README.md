@@ -54,6 +54,10 @@ Revoke any phone from the same panel; it is cut off immediately. Optional app pa
 
 Not covered: a malicious Vercel deployment could serve altered JavaScript. Only deploy `web/` from this repo, from an account you control. Anyone you pair can run commands on this PC (`agy --dangerously-skip-permissions`), so pair only your own phones. The relay address is not secret and has no login, so someone could use your Worker's quota, but cannot read or inject anything.
 
+## Run a CLI command
+
+Type `/cmd{git status}` (or `/cmd git status`; aliases `/cli`, `/run`, `/sh`) to make the agent run that exact command in the current folder and show the output. Text after the brace is a follow-up, e.g. `/cmd{npm test} summarize failures`. Works from the phone too.
+
 ## Project review
 
 Header grid icon (or tray → **Review All Projects...**):
