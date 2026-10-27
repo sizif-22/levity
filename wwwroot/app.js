@@ -568,12 +568,14 @@ function openSheet(id) {
   if (id === 'projectsSheet') { requestScan(false); postToHost({ type: 'list_projects' }); syncSeen = true; updateSyncBanner(); }
   if (id === 'mobileSheet') postToHost({ type: 'remote_info' });
   if (id === 'sessionsSheet') postToHost({ type: 'list_sessions' });
+  if (id === 'diagramSheet') postToHost({ type: 'diagram_pin', on: true });   // reading a diagram must not be interrupted by the sidebar hiding
 }
 function closeSheet(id) {
   const sheet = $(id);
   sheet.classList.remove('open');
   sheet.setAttribute('aria-hidden', 'true');
   if (id === 'projectsSheet') updateSyncBanner();
+  if (id === 'diagramSheet') postToHost({ type: 'diagram_pin', on: false });
 }
 document.querySelectorAll('[data-close-sheet]').forEach(b => b.addEventListener('click', () => closeSheet(b.dataset.closeSheet)));
 document.addEventListener('keydown', (e) => {

@@ -191,6 +191,23 @@ namespace Levity
         }
 
         private bool _diagramExpanded;
+        private bool _diagramAutoPinned;
+
+        /// <summary>Pins the sidebar while a diagram is open, and puts the pin back the way it was when the diagram closes.</summary>
+        private void SetDiagramPin(bool on)
+        {
+            if (on)
+            {
+                if (_settings.IsPinned) return;   // already pinned by the user: leave it alone, and do not unpin it later
+                _diagramAutoPinned = true;
+                SetPinned(true);
+            }
+            else if (_diagramAutoPinned)
+            {
+                _diagramAutoPinned = false;
+                SetPinned(false);
+            }
+        }
 
         /// <summary>Stretches the sidebar over the whole work area so a big diagram can be read, and puts it back afterwards.</summary>
         private void SetDiagramExpanded(bool on)
@@ -364,6 +381,11 @@ namespace Levity
 
                     case "diagram_prepare":
                         _ = DiagramPrepareAsync(GetString(root, "path"), clientId);
+                        break;
+
+                    case "diagram_pin":
+                        if (clientId == null)
+                            SetDiagramPin(root.TryGetProperty("on", out var pinOn) && pinOn.ValueKind == JsonValueKind.True);
                         break;
 
                     case "diagram_expand":

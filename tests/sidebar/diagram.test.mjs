@@ -556,3 +556,13 @@ test('the drawing is configured from the shared theme: readable text, group boxe
   assert.notEqual(cfg.fontFamily, 'inherit');
   for (const key of ['clusterBkg', 'clusterBorder', 'titleColor', 'edgeLabelBackground', 'textColor', 'lineColor']) assert.ok(cfg.themeVariables[key], key);
 });
+
+// ---- pinning while a diagram is open ----
+
+test('opening the diagram asks the PC to pin the sidebar and closing it releases the pin', async () => {
+  const ui = await open({ mermaid: fakeMermaid() });
+  ui.window.openDiagram(PROJECT);
+  assert.deepEqual(ui.sent('diagram_pin'), [{ type: 'diagram_pin', on: true }]);
+  ui.window.closeSheet('diagramSheet');
+  assert.deepEqual(ui.sent('diagram_pin').at(-1), { type: 'diagram_pin', on: false });
+});
