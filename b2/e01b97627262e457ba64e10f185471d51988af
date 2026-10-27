@@ -1,0 +1,56 @@
+web/src/styles.css
+  s_d7448d4eb56c88::t_0afbb8c236d03b 1-662
+wwwroot/index.html
+  s_d7448d4eb56c88::t_e3ab4e2156e645 238,240,368
+wwwroot/app.js
+  s_d7448d4eb56c88::t_61c3679c0c2593 83
+wwwroot/diagram.js
+  s_d7448d4eb56c88::t_1f06bf1959a4b0 5,19-20,35,37,173,190,192,255-295,330,352,368-370,374-376,379-386
+wwwroot/diagram-theme.js
+  s_d7448d4eb56c88::t_a06547fee2fd76 1-36
+wwwroot/style.css
+  s_d7448d4eb56c88::t_6b980f14c7b2fe 631-642
+web/src/components/DiagramSheet.tsx
+  s_d7448d4eb56c88::t_0afbb8c236d03b 4,43-45,57-68,93,120,153,155,174,216-220,222,228,232-234,252,286,291,293,298,300,344
+tests/sidebar/diagram.test.mjs
+  s_d7448d4eb56c88::t_fa4c4e38e708dc 465-558
+web/tests/diagram-theme.spec.ts
+  s_d7448d4eb56c88::t_fa4c4e38e708dc 1-22
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_7036c19b8d6124 942-946
+  s_d7448d4eb56c88::t_0afb7eaef62dfd 371
+  s_d7448d4eb56c88::t_a0e39da57a0391 278-282
+  s_d7448d4eb56c88::t_ef5c401bf576bf 957
+  s_d7448d4eb56c88::t_66908a73152dad 193-215
+  s_d7448d4eb56c88::t_d636b353a7abfa 369-370,372-373
+web/src/lib/diagramTheme.ts
+  s_d7448d4eb56c88::t_c76249bff2105f 1-34
+web/tests/diagram.spec.tsx
+  s_d7448d4eb56c88::t_01577aea2e1a02 231
+  s_d7448d4eb56c88::t_4e808d5aa8253a 394-442
+web/tsconfig.tsbuildinfo
+  s_d7448d4eb56c88::t_4e808d5aa8253a 1
+docs/USING.md
+  s_d7448d4eb56c88::t_f3c06c5569c0d8 31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b2e01b97627262e457ba64e10f185471d51988af",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
