@@ -1,0 +1,59 @@
+web/src/components/ProjectsSheet.tsx
+  s_d7448d4eb56c88::t_4d288f217fcf4b 52-54,65,68,157
+docs/PHONE.md
+  s_d7448d4eb56c88::t_107f8ad80b99b4 12
+web/tests/setup.ts
+  s_d7448d4eb56c88::t_b0c89d8a533a3c 1-14
+web/src/lib/diagram.ts
+  s_d7448d4eb56c88::t_0ffa6767d6ad14 1-40
+web/tests/diagram.spec.tsx
+  s_d7448d4eb56c88::t_650a84f3c2dc1f 203-209,214,336-337
+  s_d7448d4eb56c88::t_2bc99cf4f0c956 1-202,210-213,215-335,338-393
+docs/TESTING.md
+  s_d7448d4eb56c88::t_f0575ae6c08b46 18
+web/src/lib/svg.ts
+  s_d7448d4eb56c88::t_14fd2893cf24cb 1-53
+web/tests/app-diagram.spec.tsx
+  s_d7448d4eb56c88::t_f9501d8f902a5e 1-158
+README.md
+  s_d7448d4eb56c88::t_107f8ad80b99b4 19
+  s_d7448d4eb56c88::t_0ca8d6dd5b3588 54
+web/src/App.tsx
+  s_d7448d4eb56c88::t_4d288f217fcf4b 13-14,90-95,136-143,190-200,204,363,391,398-400
+  s_d7448d4eb56c88::t_37d753c777cdfb 401
+docs/ARCHITECTURE.md
+  s_d7448d4eb56c88::t_3304561e158a5c 1-111
+web/src/components/DiagramSheet.tsx
+  s_d7448d4eb56c88::t_b7d2886c82e9dd 1-48,51-84,86-150,152-335
+  s_d7448d4eb56c88::t_ff883b8de3da83 49-50,85,151
+docs/USING.md
+  s_d7448d4eb56c88::t_0ca8d6dd5b3588 29
+  s_d7448d4eb56c88::t_107f8ad80b99b4 20,24-28,30-37
+  s_d7448d4eb56c88::t_ea27091fba4865 38
+web/vitest.config.ts
+  s_d7448d4eb56c88::t_5ae1c2fd1dbf30 9
+web/tests/svg.spec.ts
+  s_d7448d4eb56c88::t_35a3f8c52dc109 1-16,18-26,36-76,84-127
+  s_d7448d4eb56c88::t_49092ab08b699f 17,27-35,77-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "52ff2df267460f3e15e1bd9b5f8734a11d36f6a8",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
