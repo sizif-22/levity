@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <param name="Index">1-based position; the UI sends this back when a node is clicked (never a path).</param>
     /// <param name="MermaidId">The id used in the Mermaid source (n1, n2, ...). Generated here, never taken from the model.</param>

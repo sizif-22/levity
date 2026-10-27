@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <summary>Which folders a paired phone may act on. At the PC itself there is no restriction; these rules apply only to phone requests.</summary>
     public static class FolderAccess

@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using AntigravitySidebar.Services;
+using Levity.Services;
 using Xunit;
 
 namespace Levity.Tests;

@@ -102,13 +102,13 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Build the desktop app
-        run: dotnet build AntigravitySidebar.csproj -c Release
+        run: dotnet build Levity.csproj -c Release
       - name: Test services (includes drawing diagrams with the real Mermaid in headless Edge)
         env:
           LEVITY_REQUIRE_BROWSER: "1"   # fail, do not skip, if no browser is installed
         run: dotnet test tests/Levity.Tests/Levity.Tests.csproj -c Release --logger "trx;LogFileName=results.trx" --results-directory TestResults
       - name: Publish
-        run: dotnet publish AntigravitySidebar.csproj -c Release -r win-x64 --self-contained false -o publish
+        run: dotnet publish Levity.csproj -c Release -r win-x64 --self-contained false -o publish
       - name: Check the published layout
         shell: pwsh
         run: |

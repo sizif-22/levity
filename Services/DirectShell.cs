@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <summary>Helpers for "/cmd{$...}" commands that run directly in PowerShell (see JobManager).</summary>
     public static class DirectShell

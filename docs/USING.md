@@ -49,7 +49,7 @@ Folders you pick by hand are remembered. The same list is available on the phone
 ## Chat
 
 - Replies stream in with Markdown and highlighted, copyable code. Reasoning and tool activity (`run_command`, file reads and so on) show as pills.
-- Quick chips insert the agent's slash commands (`/plan`, `/goal`, `/boost`, `/compact`, `/help`).
+- Two chips sit above the box: **/diagram** (draw this project's architecture) and **/cmd** (run a command; see below).
 - **Queue:** messages sent while the assistant is busy wait above the box and run in order. Remove any with the x.
 - **Stop:** the red square next to Send stops the current response and keeps the conversation, so you can steer and continue.
 
@@ -62,7 +62,7 @@ Folders you pick by hand are remembered. The same list is available on the phone
 
 ## Chat history
 
-Every chat is saved on the PC automatically (`%APPDATA%\AntigravitySidebar\sessions`). The clock icon lists them. **Open** brings the chat back, switches to its folder and resumes the same agent conversation, so the AI keeps its context. **Delete** (tap twice) removes it. The phone shows and opens the same list. The open chat can't be deleted; start a new one first.
+Every chat is saved on the PC automatically (`%APPDATA%\Levity\sessions`). The clock icon lists them. **Open** brings the chat back, switches to its folder and resumes the same agent conversation, so the AI keeps its context. **Delete** (tap twice) removes it. The phone shows and opens the same list. The open chat can't be deleted; start a new one first.
 
 ## Project review
 

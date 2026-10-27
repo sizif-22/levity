@@ -8,10 +8,10 @@ using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
-using AntigravitySidebar.Services;
+using Levity.Services;
 using Microsoft.Web.WebView2.Core;
 
-namespace AntigravitySidebar
+namespace Levity
 {
     public partial class MainWindow : Window
     {
@@ -131,7 +131,7 @@ namespace AntigravitySidebar
         {
             try
             {
-                string userDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AntigravitySidebar", "WebView2");
+                string userDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Levity", "WebView2");
                 var env = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
                 await webView.EnsureCoreWebView2Async(env);
 

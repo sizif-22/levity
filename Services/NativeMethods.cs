@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     public static class NativeMethods
     {

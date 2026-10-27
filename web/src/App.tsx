@@ -357,9 +357,6 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           </div>
         )}
         <div className="quick-commands">
-          {['/plan', '/goal', '/boost', '/compact', '/help'].map((c) => (
-            <span key={c} className="cmd-chip" onClick={() => setDraft(c + ' ')}>{c}</span>
-          ))}
           <span className="cmd-chip" title="Draw this project's architecture" onClick={() => openDiagram(chat.cwd)}>/diagram</span>
           <span className="cmd-chip" title="Run a CLI command directly (no AI), e.g. /cmd{$git status}. Add -b to run it in the background." onClick={() => { setDraft('/cmd{$}'); setTimeout(() => { composer.current?.focus(); composer.current?.setSelectionRange(6, 6); }, 0); }}>/cmd</span>
         </div>

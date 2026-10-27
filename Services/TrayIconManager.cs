@@ -3,7 +3,7 @@ using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     public class TrayIconManager : IDisposable
     {

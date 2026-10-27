@@ -1,6 +1,6 @@
 using System;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <summary>
     /// Turns "/cmd{git status}" (also "/cmd git status", aliases /cli /run /sh) into an instruction

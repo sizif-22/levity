@@ -8,7 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <param name="Tokens">Total tokens the agent reported using (0 if unknown).</param>
     public sealed record ModelRunResult(string? Json, string? Error, long Tokens, double Seconds);

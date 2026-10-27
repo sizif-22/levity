@@ -55,7 +55,7 @@ Step "relay"   "integration tests"  "relay"         { npm test }
 Step "web"     "typecheck + build"  "web"           { npm run build }
 Step "web"     "tests"              "web"           { npm test }
 Step "sidebar" "UI tests"           "tests\sidebar" { npm test }
-Step "desktop" "build"              "."             { dotnet build AntigravitySidebar.csproj -c Release --nologo -v q }
+Step "desktop" "build"              "."             { dotnet build Levity.csproj -c Release --nologo -v q }
 Step "desktop" "service tests"      "."             { dotnet test tests/Levity.Tests/Levity.Tests.csproj -c Release --nologo -v q }
 Step "repo"    "repository checks"  "."             { pwsh -NoProfile -File tests/repo/Validate-Repo.ps1 }
 

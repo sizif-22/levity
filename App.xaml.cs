@@ -3,18 +3,18 @@ using System.IO;
 using System.Threading;
 using System.Windows;
 
-namespace AntigravitySidebar
+namespace Levity
 {
     public partial class App : System.Windows.Application
     {
         private static Mutex? _mutex;
         private static EventWaitHandle? _wakeupEvent;
-        private const string MutexName = "AntigravitySidebar_SingleInstance_Mutex";
-        private const string EventName = "AntigravitySidebar_Wakeup_Event";
+        private const string MutexName = "Levity_SingleInstance_Mutex";
+        private const string EventName = "Levity_Wakeup_Event";
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            AntigravitySidebar.Services.DotEnv.Load(); // before anything reads configuration
+            Levity.Services.DotEnv.Load(); // before anything reads configuration
             string logFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup.log");
             try { File.AppendAllText(logFile, $"[{DateTime.Now:HH:mm:ss}] OnStartup entered\n"); } catch { }
 

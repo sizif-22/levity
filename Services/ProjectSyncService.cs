@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     public class SyncItem
     {

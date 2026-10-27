@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     public record PairRequest(string Id, string Name, string Code, DateTime ReceivedUtc);
 

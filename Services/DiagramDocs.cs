@@ -3,7 +3,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <summary>Turns a diagram into a Markdown section for docs/ARCHITECTURE.md and merges it into an existing file without touching anything else in it.</summary>
     public static class DiagramDocs

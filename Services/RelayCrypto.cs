@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <summary>
     /// End-to-end encryption shared with the phone app (web/src/lib/crypto.ts).

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <summary>Hard limits for a diagram. They keep the graph readable and the messages small enough for the relay.</summary>
     public static class DiagramLimits

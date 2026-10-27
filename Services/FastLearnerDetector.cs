@@ -2,7 +2,7 @@ using System;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <summary>What Fast Learner is doing right now, worked out from the agent's tool calls.</summary>
     /// <param name="Phase">running | saving | done</param>

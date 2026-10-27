@@ -2,7 +2,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <summary>
     /// Builds the single request sent to the agent. The instructions are adapted from GitDiagram's architecture prompts

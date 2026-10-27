@@ -69,7 +69,7 @@ Copy `.env.example` to `.env` (every value is optional): relay and phone-app add
         │                            │
  Levity.exe (WPF + WebView2) ────────┤  PowerShell: direct /cmd{$...} commands and jobs
   sidebar UI, queue, saved chats     │
-        │                            └─ %APPDATA%\AntigravitySidebar: settings, chats
+        │                            └─ %APPDATA%\Levity: settings, chats
         └─ outbound wss ─▶ relay (Cloudflare Worker) ◀─ wss ─ phone web app
 ```
 
@@ -90,4 +90,4 @@ Setup.ps1, Install-Skills.ps1, Run-Tests.ps1, Create-DesktopShortcut.ps1, run.ps
 
 [PolyForm Noncommercial License 1.0.0](LICENSE). Anyone may use, modify and share Levity for noncommercial purposes: personal use, learning, research, hobby projects, nonprofits and similar. **Commercial use, including selling it or using it to make money, is not permitted** without a separate license from the author. This makes the source available but not "open source" in the OSI sense.
 
-Third-party code keeps its own licenses: `wwwroot/marked.min.js` (MIT), `wwwroot/highlight.min.js` and `github-dark.min.css` (BSD-3-Clause), and the npm and NuGet dependencies listed in `web/package.json`, `relay/package.json` and `AntigravitySidebar.csproj`.
+Third-party code keeps its own licenses: `wwwroot/marked.min.js` (MIT), `wwwroot/highlight.min.js` and `github-dark.min.css` (BSD-3-Clause), and the npm and NuGet dependencies listed in `web/package.json`, `relay/package.json` and `Levity.csproj`.

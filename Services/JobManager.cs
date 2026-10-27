@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     public enum JobState { Running, Done, Failed, Stopped }
 

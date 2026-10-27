@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using AntigravitySidebar.Services;
+using Levity.Services;
 using Xunit;
 
 namespace Levity.Tests;

@@ -60,7 +60,7 @@ Copy `.env.example` to `.env`. All values are optional.
 | `LEVITY_DIAGRAM_EFFORT` | Assistant effort for architecture diagrams: `low`, `medium`, `high` | `low` |
 | `LEVITY_DIAGRAM_TIMEOUT` | Seconds to wait for a diagram (30 to 1800) | `300` |
 | `LEVITY_SIDEBAR_WIDTH` | Sidebar width in px | `460` |
-| `LEVITY_SETTINGS_DIR` | Settings, chat history and WebView cache | `%APPDATA%\AntigravitySidebar` |
+| `LEVITY_SETTINGS_DIR` | Settings, chat history and WebView cache | `%APPDATA%\Levity` |
 | `LEVITY_SKILLS_DIR` | Target for `Install-Skills.ps1` | `%USERPROFILE%\.gemini\config\skills` |
 | `LEVITY_ENV_FILE` | Use this file instead of searching | not set |
 
@@ -101,7 +101,7 @@ The rule is global for the agent, so it applies in every folder, not only Levity
 
 ## 7. Where things are stored
 
-`%APPDATA%\AntigravitySidebar` (or `LEVITY_SETTINGS_DIR`):
+`%APPDATA%\Levity` (or `LEVITY_SETTINGS_DIR`):
 
 - `settings.json`: settings; paired-phone keys are encrypted with Windows DPAPI for your user.
 - `sessions\`: saved chats, one JSON file each. Delete a file to delete that chat.
@@ -122,7 +122,7 @@ The rule is global for the agent, so it applies in every folder, not only Levity
 
 ## 9. Uninstall
 
-Delete the `publish` folder and the shortcuts, run `.\Install-Skills.ps1 -Uninstall` if you installed the skills, and delete `%APPDATA%\AntigravitySidebar` to remove saved data.
+Delete the `publish` folder and the shortcuts, run `.\Install-Skills.ps1 -Uninstall` if you installed the skills, and delete `%APPDATA%\Levity` to remove saved data.
 
 ## 10. License
 

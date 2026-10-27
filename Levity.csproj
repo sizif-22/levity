@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
-    <RootNamespace>AntigravitySidebar</RootNamespace>
+    <RootNamespace>Levity</RootNamespace>
     <AssemblyName>Levity</AssemblyName>
     <Product>Levity</Product>
     <Description>Levity - desktop and mobile control surface for the Antigravity CLI</Description>

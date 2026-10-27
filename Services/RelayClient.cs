@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <summary>
     /// Outbound-only connection to the relay. No port is opened on this PC; phones reach it through the

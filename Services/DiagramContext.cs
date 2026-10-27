@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <summary>
     /// What Levity knows about a project: its files, which ones were read, and which files reference which.

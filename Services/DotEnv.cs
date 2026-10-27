@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <summary>
     /// Minimal .env loader. Looks for LEVITY_ENV_FILE, then ".env" next to Levity.exe, then in the settings folder.
@@ -12,14 +12,15 @@ namespace AntigravitySidebar.Services
         public static void Load()
         {
             string? explicitFile = Environment.GetEnvironmentVariable("LEVITY_ENV_FILE");
-            string settingsDir = Environment.GetEnvironmentVariable("LEVITY_SETTINGS_DIR")
-                ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "AntigravitySidebar");
+            string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string settingsDir = Environment.GetEnvironmentVariable("LEVITY_SETTINGS_DIR") ?? Path.Combine(appData, "Levity");
 
             foreach (string? path in new[]
             {
                 explicitFile,
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".env"),
-                Path.Combine(settingsDir, ".env")
+                Path.Combine(settingsDir, ".env"),
+                Path.Combine(appData, AppSettings.LegacyDataFolderName, ".env")   // before the first run after the rename has moved the folder
             })
             {
                 if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) continue;

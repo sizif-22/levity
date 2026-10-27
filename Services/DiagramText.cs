@@ -3,7 +3,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <summary>Cleaning of model-supplied text and paths. Nothing from the model reaches the UI, Mermaid or the file system without passing through here.</summary>
     public static class DiagramText

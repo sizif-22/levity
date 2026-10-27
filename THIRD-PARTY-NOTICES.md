@@ -47,4 +47,4 @@ SOFTWARE.
 | `wwwroot/marked.min.js` | [marked](https://github.com/markedjs/marked) | MIT |
 | `wwwroot/highlight.min.js`, `wwwroot/github-dark.min.css` | [highlight.js](https://github.com/highlightjs/highlight.js) | BSD-3-Clause |
 
-The npm and NuGet dependencies listed in `web/package.json`, `relay/package.json` and `AntigravitySidebar.csproj` keep their own licenses.
+The npm and NuGet dependencies listed in `web/package.json`, `relay/package.json` and `Levity.csproj` keep their own licenses.

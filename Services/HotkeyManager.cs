@@ -1,7 +1,7 @@
 using System;
 using System.Windows.Interop;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     public class HotkeyManager : IDisposable
     {

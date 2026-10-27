@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <param name="Files">Files listed to the model (secrets and binaries excluded).</param>
     /// <param name="ExcerptFiles">Source files whose beginning is included.</param>

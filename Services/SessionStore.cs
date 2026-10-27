@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     /// <summary>One saved chat: what the UI replays plus the agy conversation id it can resume.</summary>
     public sealed class ChatSession
@@ -20,7 +20,7 @@ namespace AntigravitySidebar.Services
         public List<string> History { get; set; } = new();
     }
 
-    /// <summary>Chat sessions as one JSON file each under the settings folder (%APPDATA%\AntigravitySidebar\sessions).</summary>
+    /// <summary>Chat sessions as one JSON file each under the settings folder (%APPDATA%\Levity\sessions).</summary>
     public sealed class SessionStore
     {
         private readonly string _dir = Path.Combine(AppSettings.DataDir, "sessions");

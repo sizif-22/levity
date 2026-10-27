@@ -3,7 +3,7 @@ using System.IO;
 using System.Text.Json;
 using Microsoft.Win32;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     public class AppSettings
     {
@@ -59,9 +59,36 @@ namespace AntigravitySidebar.Services
             Save();
         }
 
+        /// <summary>The folder name used before the app was called Levity. Its contents are moved to the new folder on first run.</summary>
+        public const string LegacyDataFolderName = "AntigravitySidebar";
+
+        /// <summary>
+        /// Where settings, saved chats and diagrams live: LEVITY_SETTINGS_DIR if set, else %APPDATA%\Levity. If only the old
+        /// %APPDATA%\AntigravitySidebar exists it is moved over first. If the move fails (a file is in use) the old folder keeps being
+        /// used for this run, so nothing is ever lost or split between two places.
+        /// </summary>
+        public static string ResolveDataDir(string appData, string? envOverride)
+        {
+            if (!string.IsNullOrWhiteSpace(envOverride)) return envOverride;
+            string current = Path.Combine(appData, "Levity");
+            string legacy = Path.Combine(appData, LegacyDataFolderName);
+            try
+            {
+                if (!Directory.Exists(legacy)) return current;
+                if (Directory.Exists(current))
+                {
+                    if (Directory.EnumerateFileSystemEntries(current).Any()) return current;   // already in use: the new folder wins
+                    Directory.Delete(current);                                                   // an empty leftover must not block the move
+                }
+                Directory.Move(legacy, current);
+                return current;
+            }
+            catch { return Directory.Exists(legacy) ? legacy : current; }
+        }
+
         // LEVITY_SETTINGS_DIR lets tests run without touching the real settings file.
-        private static readonly string SettingsDir = Environment.GetEnvironmentVariable("LEVITY_SETTINGS_DIR")
-            ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "AntigravitySidebar");
+        private static readonly string SettingsDir = ResolveDataDir(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Environment.GetEnvironmentVariable("LEVITY_SETTINGS_DIR"));
         public static string DataDir => SettingsDir;
         private static readonly string SettingsFilePath = Path.Combine(SettingsDir, "settings.json");
 
@@ -125,7 +152,7 @@ namespace AntigravitySidebar.Services
                     {
                         key.DeleteValue("Levity", false);
                     }
-                    key.DeleteValue("AntigravitySidebar", false);
+                    key.DeleteValue(LegacyDataFolderName, false);   // the startup entry older versions registered under the old name
                 }
             }
             catch { }

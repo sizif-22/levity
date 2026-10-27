@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using AntigravitySidebar.Services;
+using Levity.Services;
 using Xunit;
 
 namespace Levity.Tests;

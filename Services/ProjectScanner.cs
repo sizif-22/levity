@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace AntigravitySidebar.Services
+namespace Levity.Services
 {
     public record ProjectInfo(
         string Name,
