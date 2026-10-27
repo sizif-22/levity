@@ -26,11 +26,29 @@ describe('UserText', () => {
     expect(container.textContent).toBe('<img src=x onerror=alert(1)> hello');
   });
 
-  it.each(['/cmd{$ls}', '/cli ls', '/run{dir}', '/SH{$whoami}'])('%s is a command message', (t) => {
+  it('styles the short form: command word, -b flag and the closing semicolon', () => {
+    const { container } = render(<UserText text="/cmd$bun run dev -b;" />);
+    expect(container.querySelector('.cmd-word')?.textContent).toBe('bun');
+    expect(container.querySelector('.cmd-flag')?.textContent).toBe('-b');
+    expect(Array.from(container.querySelectorAll('.cmd-pre')).map((e) => e.textContent)).toEqual(['/cmd$', ';']);
+    expect(container.textContent).toBe('/cmd$bun run dev -b;');
+  });
+
+  it('shows the short form with no closing semicolon and a semicolon inside the command unchanged', () => {
+    const a = render(<UserText text="/cmd$git status" />);
+    expect(a.container.querySelector('.cmd-word')?.textContent).toBe('git');
+    expect(a.container.textContent).toBe('/cmd$git status');
+    a.unmount();
+    const b = render(<UserText text="/cmd$cd app; npm i;" />);
+    expect(b.container.textContent).toBe('/cmd$cd app; npm i;');
+    expect(b.container.querySelector('.cmd-word')?.textContent).toBe('cd');
+  });
+
+  it.each(['/cmd{$ls}', '/cli ls', '/run{dir}', '/SH{$whoami}', '/cmd$ls;', '/cmd$git status', '/CLI$dir;', '/run$x;'])('%s is a command message', (t) => {
     expect(CMD_RE.test(t)).toBe(true);
   });
 
-  it.each(['hello', '/plan x', '/cmdx{ls}', '/cmd'])('%s is not a command message', (t) => {
+  it.each(['hello', '/plan x', '/cmdx{ls}', '/cmd', '/cmd$', '/cmd$;', '/cmdx$ls;'])('%s is not a command message', (t) => {
     expect(CMD_RE.test(t)).toBe(false);
   });
 });

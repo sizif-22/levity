@@ -118,12 +118,12 @@
         <span class="cmd-chip" id="ideChip" data-cmd="/open-ide" title="Open this folder in the Antigravity IDE" hidden>/open-ide</span>
         <span class="cmd-chip" id="runChip" data-cmd="/run" title="Run a script from this folder's package.json" hidden>/run</span>
         <span class="cmd-chip" id="gitChip" data-cmd="/git" title="Common git steps: add, commit, push..." hidden>/git</span>
-        <span class="cmd-chip" data-cmd="/cmd{$}" title="Run a CLI command directly (no AI), e.g. /cmd{$git status}. Add -b to run it in the background. Without $ the agent runs it.">/cmd</span>
+        <span class="cmd-chip" data-cmd="/cmd$;" title="Run a CLI command directly (no AI), e.g. /cmd$git status;. Add -b to run it in the background. Without $ the agent runs it.">/cmd</span>
       </div>
       <div class="composer">
         <div class="input-stack">
           <div class="composer-hl" id="promptHl" aria-hidden="true"></div>
-          <textarea id="promptInput" placeholder="Ask Levity anything… or /cmd{$git status}" rows="1" enterkeyhint="send"></textarea>
+          <textarea id="promptInput" placeholder="Ask Levity anything… or /cmd$git status;" rows="1" enterkeyhint="send"></textarea>
         </div>
         <button class="send-btn stop-btn" id="stopBtn" title="Stop the response" hidden>
           <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>

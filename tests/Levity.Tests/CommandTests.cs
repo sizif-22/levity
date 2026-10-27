@@ -15,6 +15,21 @@ public class CommandShortcutTests
     [InlineData("/sh{$whoami}", "whoami", "", true)]
     [InlineData("/CMD{$git status}", "git status", "", true)]
     [InlineData("  /cmd{$ls}  ", "ls", "", true)]
+    [InlineData("/cmd$git status;", "git status", "", true)]
+    [InlineData("/cmd$git status", "git status", "", true)]
+    [InlineData("/cmd$git status ;", "git status", "", true)]
+    [InlineData("  /cmd$ls;  ", "ls", "", true)]
+    [InlineData("/cmd$cd app; npm install;", "cd app; npm install", "", true)]
+    [InlineData("/cmd$cd app; npm install", "cd app; npm install", "", true)]
+    [InlineData("/cmd$bun run dev -b;", "bun run dev -b", "", true)]
+    [InlineData("/cmd$-i bun convex deploy;", "-i bun convex deploy", "", true)]
+    [InlineData("/cmd$git commit -m \"a;b\";", "git commit -m \"a;b\"", "", true)]
+    [InlineData("/CMD$whoami;", "whoami", "", true)]
+    [InlineData("/cli$ls;", "ls", "", true)]
+    [InlineData("/run$dir;", "dir", "", true)]
+    [InlineData("/sh$whoami;", "whoami", "", true)]
+    [InlineData("/cmd $git status;", "git status", "", true)]
+    [InlineData("/cmd{$git status;}", "git status", "", true)]
     public void Parses_the_command_forms(string input, string command, string after, bool direct)
     {
         Assert.True(CommandShortcut.TryParse(input, out string c, out string a, out bool d));
@@ -63,6 +78,10 @@ public class CommandShortcutTests
     [InlineData("/cmd")]
     [InlineData("/cmd{}")]
     [InlineData("/cmd{$}")]
+    [InlineData("/cmd$")]
+    [InlineData("/cmd$;")]
+    [InlineData("/cmd$  ;  ")]
+    [InlineData("/cmdx$ls;")]
     [InlineData("/cmd   ")]
     [InlineData("/plan do it")]
     [InlineData("")]
@@ -150,5 +169,52 @@ public class DirectShellTests
     {
         Assert.Equal(flagged, DirectShell.StripBackgroundFlag(input, out string result));
         Assert.Equal(stripped, result);
+    }
+}
+
+public class ShortCommandFormTests
+{
+    [Fact]
+    public void The_short_form_has_no_follow_up_so_text_after_a_semicolon_is_part_of_the_command()
+    {
+        // "/cmd$a; b" is one PowerShell line, never "run a, then ask the AI about b".
+        Assert.True(CommandShortcut.TryParse("/cmd$npm test; summarize the failures", out string c, out string after, out bool direct));
+        Assert.Equal("npm test; summarize the failures", c);
+        Assert.Equal("", after);
+        Assert.True(direct);
+    }
+
+    [Fact]
+    public void Only_one_trailing_semicolon_is_the_end_marker()
+    {
+        Assert.True(CommandShortcut.TryParse("/cmd$echo hi;;", out string c, out _, out _));
+        Assert.Equal("echo hi;", c);
+    }
+
+    [Fact]
+    public void Without_the_dollar_a_trailing_semicolon_is_left_alone()
+    {
+        Assert.True(CommandShortcut.TryParse("/cmd git status;", out string c, out _, out bool direct));
+        Assert.Equal("git status;", c);
+        Assert.False(direct);
+    }
+
+    [Fact]
+    public void The_old_brace_form_still_works_next_to_the_new_one()
+    {
+        Assert.True(CommandShortcut.TryParse("/cmd{$npm test} summarize failures", out string c, out string after, out bool direct));
+        Assert.Equal("npm test", c);
+        Assert.Equal("summarize failures", after);
+        Assert.True(direct);
+    }
+
+    [Fact]
+    public void Flags_inside_the_short_form_are_read_like_everywhere_else()
+    {
+        Assert.True(CommandShortcut.TryParse("/cmd$-i -b bun convex dev;", out string c, out _, out _));
+        DirectShell.StripFlags(c, out string stripped, out bool background, out bool interactive);
+        Assert.Equal("bun convex dev", stripped);
+        Assert.True(background);
+        Assert.True(interactive);
     }
 }

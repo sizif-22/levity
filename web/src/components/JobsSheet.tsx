@@ -61,7 +61,7 @@ export function JobsSheet({ jobs, send, onClose }: { jobs: Job[]; send: (m: Reco
       <div className="sheet-head">
         <div>
           <h3>Background jobs</h3>
-          <p className="sheet-sub">{jobs.length ? `${running} running · ${jobs.length - running} finished` : 'Nothing running. Start one with /cmd{$bun run dev}.'}</p>
+          <p className="sheet-sub">{jobs.length ? `${running} running · ${jobs.length - running} finished` : 'Nothing running. Start one with /cmd$bun run dev -b;'}</p>
         </div>
         <button className="icon-btn" onClick={onClose} title="Close">
           <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>

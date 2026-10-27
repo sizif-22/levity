@@ -335,12 +335,14 @@ function finishCurrentAssistantMessage(resultData) {
   sendBtn.disabled = false;
 }
 
-// "/cmd{$cd ../..}": dim the wrapper, colour and embolden the command word.
-const CMD_RE = /^(\/(?:cmd|cli|run|sh)(?:\{|\s+)\s*\$?\s*)([^\s}]+)([\s\S]*)$/i;
+// "/cmd$cd ../..;" (or "/cmd{$cd ../..}"): dim the wrapper, colour and embolden the command word.
+const CMD_RE = /^(\/(?:cmd|cli|run|sh)(?:\{|\s+|(?=\$))\s*\$?\s*)([^\s};]+)([\s\S]*)$/i;
 function userBubbleHtml(text) {
   const m = CMD_RE.exec(text);
   if (!m) return escapeHtml(text);
-  const rest = escapeHtml(m[3]).replace(/(^|\s)(-b)(?=\}?\s*$)/, '$1<span class="cmd-flag">$2</span>'); // the background flag reads as secondary
+  const rest = escapeHtml(m[3])
+    .replace(/(^|\s)(-b)(?=\}?;?\s*$)/, '$1<span class="cmd-flag">$2</span>')   // the background flag reads as secondary
+    .replace(/;(\s*)$/, '<span class="cmd-pre">;</span>$1');                    // so does the closing semicolon
   return `<span class="cmd-pre">${escapeHtml(m[1])}</span><b class="cmd-word">${escapeHtml(m[2])}</b>${rest}`;
 }
 
@@ -423,10 +425,10 @@ document.querySelectorAll('.cmd-chip').forEach(cmd => {
   if (['/diagram', '/run', '/git', '/open-ide'].includes(cmd.dataset.cmd)) return; // these open their own views (diagram.js, actions.js)
   cmd.addEventListener('click', () => {
     const c = cmd.dataset.cmd;
-    promptInput.value = c.endsWith('}') ? c : c + ' ';
+    promptInput.value = c.endsWith('}') || c.endsWith(';') ? c : c + ' ';
     promptInput.focus();
     syncPromptHl();
-    if (c.endsWith('}')) promptInput.setSelectionRange(c.length - 1, c.length - 1); // caret between the braces
+    if (c.endsWith('}') || c.endsWith(';')) promptInput.setSelectionRange(c.length - 1, c.length - 1); // caret before the closing brace or semicolon
   });
 });
 
@@ -544,7 +546,7 @@ function renderJobs(msg) {
   const running = jobs.filter(j => j.state === 'running').length;
   $('jobsBadge').hidden = running === 0;
   $('jobsBadge').textContent = running;
-  $('jobsSub').textContent = jobs.length ? `${running} running · ${jobs.length - running} finished` : 'Nothing running. Start one with /cmd{$bun run dev}.';
+  $('jobsSub').textContent = jobs.length ? `${running} running · ${jobs.length - running} finished` : 'Nothing running. Start one with /cmd$bun run dev -b;';
 
   const list = $('jobList');
   const keep = new Set(jobs.map(j => String(j.id)));

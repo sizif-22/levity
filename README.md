@@ -11,8 +11,8 @@ It is the developer interface for the **Antigravity CLI** (`agy`), which provide
 ## Built for how developers work
 
 - **Repo-aware.** It finds your projects by their markers (`.git`, `package.json`, `*.csproj`, `Cargo.toml`, `go.mod`, ...) and lists them as pinned, most used and recently active. One click switches the assistant to another repo; **Choose folder...** works for any directory, and **No project** gives a general assistant for non-repo tasks. The path bar always shows where it is working.
-- **Commands without the AI.** `/cmd{$git status}` and `/cmd{$npm test}` run straight in PowerShell: instant, free, output and exit code in the chat. `cd` moves the whole assistant to another folder. Drop the `$` (or add text after it, `/cmd{$npm test} summarize the failures`) when you want the AI to run it and reason about the result.
-- **Dev servers and watchers stay out of the way.** Anything still running after 3 seconds, or anything started with `-b` (`/cmd{$bun run dev -b}`), moves to a **Jobs panel** with live output and a Stop button that ends the whole process tree. Your chat stays free.
+- **Commands without the AI.** `/cmd$git status;` and `/cmd$npm test;` run straight in PowerShell: instant, free, output and exit code in the chat. `cd` moves the whole assistant to another folder. Drop the `$` (or add text after it, `/cmd{$npm test} summarize the failures`) when you want the AI to run it and reason about the result.
+- **Dev servers and watchers stay out of the way.** Anything still running after 3 seconds, or anything started with `-b` (`/cmd$bun run dev -b;`), moves to a **Jobs panel** with live output and a Stop button that ends the whole process tree. Your chat stays free.
 - **Never blocked while it thinks.** Type the next request and it is **queued**. Hit **Stop** to cancel a wrong turn without losing the conversation.
 - **One chat per task, saved per repo.** Reopen yesterday's debugging session and the assistant remembers it, in its original folder.
 - **Straight to your editor.** One click opens any project in the Antigravity IDE, with no AI round trip.
@@ -25,12 +25,12 @@ It is the developer interface for the **Antigravity CLI** (`agy`), which provide
 ## A typical session
 
 ```text
-/cmd{$git status}                      instant status, no tokens
+/cmd$git status;                      instant status, no tokens
 Why does the login test fail?          the assistant investigates in this repo
 /cmd{$npm test} summarize failures     runs it, then the AI explains the output
-/cmd{$bun run dev -b}                  dev server starts in the Jobs panel
+/cmd$bun run dev -b;                  dev server starts in the Jobs panel
 (walk away; watch it or stop it from your phone)
-/cmd{$cd ../other-service}             switch the assistant to another repo
+/cmd$cd ../other-service;             switch the assistant to another repo
 ```
 
 ## Quick start
