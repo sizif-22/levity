@@ -1,0 +1,48 @@
+web/src/lib/onboarding.ts
+  s_d7448d4eb56c88::t_afa392aae29e9f 1-33
+wwwroot/app.js
+  s_d7448d4eb56c88::t_76194ff108c980 423,628,689
+  s_d7448d4eb56c88::t_c42980c10083b4 55
+web/src/App.tsx
+  s_d7448d4eb56c88::t_54af83385ad7d5 16,127,301-304,306-316,373
+web/src/lib/actions.ts
+  s_d7448d4eb56c88::t_54af83385ad7d5 11-14
+web/tsconfig.tsbuildinfo
+  s_d7448d4eb56c88::t_54af83385ad7d5 1
+Services/ProjectActions.cs
+  s_d7448d4eb56c88::t_76194ff108c980 14-15,29-56
+wwwroot/actions.js
+  s_d7448d4eb56c88::t_c42980c10083b4 26-52,55-56
+tests/Levity.Tests/InteractiveTests.cs
+  s_d7448d4eb56c88::t_2ecc674a4c15c2 544-597
+tests/sidebar/actions.test.mjs
+  s_d7448d4eb56c88::t_bec0021ca612cf 268
+  s_d7448d4eb56c88::t_2ecc674a4c15c2 209-267,269-273
+wwwroot/index.html
+  s_d7448d4eb56c88::t_76194ff108c980 90,94-96,98-103,118
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_76194ff108c980 1278-1281
+web/tests/onboarding.spec.ts
+  s_d7448d4eb56c88::t_2ecc674a4c15c2 1-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4d01c2df332377bb8895fcd129b3033e06f6c39f",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
