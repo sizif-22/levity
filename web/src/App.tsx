@@ -240,6 +240,10 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
                 <span className="chip-ico"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /></svg></span>
                 <span><strong>Review all my projects</strong><small>Refresh docs and skills across your drive</small></span>
               </button>
+              <button className="chip" onClick={() => send({ type: 'open_ide', path: chat.cwd })}>
+                <span className="chip-ico"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
+                <span><strong>Open in Antigravity IDE</strong><small>Opens the current project on your PC</small></span>
+              </button>
               {['What files and structure are in the current working directory?', 'Check the git status and recent commits of this repository.', 'Explain what this project does and recommend next steps.'].map((t, i) => (
                 <button key={t} className="chip" onClick={() => send({ type: 'send_prompt', text: t })}>
                   <span><strong>{['Inspect workspace', 'Git status', 'Project overview'][i]}</strong></span>

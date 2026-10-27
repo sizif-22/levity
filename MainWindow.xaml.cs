@@ -361,6 +361,10 @@ namespace AntigravitySidebar
                         }
                         break;
 
+                    case "open_ide":
+                        OpenInIde(GetString(root, "path"), clientId);
+                        break;
+
                     case "set_cwd":
                         SwitchProject(GetString(root, "path"), clientId);
                         break;
@@ -451,6 +455,75 @@ namespace AntigravitySidebar
                     lastUsed = _settings.ProjectLastUsed.TryGetValue(AppSettings.ProjectKey(p.Path), out var lu) ? lu : (DateTime?)null
                 })
             });
+        }
+
+        // ---- Open in IDE -------------------------------------------------------------------
+
+        private static string? LocateIdeLauncher()
+        {
+            string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            foreach (string name in new[] { "Antigravity IDE", "Antigravity" })
+            {
+                string candidate = Path.Combine(local, "Programs", name, "bin", "antigravity.cmd");
+                if (File.Exists(candidate)) return candidate;
+            }
+
+            foreach (string dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+            {
+                try
+                {
+                    string candidate = Path.Combine(dir.Trim(), "antigravity.cmd");
+                    if (File.Exists(candidate)) return candidate;
+                }
+                catch { }
+            }
+            return null;
+        }
+
+        /// <summary>Opens a project folder in the Antigravity IDE directly (no AI round-trips).</summary>
+        private void OpenInIde(string path, string? clientId)
+        {
+            if (string.IsNullOrWhiteSpace(path)) path = _agyManager.CurrentWorkingDirectory;
+
+            bool allowed = Directory.Exists(path);
+            if (allowed && clientId != null)
+            {
+                // Phones may only open folders under the projects root, or the current project.
+                string full = Path.GetFullPath(path).TrimEnd('\\') + "\\";
+                string rootFull = Path.GetFullPath(_settings.ProjectsRoot).TrimEnd('\\') + "\\";
+                string cwdFull = Path.GetFullPath(_agyManager.CurrentWorkingDirectory).TrimEnd('\\') + "\\";
+                allowed = full.StartsWith(rootFull, StringComparison.OrdinalIgnoreCase)
+                       || string.Equals(full, cwdFull, StringComparison.OrdinalIgnoreCase);
+            }
+            // The launcher is a .cmd file: refuse anything cmd.exe would treat as a command separator.
+            if (!allowed || path.IndexOfAny(new[] { '&', '|', '<', '>', '^', '%', '"', '!' }) >= 0)
+            {
+                Reply(clientId, new { type = "toast", text = "That folder cannot be opened." });
+                return;
+            }
+
+            string? launcher = LocateIdeLauncher();
+            if (launcher == null)
+            {
+                Reply(clientId, new { type = "toast", text = "Antigravity IDE was not found on this PC." });
+                return;
+            }
+
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = launcher,
+                    Arguments = $"\"{path}\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+                Reply(clientId, new { type = "toast", text = $"Opening {Path.GetFileName(path.TrimEnd('\\'))} in Antigravity IDE…" });
+            }
+            catch (Exception ex)
+            {
+                Reply(clientId, new { type = "toast", text = $"Could not start the IDE: {ex.Message}" });
+            }
         }
 
         private async Task StartSyncAsync(JsonElement root, string? clientId)

@@ -410,6 +410,7 @@ document.addEventListener('keydown', (e) => {
 $('projectsBtn').addEventListener('click', () => openSheet('projectsSheet'));
 $('cwdButton').addEventListener('click', () => openSheet('projectsSheet'));
 $('chipReviewAll').addEventListener('click', () => openSheet('projectsSheet'));
+$('chipIde').addEventListener('click', () => postToHost({ type: 'open_ide', path: currentCwd }));
 $('mobileBtn').addEventListener('click', () => openSheet('mobileSheet'));
 
 // ---------------------------------------------------------------------------
@@ -423,6 +424,7 @@ let showSyncView = false;
 
 function dot(has, label) { return `<span title="${label}: ${has ? 'present' : 'missing'}"><i class="d ${has ? 'ok' : 'miss'}"></i></span>`; }
 
+const IDE_SVG = '<svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>';
 const PIN_SVG = '<svg viewBox="0 0 24 24"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-2l-2-2V5a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v8l-2 2v2z"/></svg>';
 const DAY = 86400000;
 
@@ -507,10 +509,12 @@ function projectRow(p, checked) {
         ${dot(p.hasReadme, 'README')}${dot(p.hasAgentsDoc, 'AGENTS')}${dot(p.hasSkills, 'Skills')}
         <span>${escapeHtml(meta)}</span></div>
     </div>
+    <button class="pin-btn ide-btn" title="Open in Antigravity IDE">${IDE_SVG}</button>
     <button class="pin-btn ${p.pinned ? 'on' : ''}" title="${p.pinned ? 'Unpin' : 'Pin to top'}">${PIN_SVG}</button>
     <button class="open-btn">Open</button>`;
   li.querySelector('.proj-main').addEventListener('click', () => { const cb = li.querySelector('.cb'); cb.checked = !cb.checked; updateSyncButton(); });
   li.querySelector('.cb').addEventListener('change', updateSyncButton);
+  li.querySelector('.ide-btn').addEventListener('click', () => postToHost({ type: 'open_ide', path: p.path }));
   li.querySelector('.pin-btn').addEventListener('click', () => postToHost({ type: 'pin_project', path: p.path, pinned: !p.pinned }));
   li.querySelector('.open-btn').addEventListener('click', () => {
     postToHost({ type: 'set_cwd', path: p.path });
