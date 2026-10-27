@@ -13,7 +13,7 @@ import { FastLearnerCard } from './components/FastLearnerCard';
 import { DiagramSheet } from './components/DiagramSheet';
 import { sameFolder, type DiagramMsg, type DiagramPrepared, type DiagramState } from './lib/diagram';
 import { ProjectsSheet, syncCounts, type ProjectsMsg, type SyncState } from './components/ProjectsSheet';
-import { Center, ConfirmDialog, Logo, LockScreen, PairScreen, SettingsSheet } from './components/Screens';
+import { ConfirmDialog, Logo, LockScreen, PairScreen, SettingsSheet } from './components/Screens';
 
 type Phase = 'loading' | 'pair' | 'locked' | 'main';
 type Json = Record<string, unknown>;
@@ -404,7 +404,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
 
       {dialog && <ConfirmDialog {...dialog} onResult={(v) => { dialog.resolve(v); setDialog(null); }} />}
       <div className={`toast ${toastText ? 'show' : ''}`} role="status">{toastText}</div>
-      {!online && linkState === 'offline' && <Center><span className="spinner" /></Center>}
+      {!online && linkState === 'offline' && <div className="reconnect-spin" role="status" aria-label="Reconnecting"><span className="spinner big" /></div>}
     </div>
   );
 }
