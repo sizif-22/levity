@@ -173,6 +173,11 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
     : linkState === 'host-offline' ? 'PC offline' : linkState === 'connecting' ? 'Connecting…' : 'Reconnecting…';
   const statusState = online ? chat.status.state : 'offline';
 
+  // The box grows with long text by setting an inline height; shrink it back once the draft is cleared (sent or emptied).
+  useEffect(() => {
+    if (!draft && composer.current) composer.current.style.height = 'auto';
+  }, [draft]);
+
   const submit = () => {
     const text = draft.trim();
     if (!text || !online) return; // while busy the PC queues it
