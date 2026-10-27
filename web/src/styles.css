@@ -574,3 +574,15 @@ body.remote textarea, body.remote input, body.remote code { -webkit-user-select:
 .job-meta { font-size: 11.5px; color: var(--muted-foreground); white-space: nowrap; }
 .job-stop { height: 28px; padding: 0 10px; font-size: 12px; }
 .job-out { margin: 0; padding: 8px 10px; max-height: 220px; overflow: auto; border-top: 1px solid var(--border); background: var(--code-bg); font-family: var(--mono); font-size: 11.5px; line-height: 1.45; white-space: pre-wrap; word-break: break-all; }
+
+/* ---------- Command highlight inside the message box ---------- */
+.input-stack { position: relative; flex: 1; min-width: 0; display: flex; }
+.input-stack textarea, .composer-hl { padding: 6px 0; line-height: 1.45; font: inherit; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; word-break: normal; }
+.composer-hl { position: absolute; inset: 0; overflow: hidden; pointer-events: none; color: var(--foreground); }
+.input-stack textarea { position: relative; z-index: 1; width: 100%; }
+.input-stack textarea.hl-on { color: transparent; caret-color: var(--foreground); }
+.composer-hl .cmd-pre { opacity: 0.65; }
+/* Bold would change glyph widths and misalign the caret, so the word is thickened with a stroke instead. */
+.composer-hl .cmd-word { color: oklch(0.55 0.17 55); -webkit-text-stroke: 0.7px currentColor; }
+@media (prefers-color-scheme: dark) { .composer-hl .cmd-word { color: oklch(0.82 0.15 85); } }
+body.remote .composer-hl { font-size: 16px; } /* match the textarea (iOS zoom guard) */

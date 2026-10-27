@@ -317,6 +317,15 @@ function userBubbleHtml(text) {
   return `<span class="cmd-pre">${escapeHtml(m[1])}</span><b class="cmd-word">${escapeHtml(m[2])}</b>${escapeHtml(m[3])}`;
 }
 
+// Colour the command word inside the message box itself: a transparent-text textarea over a styled mirror.
+function syncPromptHl() {
+  const isCmd = CMD_RE.test(promptInput.value);
+  promptInput.classList.toggle('hl-on', isCmd);
+  promptInput.spellcheck = !isCmd;
+  $('promptHl').innerHTML = isCmd ? userBubbleHtml(promptInput.value) + '&#8203;' : '';
+  $('promptHl').scrollTop = promptInput.scrollTop;
+}
+
 function appendUserMessage(text, source) {
   welcomeScreen.style.display = 'none';
   const row = document.createElement('div');
@@ -341,6 +350,7 @@ function sendCurrentPrompt() {
   sendPrompt(text);
   promptInput.value = '';
   promptInput.style.height = 'auto';
+  syncPromptHl();
 }
 
 function resetChatUI() {
@@ -364,7 +374,9 @@ promptInput.addEventListener('keydown', (e) => {
     sendCurrentPrompt();
   }
 });
+promptInput.addEventListener('scroll', () => { $('promptHl').scrollTop = promptInput.scrollTop; });
 promptInput.addEventListener('input', () => {
+  syncPromptHl();
   promptInput.style.height = 'auto';
   promptInput.style.height = Math.min(promptInput.scrollHeight, 180) + 'px';
 });
@@ -378,6 +390,7 @@ document.querySelectorAll('.cmd-chip').forEach(cmd => {
     const c = cmd.dataset.cmd;
     promptInput.value = c.endsWith('}') ? c : c + ' ';
     promptInput.focus();
+    syncPromptHl();
     if (c.endsWith('}')) promptInput.setSelectionRange(c.length - 1, c.length - 1); // caret between the braces
   });
 });

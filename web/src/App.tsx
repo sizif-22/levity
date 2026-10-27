@@ -104,6 +104,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const toastTimer = useRef<number>();
   const syncRef = useRef<SyncState | null>(null);
   const composer = useRef<HTMLTextAreaElement | null>(null);
+  const hl = useRef<HTMLDivElement | null>(null);
   syncRef.current = sync;
 
   const toast = useCallback((t: string) => {
@@ -327,10 +328,15 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           <span className="cmd-chip" title="Run a CLI command directly (no AI), e.g. /cmd{$git status}. Add -b to run it in the background." onClick={() => { setDraft('/cmd{$}'); setTimeout(() => { composer.current?.focus(); composer.current?.setSelectionRange(6, 6); }, 0); }}>/cmd</span>
         </div>
         <div className="composer">
+          <div className="input-stack">
+          <div className="composer-hl" ref={hl} aria-hidden="true">{CMD_RE.test(draft) && <><UserText text={draft} />{'\u200b'}</>}</div>
           <textarea
+            className={CMD_RE.test(draft) ? 'hl-on' : ''} spellCheck={!CMD_RE.test(draft)} autoCorrect="off" autoCapitalize="off"
+            onScroll={(e) => { if (hl.current) hl.current.scrollTop = e.currentTarget.scrollTop; }}
             ref={composer} rows={1} value={draft} placeholder={online ? 'Ask Levity anything… or /cmd{$git status}' : 'Waiting for your PC…'}
             onChange={(e) => { setDraft(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 180) + 'px'; }}
           />
+          </div>
           {generating && (
             <button className="send-btn stop-btn" onClick={() => send({ type: 'stop_response' })} title="Stop the response">
               <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" /></svg>
