@@ -281,7 +281,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           <div className="messages-list">
             {chat.msgs.filter(visible).map((m) => m.role === 'user' ? (
               <div key={m.id} className="message-row user">
-                <div className="user-bubble"><UserText text={m.text} /></div>
+                <div className={`user-bubble${CMD_RE.test(m.text) ? ' cmd-bubble' : ''}`}><UserText text={m.text} /></div>
                 {m.source === 'desktop' && <span className="via">from your PC</span>}
               </div>
             ) : (

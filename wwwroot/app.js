@@ -332,7 +332,7 @@ function appendUserMessage(text, source) {
   welcomeScreen.style.display = 'none';
   const row = document.createElement('div');
   row.className = 'message-row user';
-  row.innerHTML = `<div class="user-bubble">${userBubbleHtml(text)}</div>`;
+  row.innerHTML = `<div class="user-bubble${CMD_RE.test(text) ? ' cmd-bubble' : ''}">${userBubbleHtml(text)}</div>`;
   // Show where a message came from when it was not typed on this device.
   const fromOther = (source === 'mobile' && isHost) || (source === 'desktop' && !isHost);
   if (fromOther) row.insertAdjacentHTML('beforeend', `<span class="via">from ${source === 'mobile' ? 'your phone' : 'your PC'}</span>`);

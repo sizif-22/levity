@@ -229,8 +229,11 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
   word-break: break-word;
 }
 .user-bubble .cmd-pre { opacity: 0.7; }
-.user-bubble .cmd-word { font-weight: 800; color: oklch(0.88 0.16 85); }
-@media (prefers-color-scheme: dark) { .user-bubble .cmd-word { color: oklch(0.42 0.14 55); } }
+/* One colour for the command word in the sent bubble and in the message box. Command bubbles use a card background like the box, so it reads the same in both. */
+:root { --cmd-word: oklch(0.55 0.17 55); }
+@media (prefers-color-scheme: dark) { :root { --cmd-word: oklch(0.82 0.15 85); } }
+.user-bubble.cmd-bubble { background: var(--secondary); color: var(--secondary-foreground); border: 1px solid var(--border); }
+.user-bubble .cmd-word { font-weight: 800; color: var(--cmd-word); }
 .cwd-pill span bdi { direction: ltr; unicode-bidi: isolate; }
 .via { font-size: 11px; color: var(--muted-foreground); margin-top: 3px; }
 
@@ -563,8 +566,7 @@ body.remote .scroll-bottom-btn { bottom: 120px; }
 .input-stack textarea.hl-on { color: transparent; caret-color: var(--foreground); }
 .composer-hl .cmd-pre { opacity: 0.65; }
 /* Bold would change glyph widths and misalign the caret, so the word is thickened with a stroke instead. */
-.composer-hl .cmd-word { color: oklch(0.55 0.17 55); -webkit-text-stroke: 0.7px currentColor; }
-@media (prefers-color-scheme: dark) { .composer-hl .cmd-word { color: oklch(0.82 0.15 85); } }
+.composer-hl .cmd-word { color: var(--cmd-word); -webkit-text-stroke: 0.7px currentColor; }
 body.remote .composer-hl { font-size: 16px; } /* match the textarea (iOS zoom guard) */
 
 .cmd-flag { opacity: 0.4; }
