@@ -1,0 +1,89 @@
+AntigravitySidebar.csproj
+  s_d7448d4eb56c88::t_345c36c5e43635 17-23
+web/tests/components.spec.tsx
+  s_d7448d4eb56c88::t_2a5d0e6805c7ad 1-124
+tests/Levity.Tests/CommandTests.cs
+  s_d7448d4eb56c88::t_99019a3d5abe7b 1-139,141-154
+  s_d7448d4eb56c88::t_daa4c99abbf861 140
+web/package.json
+  s_d7448d4eb56c88::t_b579daa576221c 10,21-22,26,28-29
+web/src/App.tsx
+  s_d7448d4eb56c88::t_22fb4715ce44ca 11
+web/tests/pin.spec.ts
+  s_d7448d4eb56c88::t_9bebcd799aafdb 1-38
+web/tests/chat-more.test.ts
+  s_d7448d4eb56c88::t_d0887b19907da2 1-68
+tests/Levity.Tests/CryptoTests.cs
+  s_d7448d4eb56c88::t_6db563c292e7a2 151
+  s_d7448d4eb56c88::t_2dac3935a6bdd6 1-150,152-172
+tests/Levity.Tests/SettingsTests.cs
+  s_d7448d4eb56c88::t_ce0565df70641e 1-198
+tests/Levity.Tests/TestEnvironment.cs
+  s_d7448d4eb56c88::t_a518d12713c77f 1-30
+relay/tests/relay.test.mjs
+  s_d7448d4eb56c88::t_a4fa86bb60f989 1-202
+docs/TESTING.md
+  s_d7448d4eb56c88::t_9576a3503dc112 1-41
+tests/Levity.Tests/JobManagerTests.cs
+  s_d7448d4eb56c88::t_ffd55bf97b061b 64
+  s_d7448d4eb56c88::t_9ccbf55b7f38d6 1-63,65-182
+web/tests/pairing.spec.ts
+  s_d7448d4eb56c88::t_044207c35fb8a0 1-61
+Services/DirectShell.cs
+  s_d7448d4eb56c88::t_7b70629454f4b6 25-28
+tests/Levity.Tests/StoreAndScannerTests.cs
+  s_d7448d4eb56c88::t_0523009bfdecab 1-189
+web/vitest.config.ts
+  s_d7448d4eb56c88::t_b579daa576221c 1-12
+tests/sidebar/package.json
+  s_d7448d4eb56c88::t_17e07c173121f0 1-13
+.github/workflows/ci.yml
+  s_d7448d4eb56c88::t_13d1b71fb877d4 1-152
+README.md
+  s_d7448d4eb56c88::t_3d2a6bb081ed1d 3-4,37-40,114-116
+wwwroot/app.js
+  s_d7448d4eb56c88::t_31e69bfce92f27 208-209
+web/src/components/UserText.tsx
+  s_d7448d4eb56c88::t_23f27152cc76b9 1-10
+Run-Tests.ps1
+  s_d7448d4eb56c88::t_883e195ac3c6fe 1-68
+tests/Levity.Tests/interop/crypto-interop.ts
+  s_d7448d4eb56c88::t_d0c630dd92e9a1 1-16
+tests/Levity.Tests/Levity.Tests.csproj
+  s_d7448d4eb56c88::t_d0c630dd92e9a1 1-34
+tests/repo/Validate-Repo.ps1
+  s_d7448d4eb56c88::t_5973409747f9bd 48-49
+  s_d7448d4eb56c88::t_b41ea268c33886 1-47,50-155
+relay/package.json
+  s_d7448d4eb56c88::t_147b1557f78c87 8-10
+tests/sidebar/sidebar.test.mjs
+  s_d7448d4eb56c88::t_17d0c98f30f8de 1-55,58-368
+  s_d7448d4eb56c88::t_31e69bfce92f27 56-57
+.gitignore
+  s_d7448d4eb56c88::t_92f1eae0a7df63 20-22
+tests/sidebar/package-lock.json
+  s_d7448d4eb56c88::t_c77578440fb339 1-815
+web/package-lock.json
+  s_d7448d4eb56c88::t_0d0378497b71eb 19-20,24,26-27,30-50,285-294,343-457,1273-1327,1436-1608,1656-1679,1701-1740,1748-1768,1776-1792,1808-1851,1861-1875,1883-1951,2001-2037,2053-2062,2073-2166,2176-2236,2243-2283,2328-2334,2345-2364,2377-2409,2446-2482,2519-2543,2569-2575,2632-2658,2678-2684,2695-2805,2911-3116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b4938049efdf56052f561246081cbc02f7d8f98e",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
