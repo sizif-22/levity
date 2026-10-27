@@ -16,3 +16,4 @@ dist/
 settings.json
 .env
 .env.*
+!.env.example

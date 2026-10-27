@@ -515,6 +515,9 @@ namespace AntigravitySidebar
 
         private static string? LocateIdeLauncher()
         {
+            string? overridePath = DotEnv.Get("ANTIGRAVITY_IDE_PATH");
+            if (overridePath != null && File.Exists(overridePath)) return overridePath;
+
             string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             foreach (string name in new[] { "Antigravity IDE", "Antigravity" })
             {

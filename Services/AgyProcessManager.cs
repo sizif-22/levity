@@ -33,6 +33,10 @@ namespace AntigravitySidebar.Services
 
         public static string? LocateAgyExecutable()
         {
+            // 0. Explicit override from .env / environment
+            string? overridePath = DotEnv.Get("AGY_PATH");
+            if (overridePath != null && File.Exists(overridePath)) return overridePath;
+
             // 1. Direct local AppData path
             string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             string knownPath = Path.Combine(localAppData, "agy", "bin", "agy.exe");

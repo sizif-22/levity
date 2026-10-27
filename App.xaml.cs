@@ -14,6 +14,7 @@ namespace AntigravitySidebar
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            AntigravitySidebar.Services.DotEnv.Load(); // before anything reads configuration
             string logFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup.log");
             try { File.AppendAllText(logFile, $"[{DateTime.Now:HH:mm:ss}] OnStartup entered\n"); } catch { }
 

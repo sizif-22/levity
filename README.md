@@ -4,7 +4,7 @@ Desktop sidebar and phone app for the **Antigravity CLI** (`agy`). Formerly "Ant
 
 - **Desktop**: tray widget that slides in from the right edge (`Win + Alt + A`). WPF + WebView2.
 - **Phone**: React/Vite app on Vercel. It talks to your PC through a tiny relay, end-to-end encrypted. **No port is opened on your PC.**
-- **Project review**: one click runs `agy` over every project under a root folder (default `D:\`) to refresh README, `AGENTS.md` and `.agent/skills/`.
+- **Project review**: one click runs `agy` over every project under a root folder (default: your user folder, set `LEVITY_PROJECTS_ROOT`) to refresh README, `AGENTS.md` and `.agent/skills/`.
 
 ```
  phone (Vercel app) ──wss──▶  relay (Cloudflare Worker)  ◀──wss── PC (Levity.exe)
@@ -13,13 +13,24 @@ Desktop sidebar and phone app for the **Antigravity CLI** (`agy`). Formerly "Ant
 
 Vercel only serves static files and cannot hold WebSockets, so the relay is a separate ~100-line Cloudflare Worker (`relay/`). The relay forwards opaque encrypted frames between a room's PC and phones. It never holds a key.
 
-## Run the desktop app
+## Quick start
 
 ```powershell
-.\run.ps1        # or Start-Sidebar.bat, or publish\Levity.exe
+git clone https://github.com/sizif-22/levity.git
+cd levity
+.\Setup.ps1 -Skills -Shortcuts     # checks tools, creates .env, builds, installs agent skills, adds shortcuts
+.\publish\Levity.exe               # or Win + Alt + A once it is running
 ```
 
-Build: `dotnet publish -c Release -r win-x64 --self-contained false -o publish` (needs the .NET 8 desktop runtime).
+Needs Windows 10/11, the .NET 8 SDK and the `agy` CLI. The full guide, with prerequisites, every setting, phone setup and troubleshooting, is in **[docs/RUNNING.md](docs/RUNNING.md)**.
+
+## Configuration
+
+Copy `.env.example` to `.env` (all values optional): relay and phone-app addresses, projects folder, paths to `agy` and the IDE, sidebar width. Environment variables win over the file, and anything you change in the app is saved in `settings.json` and wins over the `.env` defaults. `.env` is git-ignored.
+
+## Agent skills
+
+`agent/skills` ships skills for the agent, including **Fast Learner**: when a simple task (downloading an image, changing the wallpaper, a CLI quirk) takes unexpectedly long, the agent saves the working solution as a reusable skill so the next run is one quick step. Install with `.\Install-Skills.ps1` (`-Force` to replace, `-Uninstall` to remove). Details in [docs/RUNNING.md](docs/RUNNING.md#6-agent-skills).
 
 ## Set up phone access (once)
 
@@ -87,9 +98,22 @@ Services/
   RelayCrypto.cs           AES-GCM framing shared with the phone app
   ProjectScanner.cs / ProjectSyncService.cs
   TrayIconManager.cs, HotkeyManager.cs, AppSettings.cs, NativeMethods.cs
+  JobManager.cs, DirectShell.cs, CommandShortcut.cs   /cmd{$...} direct commands and background jobs
+  SessionStore.cs          saved chats
+  DotEnv.cs                .env loader
 wwwroot/                   desktop sidebar UI (WebView2)
 relay/                     Cloudflare Worker + Durable Object (room per key)
-web/                       React + Vite phone app (deploy to Vercel)
+web/                       React + Vite phone app (deploy to Vercel or any static host)
+agent/                     agent skills and the Fast Learner rule (installed by Install-Skills.ps1)
+docs/RUNNING.md            how to build, configure and run
+Setup.ps1, Install-Skills.ps1, Create-DesktopShortcut.ps1, run.ps1
+.env.example               configuration template
 ```
 
 Tests: `cd web && npm test` (crypto: replay, tamper, reflection, staleness). The desktop host classes and the phone app were also verified end to end against a local relay.
+
+## License
+
+[PolyForm Noncommercial License 1.0.0](LICENSE). Anyone may use, modify and share Levity for noncommercial purposes (personal use, learning, research, hobby projects, nonprofits and similar). **Commercial use, including selling it or using it to make money, is not permitted** without a separate license from the author. This makes the source available but not "open source" in the OSI sense.
+
+Third-party code keeps its own licenses: `wwwroot/marked.min.js` (MIT), `wwwroot/highlight.min.js` and `github-dark.min.css` (BSD-3-Clause), and the npm and NuGet dependencies listed in `web/package.json`, `relay/package.json` and `AntigravitySidebar.csproj`.

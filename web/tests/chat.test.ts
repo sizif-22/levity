@@ -9,7 +9,7 @@ const step = (o: Json) => ev({ event: 'step_update', step_update: o });
 // Sequence taken from a real agy turn: empty agent_response between tool steps, text only at the end.
 function realTurn() {
   const msgs: Json[] = [{ type: 'user_message', text: 'open this project in the IDE', source: 'mobile' }, step({ step_type: 'user_input', state: 'DONE' })];
-  for (const [i, tool, args] of [[3, 'read_file', { AbsolutePath: 'D:\Tagaddod\grow\README.md' }], [14, 'run_command', { CommandLine: 'Get-Command *antigravity*' }], [18, 'run_command', { CommandLine: '& "antigravity.cmd" "D:\Tagaddod\grow"' }]] as const) {
+  for (const [i, tool, args] of [[3, 'read_file', { AbsolutePath: 'D:\Projects\app\README.md' }], [14, 'run_command', { CommandLine: 'Get-Command *antigravity*' }], [18, 'run_command', { CommandLine: '& "antigravity.cmd" "D:\Projects\app"' }]] as const) {
     msgs.push(step({ step_type: 'agent_response', state: 'DONE' }));
     msgs.push(step({ step_type: 'tool', state: 'ACTIVE', tool_name: tool, step_index: i }));
     msgs.push(step({ step_type: 'tool', state: 'DONE', tool_name: tool, step_index: i, tool_info: { name: tool, parameters: args } }));

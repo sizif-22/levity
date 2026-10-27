@@ -9,17 +9,17 @@ namespace AntigravitySidebar.Services
     {
         public bool IsPinned { get; set; } = false;
         public string? WorkingDirectory { get; set; }
-        public double SidebarWidth { get; set; } = 460;
+        public double SidebarWidth { get; set; } = DotEnv.GetDouble("LEVITY_SIDEBAR_WIDTH", 460);
         public bool LaunchOnStartup { get; set; } = false;
 
         // Mobile access through the relay (off until the user turns it on)
         public bool RemoteEnabled { get; set; } = false;
-        public string? RelayUrl { get; set; }       // wss://levity-relay.<account>.workers.dev
-        public string? MobileAppUrl { get; set; } = "https://levity.sheriflotfy.dev";
+        public string? RelayUrl { get; set; } = DotEnv.Get("LEVITY_RELAY_URL"); // wss://levity-relay.<account>.workers.dev
+        public string? MobileAppUrl { get; set; } = DotEnv.Get("LEVITY_APP_URL");
         public List<PairedDevice> Devices { get; set; } = new();
 
         // Project review
-        public string ProjectsRoot { get; set; } = @"D:\";
+        public string ProjectsRoot { get; set; } = DotEnv.Get("LEVITY_PROJECTS_ROOT") ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         public string? SyncPrompt { get; set; }
 
         // Project list ordering: keys are lower-cased full paths
