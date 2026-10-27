@@ -1,0 +1,66 @@
+AntigravitySidebar.csproj
+  s_d7448d4eb56c88::t_5e9ac7f9dd21a3 27-29
+web/tests/chat.test.ts
+  s_d7448d4eb56c88::t_fb2662fcc0b541 12
+agent/skills/fast-learner/SKILL.md
+  s_d7448d4eb56c88::t_17ed0798f7a8d0 33
+  s_d7448d4eb56c88::t_985eae01243060 1-32,34-44
+LICENSE
+  s_d7448d4eb56c88::t_dc7cf9cf6d4ff1 1-75
+docs/RUNNING.md
+  s_d7448d4eb56c88::t_4bd0f83fea34cd 1-127
+agent/skills/windows-wallpaper-manager/scripts/Set-Wallpaper.ps1
+  s_d7448d4eb56c88::t_985eae01243060 1-88
+agent/skills/windows-wallpaper-manager/scripts/Fetch-Wallpaper.ps1
+  s_d7448d4eb56c88::t_4d515c1a903ddb 12
+  s_d7448d4eb56c88::t_985eae01243060 1-11,13-70
+.env.example
+  s_d7448d4eb56c88::t_5b2d7581d00163 1-36
+Services/AgyProcessManager.cs
+  s_d7448d4eb56c88::t_5e9ac7f9dd21a3 36-39
+agent/fast-learner.rule.md
+  s_d7448d4eb56c88::t_2f23598aa32108 1-9
+README.md
+  s_d7448d4eb56c88::t_d647fe177f952b 7,16,19-22,25-33,101-103,106-110,114-119
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_5e9ac7f9dd21a3 518-520
+Install-Skills.ps1
+  s_d7448d4eb56c88::t_dd208601e771e2 1-70
+Setup.ps1
+  s_d7448d4eb56c88::t_353b76af925091 1-63
+Services/AppSettings.cs
+  s_d7448d4eb56c88::t_5e9ac7f9dd21a3 12,17-18,22
+Services/DotEnv.cs
+  s_d7448d4eb56c88::t_487a2831ae45bd 1-65
+agent/skills/windows-wallpaper-manager/SKILL.md
+  s_d7448d4eb56c88::t_4d515c1a903ddb 30,43,46,49
+  s_d7448d4eb56c88::t_985eae01243060 1-29,31-42,44-45,47-48
+App.xaml.cs
+  s_d7448d4eb56c88::t_5e9ac7f9dd21a3 17
+agent/skills/open-in-antigravity-ide/SKILL.md
+  s_d7448d4eb56c88::t_985eae01243060 1-17,19-76
+  s_d7448d4eb56c88::t_4d515c1a903ddb 18
+.gitignore
+  s_d7448d4eb56c88::t_5e9ac7f9dd21a3 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "96146b71a59faf9681c7b314b999b651fa5db604",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
