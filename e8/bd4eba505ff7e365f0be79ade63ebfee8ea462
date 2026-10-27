@@ -1,0 +1,70 @@
+Services/DirectShell.cs
+  s_d7448d4eb56c88::t_a73f927c7711fb 20-38
+web/src/styles.css
+  s_d7448d4eb56c88::t_aee3e6bd4fe65a 1-663,665-667,669-693
+tests/Levity.Tests/InteractiveTests.cs
+  s_d7448d4eb56c88::t_61d17e24b96bcf 1-464
+  s_d7448d4eb56c88::t_298002f74efc11 465-543
+web/src/lib/actions.ts
+  s_d7448d4eb56c88::t_744498ce5517a1 1-48
+web/src/App.tsx
+  s_d7448d4eb56c88::t_aee3e6bd4fe65a 14-15,92-94,151-153,368-369,408-409
+web/tests/actions.spec.tsx
+  s_d7448d4eb56c88::t_c34fbea05390d6 1-145
+Services/JobManager.cs
+  s_d7448d4eb56c88::t_4326def41147af 32-35,56-60,94-160,236,239-240,264,274-276,292
+wwwroot/index.html
+  s_d7448d4eb56c88::t_e01b9c7431a0ac 115-116,269-333,436
+web/tsconfig.tsbuildinfo
+  s_d7448d4eb56c88::t_16bf72b18073b4 1
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_22761d24e1192a 455
+  s_d7448d4eb56c88::t_aee3e6bd4fe65a 1243
+  s_d7448d4eb56c88::t_fa20d47c453dfd 452-454,456-481,825,956,1105,1118,1122,1126,1129,1131-1136,1155,1187,1216-1217,1235,1237,1241-1242,1244-1247,1264-1322,1457
+wwwroot/app.js
+  s_d7448d4eb56c88::t_e01b9c7431a0ac 84-86,422,559-577,586
+Services/ProjectActions.cs
+  s_d7448d4eb56c88::t_44631519d0e00e 1-168,170-179,216-234
+  s_d7448d4eb56c88::t_a73f927c7711fb 169,180-215
+docs/USING.md
+  s_d7448d4eb56c88::t_366a253247fda8 90-122
+wwwroot/actions.js
+  s_d7448d4eb56c88::t_12ef504da8882b 1-128
+wwwroot/style.css
+  s_d7448d4eb56c88::t_e01b9c7431a0ac 650-674
+web/src/components/ActionSheets.tsx
+  s_d7448d4eb56c88::t_ad84e0975e849d 1-111
+web/src/components/JobsSheet.tsx
+  s_d7448d4eb56c88::t_aee3e6bd4fe65a 1-2,12-13,37-56,83
+Services/VtScreen.cs
+  s_d7448d4eb56c88::t_b93a6f8c60141f 1-200
+Services/PtyProcess.cs
+  s_d7448d4eb56c88::t_57f42dbcc78b01 1-68,71-108,112,115-192,194-241
+  s_d7448d4eb56c88::t_60f99f8adb638f 69-70,193
+  s_d7448d4eb56c88::t_4326def41147af 109-111,113-114
+tests/sidebar/actions.test.mjs
+  s_d7448d4eb56c88::t_9730cbfcbaab85 1-199
+tests/Levity.Tests/Levity.Tests.csproj
+  s_d7448d4eb56c88::t_3151e235af10ca 23-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e8bd4eba505ff7e365f0be79ade63ebfee8ea462",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
