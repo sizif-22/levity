@@ -79,6 +79,7 @@ namespace AntigravitySidebar
             }));
             _sync.OnProgress += () => Dispatcher.Invoke(PublishSyncState);
             _jobs.Changed += ScheduleJobsPublish;
+            _diagrams.Progress += p => Dispatcher.BeginInvoke(new Action(() => PublishDiagramState(p.Root, p.Phase, p.Message)));
             _jobs.BackgroundFinished += j => Dispatcher.BeginInvoke(new Action(() =>
                 RawPublish(JsonSerializer.Serialize(new { type = "toast", text = $"Job #{j.Id} {(j.State == JobState.Stopped ? "stopped" : j.ExitCode == 0 ? "finished" : $"failed (exit {j.ExitCode})")}" }))));
 
@@ -329,6 +330,39 @@ namespace AntigravitySidebar
                         DeleteSession(GetString(root, "id"), clientId);
                         break;
 
+                    case "diagram_get":
+                        _ = DiagramGetAsync(GetString(root, "path"), clientId);
+                        break;
+
+                    case "diagram_prepare":
+                        _ = DiagramPrepareAsync(GetString(root, "path"), clientId);
+                        break;
+
+                    case "diagram_generate":
+                        _ = DiagramGenerateAsync(GetString(root, "path"), clientId);
+                        break;
+
+                    case "diagram_cancel":
+                        _diagrams.Cancel();
+                        break;
+
+                    case "diagram_open":
+                        if (root.TryGetProperty("node", out var dnode) && dnode.TryGetInt32(out int diagramNode))
+                            _ = DiagramOpenAsync(GetString(root, "path"), diagramNode, clientId);
+                        break;
+
+                    case "diagram_save_docs":
+                        _ = DiagramSaveDocsAsync(GetString(root, "path"), clientId);
+                        break;
+
+                    case "diagram_delete":
+                        if (DiagramGuard(GetString(root, "path"), clientId))
+                        {
+                            _diagrams.Delete(GetString(root, "path"));
+                            Reply(clientId, new { type = "diagram_none", path = DiagramStore.NormalizeRoot(GetString(root, "path")) });
+                        }
+                        break;
+
                     case "stop_response":
                         StopResponse();
                         break;
@@ -543,19 +577,22 @@ namespace AntigravitySidebar
             if (string.IsNullOrWhiteSpace(path)) path = _agyManager.CurrentWorkingDirectory;
 
             bool allowed = Directory.Exists(path);
-            if (allowed && clientId != null)
-            {
-                // Phones may only open folders under the projects root, or the current project.
-                string full = Path.GetFullPath(path).TrimEnd('\\') + "\\";
-                string rootFull = Path.GetFullPath(_settings.ProjectsRoot).TrimEnd('\\') + "\\";
-                string cwdFull = Path.GetFullPath(_agyManager.CurrentWorkingDirectory).TrimEnd('\\') + "\\";
-                allowed = full.StartsWith(rootFull, StringComparison.OrdinalIgnoreCase)
-                       || string.Equals(full, cwdFull, StringComparison.OrdinalIgnoreCase);
-            }
-            // The launcher is a .cmd file: refuse anything cmd.exe would treat as a command separator.
-            if (!allowed || path.IndexOfAny(new[] { '&', '|', '<', '>', '^', '%', '"', '!' }) >= 0)
+            // Phones may only open folders under the projects root, or the current project.
+            if (allowed && clientId != null) allowed = FolderAccess.PhoneMayOpenInIde(path, _settings.ProjectsRoot, _agyManager.CurrentWorkingDirectory);
+            if (!allowed)
             {
                 Reply(clientId, new { type = "toast", text = "That folder cannot be opened." });
+                return;
+            }
+            LaunchIde(path, clientId);
+        }
+
+        /// <summary>Starts the IDE on a folder or file. The launcher is a .cmd file, so anything cmd.exe would treat as a command separator is refused.</summary>
+        private void LaunchIde(string path, string? clientId)
+        {
+            if (path.IndexOfAny(new[] { '&', '|', '<', '>', '^', '%', '"', '!' }) >= 0)
+            {
+                Reply(clientId, new { type = "toast", text = "That path cannot be opened." });
                 return;
             }
 
@@ -575,7 +612,7 @@ namespace AntigravitySidebar
                     UseShellExecute = false,
                     CreateNoWindow = true
                 });
-                Reply(clientId, new { type = "toast", text = $"Opening {Path.GetFileName(path.TrimEnd('\\'))} in Antigravity IDE…" });
+                Reply(clientId, new { type = "toast", text = $"Opening {Path.GetFileName(path.TrimEnd('\\'))} in Antigravity IDE..." });
             }
             catch (Exception ex)
             {
@@ -828,6 +865,126 @@ namespace AntigravitySidebar
             }
             _sessions.Delete(id);
             PublishSessions();
+        }
+
+        // ---- Architecture diagrams -----------------------------------------------------------
+
+        private readonly DiagramService _diagrams = new(new AgyDiagramRunner(), new DiagramStore());
+
+        /// <summary>At the PC any existing folder is fine; a phone may only use the folders it may already switch to.</summary>
+        private bool DiagramFolderAllowed(string path, string? clientId)
+        {
+            if (string.IsNullOrWhiteSpace(path) || path.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || !Directory.Exists(path)) return false;
+            if (clientId == null) return true;
+            return FolderAccess.PhoneMayUseForDiagram(path, _settings.ProjectsRoot, AppSettings.HomeFolder, _agyManager.CurrentWorkingDirectory, _settings.RecentFolders);
+        }
+
+        private bool DiagramGuard(string path, string? clientId)
+        {
+            if (DiagramFolderAllowed(path, clientId)) return true;
+            Reply(clientId, new { type = "toast", text = "That folder is not available." });
+            return false;
+        }
+
+        private void PublishDiagramState(string path, string phase, string message) =>
+            RawPublish(JsonSerializer.Serialize(new { type = "diagram_state", path = DiagramStore.NormalizeRoot(path), phase, message }));
+
+        private async Task DiagramGetAsync(string path, string? clientId)
+        {
+            if (!DiagramGuard(path, clientId)) return;
+            try
+            {
+                var result = await _diagrams.GetAsync(path);
+                if (result != null) Reply(clientId, DiagramPayload.Build(result));
+                else Reply(clientId, new { type = "diagram_none", path = DiagramStore.NormalizeRoot(path) });
+            }
+            catch { Reply(clientId, new { type = "toast", text = "Could not read the saved diagram." }); }
+            if (_diagrams.IsRunning && _diagrams.RunningRoot != null)
+                Reply(clientId, new { type = "diagram_state", path = _diagrams.RunningRoot, phase = "generating", message = "A diagram is being generated..." });
+        }
+
+        /// <summary>Tells the user what would be sent before anything is.</summary>
+        private async Task DiagramPrepareAsync(string path, string? clientId)
+        {
+            if (!DiagramGuard(path, clientId)) return;
+            try
+            {
+                var (stats, chars) = await _diagrams.PrepareAsync(path);
+                Reply(clientId, new
+                {
+                    type = "diagram_prepared", path = DiagramStore.NormalizeRoot(path),
+                    files = stats.Files, excerpts = stats.ExcerptFiles, indexed = stats.IndexedFiles,
+                    redactions = stats.Redactions, truncated = stats.Truncated, kb = (chars + 1023) / 1024,
+                });
+            }
+            catch { Reply(clientId, new { type = "toast", text = "Could not read that folder." }); }
+        }
+
+        private async Task DiagramGenerateAsync(string path, string? clientId)
+        {
+            if (!DiagramGuard(path, clientId)) return;
+            if (_diagrams.IsRunning)
+            {
+                Reply(clientId, new { type = "toast", text = DiagramService.BusyMessage });
+                return;
+            }
+            PublishDiagramState(path, "ingest", "Reading the project...");
+            try
+            {
+                var (result, error) = await _diagrams.GenerateAsync(path);
+                if (result != null) RawPublish(JsonSerializer.Serialize(DiagramPayload.Build(result)));
+                else if (error == DiagramService.BusyMessage) Reply(clientId, new { type = "toast", text = error });
+                else PublishDiagramState(path, "error", error ?? "The diagram could not be made.");
+            }
+            catch (OperationCanceledException) { PublishDiagramState(path, "cancelled", "Stopped."); }
+            catch { PublishDiagramState(path, "error", "The diagram could not be made."); }
+        }
+
+        /// <summary>Opens the file behind a clicked node. The client sends a node number; the path comes from the validated diagram on the PC.</summary>
+        private async Task DiagramOpenAsync(string path, int node, string? clientId)
+        {
+            if (!DiagramGuard(path, clientId)) return;
+            var result = await _diagrams.GetAsync(path);
+            var n = result?.Compiled.Nodes.FirstOrDefault(x => x.Index == node);
+            if (result == null || n?.Path == null)
+            {
+                Reply(clientId, new { type = "toast", text = "That component has no file to open." });
+                return;
+            }
+            string? full = DiagramIngest.SafeFullPath(result.Root, n.Path);
+            if (full == null || (!File.Exists(full) && !Directory.Exists(full)))
+            {
+                Reply(clientId, new { type = "toast", text = "That file no longer exists." });
+                return;
+            }
+            LaunchIde(full, clientId);
+        }
+
+        /// <summary>Writes the diagram into docs/ARCHITECTURE.md, replacing only the generated section of an existing file.</summary>
+        private async Task DiagramSaveDocsAsync(string path, string? clientId)
+        {
+            if (!DiagramGuard(path, clientId)) return;
+            var result = await _diagrams.GetAsync(path);
+            if (result == null) { Reply(clientId, new { type = "toast", text = "Make a diagram first." }); return; }
+
+            string? full = DiagramIngest.SafeFullPath(result.Root, DiagramDocs.RelativePath);
+            if (full == null) { Reply(clientId, new { type = "toast", text = "docs/ARCHITECTURE.md cannot be written in this project." }); return; }
+            try
+            {
+                string? existing = null;
+                if (File.Exists(full))
+                {
+                    if (new FileInfo(full).Length > 2_000_000) { Reply(clientId, new { type = "toast", text = "docs/ARCHITECTURE.md is too large to update safely." }); return; }
+                    existing = File.ReadAllText(full);
+                }
+                string merged = DiagramDocs.Merge(existing, DiagramDocs.Render(result));
+                Directory.CreateDirectory(Path.GetDirectoryName(full)!);
+                string tmp = full + ".levity-tmp";
+                File.WriteAllText(tmp, merged, new System.Text.UTF8Encoding(false));
+                File.Move(tmp, full, overwrite: true);
+                Reply(clientId, new { type = "toast", text = "Saved to docs/ARCHITECTURE.md" });
+            }
+            catch { Reply(clientId, new { type = "toast", text = "Could not write docs/ARCHITECTURE.md." }); }
         }
 
         // ---- Prompts: queue, direct commands, background jobs, stop -----------------------

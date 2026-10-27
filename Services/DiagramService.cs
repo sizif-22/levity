@@ -210,6 +210,7 @@ namespace AntigravitySidebar.Services
     public sealed class DiagramService
     {
         public const int MaxAttempts = 2;
+        public const string BusyMessage = "A diagram is already being generated.";
         private readonly IDiagramModelRunner _runner;
         private readonly DiagramStore _store;
         private readonly object _gate = new();
@@ -261,7 +262,7 @@ namespace AntigravitySidebar.Services
             CancellationTokenSource cts;
             lock (_gate)
             {
-                if (_cts != null) return (null, "A diagram is already being generated.");
+                if (_cts != null) return (null, BusyMessage);
                 cts = _cts = CancellationTokenSource.CreateLinkedTokenSource(outer);
                 RunningRoot = DiagramStore.NormalizeRoot(root);
             }

@@ -251,6 +251,32 @@ namespace AntigravitySidebar.Services
         // ------------------------------------------------------------------ safe reading
 
         /// <summary>
+        /// The absolute path for a repo-relative path, or null unless it lies strictly inside <paramref name="root"/> with no link or junction
+        /// anywhere along the way. The target itself need not exist yet (the first missing part ends the check).
+        /// </summary>
+        public static string? SafeFullPath(string root, string relative)
+        {
+            try
+            {
+                string? rel = DiagramText.NormalizeRepoPath(relative);
+                if (rel == null) return null;
+                string rootFull = Path.GetFullPath(root).TrimEnd('\\', '/');
+                string full = Path.GetFullPath(Path.Combine(rootFull, rel.Replace('/', Path.DirectorySeparatorChar)));
+                if (!full.StartsWith(rootFull + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) return null;
+
+                string current = rootFull;
+                foreach (string seg in rel.Split('/'))
+                {
+                    current = Path.Combine(current, seg);
+                    if (!File.Exists(current) && !Directory.Exists(current)) break;
+                    if (File.GetAttributes(current).HasFlag(FileAttributes.ReparsePoint)) return null;
+                }
+                return full;
+            }
+            catch { return null; }
+        }
+
+        /// <summary>
         /// Reads the start of a project file as text. Returns null for anything that is not an ordinary text file strictly inside the
         /// project: links, junctions, binary files, secret-like names, missing files.
         /// </summary>
@@ -260,18 +286,8 @@ namespace AntigravitySidebar.Services
             {
                 string? rel = DiagramText.NormalizeRepoPath(relative);
                 if (rel == null || SecretName.IsMatch(rel)) return null;
-                string rootFull = Path.GetFullPath(root).TrimEnd('\\', '/');
-                string full = Path.GetFullPath(Path.Combine(rootFull, rel.Replace('/', Path.DirectorySeparatorChar)));
-                if (!full.StartsWith(rootFull + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) return null;
-
-                // No link or junction anywhere between the project root and the file.
-                string current = rootFull;
-                foreach (string seg in rel.Split('/'))
-                {
-                    current = Path.Combine(current, seg);
-                    if (File.GetAttributes(current).HasFlag(FileAttributes.ReparsePoint)) return null;
-                }
-                if (File.GetAttributes(full).HasFlag(FileAttributes.Directory)) return null;
+                string? full = SafeFullPath(root, rel);
+                if (full == null || !File.Exists(full)) return null;
 
                 using var fs = new FileStream(full, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
                 var buffer = new byte[Math.Min(maxBytes, (int)Math.Min(fs.Length, int.MaxValue))];

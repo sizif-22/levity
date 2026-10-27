@@ -38,6 +38,8 @@
     <Compile Include="..\..\Services\DiagramIngest.cs" Link="Services\DiagramIngest.cs" />
     <Compile Include="..\..\Services\DiagramPrompt.cs" Link="Services\DiagramPrompt.cs" />
     <Compile Include="..\..\Services\DiagramService.cs" Link="Services\DiagramService.cs" />
+    <Compile Include="..\..\Services\DiagramDocs.cs" Link="Services\DiagramDocs.cs" />
+    <Compile Include="..\..\Services\FolderAccess.cs" Link="Services\FolderAccess.cs" />
   </ItemGroup>
 
 </Project>
