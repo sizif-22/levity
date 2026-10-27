@@ -753,7 +753,12 @@ $('syncBanner').addEventListener('click', () => { showSyncView = true; openSheet
 function renderSync(state) {
   lastSync = state;
   const items = state.items || [];
-  if (!items.length) return;
+  if (!items.length) {
+    // The PC has no review (stopped, or the app restarted): drop any stale "Starting…" view.
+    lastSync = null; wasRunning = false; showSyncView = false;
+    showView('list'); updateSyncBanner(); updateStatusFromSync({ running: false, items: [] });
+    return;
+  }
 
   if (wasRunning && !state.running) {
     const c = syncCounts(items);

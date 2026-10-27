@@ -138,6 +138,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         if (type === 'projects') { setProjects(msg as unknown as ProjectsMsg); setScanning(false); return; }
         if (type === 'sync_state') {
           const next = msg as unknown as SyncState;
+          if (!next.running && next.items.length === 0) { setSync(null); return; } // the PC has no review: clear a stale one
           const was = syncRef.current;
           if (was?.running && !next.running) {
             const k = syncCounts(next.items);

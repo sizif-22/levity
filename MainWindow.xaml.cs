@@ -417,6 +417,8 @@ namespace AntigravitySidebar
                     case "sync_cancel":
                         if (_syncStarting) _syncCancelPending = true; // still scanning: nothing to kill yet, stop it before it starts
                         _sync.Cancel();
+                        // Nothing is running on this PC (e.g. a screen left over from before a restart): tell every UI so it can leave "Starting".
+                        if (!_sync.IsRunning && !_syncStarting) RawPublish(IdleSyncJson);
                         break;
 
                     // Everything below manages phone access and is desktop-only.
@@ -578,6 +580,7 @@ namespace AntigravitySidebar
             }
         }
 
+        private const string IdleSyncJson = "{\"type\":\"sync_state\",\"running\":false,\"mode\":\"update\",\"items\":[]}";
         private bool _syncStarting;
         private bool _syncCancelPending;
 
@@ -1105,7 +1108,7 @@ namespace AntigravitySidebar
                 isPinned = _settings.IsPinned
             });
             if (_lastStatusJson != null) ReplyRaw(clientId, _lastStatusJson);
-            if (_lastSyncJson != null) ReplyRaw(clientId, _lastSyncJson);
+            ReplyRaw(clientId, _lastSyncJson ?? IdleSyncJson);
             if (_lastQueueJson != null) ReplyRaw(clientId, _lastQueueJson);
             if (_lastJobsJson != null) ReplyRaw(clientId, _lastJobsJson);
             var lines = _history.ToArray();
