@@ -89,7 +89,7 @@ function handleHostMessage(msg) {
 
 function setCwd(path) {
   currentCwd = path;
-  $('cwdText').textContent = path;
+  $('cwdText').innerHTML = `<bdi>${escapeHtml(path)}</bdi>`;
   $('cwdButton').title = `Current project: ${path}`;
   markCurrentProject();
 }
@@ -306,11 +306,19 @@ function finishCurrentAssistantMessage(resultData) {
   sendBtn.disabled = false;
 }
 
+// "/cmd{$cd ../..}": dim the wrapper, colour and embolden the command word.
+const CMD_RE = /^(\/(?:cmd|cli|run|sh)(?:\{|\s+)\s*\$?\s*)([^\s}]+)([\s\S]*)$/i;
+function userBubbleHtml(text) {
+  const m = CMD_RE.exec(text);
+  if (!m) return escapeHtml(text);
+  return `<span class="cmd-pre">${escapeHtml(m[1])}</span><b class="cmd-word">${escapeHtml(m[2])}</b>${escapeHtml(m[3])}`;
+}
+
 function appendUserMessage(text, source) {
   welcomeScreen.style.display = 'none';
   const row = document.createElement('div');
   row.className = 'message-row user';
-  row.innerHTML = `<div class="user-bubble">${escapeHtml(text)}</div>`;
+  row.innerHTML = `<div class="user-bubble">${userBubbleHtml(text)}</div>`;
   // Show where a message came from when it was not typed on this device.
   const fromOther = (source === 'mobile' && isHost) || (source === 'desktop' && !isHost);
   if (fromOther) row.insertAdjacentHTML('beforeend', `<span class="via">from ${source === 'mobile' ? 'your phone' : 'your PC'}</span>`);
@@ -365,9 +373,9 @@ document.querySelectorAll('.chip[data-prompt]').forEach(chip => {
 document.querySelectorAll('.cmd-chip').forEach(cmd => {
   cmd.addEventListener('click', () => {
     const c = cmd.dataset.cmd;
-    promptInput.value = c.endsWith('{}') ? c : c + ' ';
+    promptInput.value = c.endsWith('}') ? c : c + ' ';
     promptInput.focus();
-    if (c.endsWith('{}')) promptInput.setSelectionRange(c.length - 1, c.length - 1); // caret between the braces
+    if (c.endsWith('}')) promptInput.setSelectionRange(c.length - 1, c.length - 1); // caret between the braces
   });
 });
 

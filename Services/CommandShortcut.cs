@@ -10,10 +10,11 @@ namespace AntigravitySidebar.Services
     {
         private static readonly string[] Names = { "/cmd", "/cli", "/run", "/sh" };
 
-        /// <summary>Splits "/cmd{...} follow-up" into the command and the trailing text. False when the prompt is not a command shortcut.</summary>
-        public static bool TryParse(string prompt, out string command, out string after)
+        /// <summary>Splits "/cmd{$...} follow-up" into the command and the trailing text. "$" marks a direct run. False when the prompt is not a command shortcut.</summary>
+        public static bool TryParse(string prompt, out string command, out string after, out bool direct)
         {
             command = after = "";
+            direct = false;
             string text = prompt.Trim();
             foreach (string name in Names)
             {
@@ -35,6 +36,8 @@ namespace AntigravitySidebar.Services
                 else continue; // e.g. "/cmdx": not our command
 
                 command = command.Trim();
+                // "$" in front means: run it directly in PowerShell, no AI.
+                if (command.StartsWith("$")) { direct = true; command = command.Substring(1).Trim(); }
                 return command.Length > 0;
             }
             return false;
@@ -43,7 +46,7 @@ namespace AntigravitySidebar.Services
         /// <summary>Instruction for the agent to run the command; used only when a follow-up needs the AI.</summary>
         public static string Expand(string prompt, string cwd)
         {
-            if (!TryParse(prompt, out string command, out string after)) return prompt;
+            if (!TryParse(prompt, out string command, out string after, out _)) return prompt;
             string expanded =
                 $"Run this exact command in the shell with the working directory {cwd}. " +
                 "Do not change, extend or substitute it. Show its output and exit code. " +

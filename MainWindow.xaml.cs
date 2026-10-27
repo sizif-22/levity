@@ -308,9 +308,9 @@ namespace AntigravitySidebar
                     case "send_prompt":
                         string prompt = GetString(root, "text").Trim();
                         if (prompt.Length == 0) break;
-                        if (CommandShortcut.TryParse(prompt, out string shellCmd, out string shellAfter) && shellAfter.Length == 0)
+                        if (CommandShortcut.TryParse(prompt, out string shellCmd, out string shellAfter, out bool shellDirect) && shellDirect && shellAfter.Length == 0)
                         {
-                            // Plain /cmd{...}: run it directly, no AI, no tokens.
+                            // /cmd{$...}: run it directly, no AI, no tokens.
                             _ = RunDirectCommandAsync(prompt, shellCmd, remote, clientId);
                             break;
                         }

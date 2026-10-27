@@ -15,6 +15,14 @@ type Json = Record<string, unknown>;
 const LOCK_AFTER_MS = 60_000;
 
 /** A finished reply with nothing in it (agy emits empty steps) is not worth a row. */
+// "/cmd{$cd ../..}": dim the wrapper, colour and embolden the command word.
+const CMD_RE = /^(\/(?:cmd|cli|run|sh)(?:\{|\s+)\s*\$?\s*)([^\s}]+)([\s\S]*)$/i;
+function UserText({ text }: { text: string }) {
+  const m = CMD_RE.exec(text);
+  if (!m) return <>{text}</>;
+  return <><span className="cmd-pre">{m[1]}</span><b className="cmd-word">{m[2]}</b>{m[3]}</>;
+}
+
 const visible = (m: Msg) => m.role === 'user' || !m.done || !!(m.text || m.thinking || m.tools.length || m.error);
 
 export default function App() {
@@ -256,7 +264,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           <div className="messages-list">
             {chat.msgs.filter(visible).map((m) => m.role === 'user' ? (
               <div key={m.id} className="message-row user">
-                <div className="user-bubble">{m.text}</div>
+                <div className="user-bubble"><UserText text={m.text} /></div>
                 {m.source === 'desktop' && <span className="via">from your PC</span>}
               </div>
             ) : (
@@ -295,11 +303,11 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           {['/plan', '/goal', '/boost', '/compact', '/help'].map((c) => (
             <span key={c} className="cmd-chip" onClick={() => setDraft(c + ' ')}>{c}</span>
           ))}
-          <span className="cmd-chip" title="Run a CLI command, e.g. /cmd{git status}" onClick={() => { setDraft('/cmd{}'); setTimeout(() => { composer.current?.focus(); composer.current?.setSelectionRange(5, 5); }, 0); }}>/cmd</span>
+          <span className="cmd-chip" title="Run a CLI command directly (no AI), e.g. /cmd{$git status}" onClick={() => { setDraft('/cmd{$}'); setTimeout(() => { composer.current?.focus(); composer.current?.setSelectionRange(6, 6); }, 0); }}>/cmd</span>
         </div>
         <div className="composer">
           <textarea
-            ref={composer} rows={1} value={draft} placeholder={online ? 'Ask Levity anything… or /cmd{git status}' : 'Waiting for your PC…'}
+            ref={composer} rows={1} value={draft} placeholder={online ? 'Ask Levity anything… or /cmd{$git status}' : 'Waiting for your PC…'}
             onChange={(e) => { setDraft(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 180) + 'px'; }}
           />
           <button className="send-btn" disabled={!draft.trim() || generating || !online} onClick={submit} title="Send">

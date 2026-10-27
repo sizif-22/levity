@@ -107,10 +107,10 @@
         <span class="cmd-chip" data-cmd="/boost">/boost</span>
         <span class="cmd-chip" data-cmd="/compact">/compact</span>
         <span class="cmd-chip" data-cmd="/help">/help</span>
-        <span class="cmd-chip" data-cmd="/cmd{}" title="Run a CLI command, e.g. /cmd{git status}">/cmd</span>
+        <span class="cmd-chip" data-cmd="/cmd{$}" title="Run a CLI command directly (no AI), e.g. /cmd{$git status}. Without $ the agent runs it.">/cmd</span>
       </div>
       <div class="composer">
-        <textarea id="promptInput" placeholder="Ask Levity anything… or /cmd{git status}" rows="1" enterkeyhint="send"></textarea>
+        <textarea id="promptInput" placeholder="Ask Levity anything… or /cmd{$git status}" rows="1" enterkeyhint="send"></textarea>
         <button class="send-btn" id="sendBtn" title="Send">
           <svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
         </button>
