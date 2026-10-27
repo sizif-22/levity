@@ -541,3 +541,57 @@ public class GitDialogEndToEndTests
         Assert.Equal("feature/login", ProjectActions.Detect(dir).Branch);
     }
 }
+
+public class FolderFactsTests
+{
+    [Fact]
+    public void An_empty_folder_has_no_files_and_is_not_a_project()
+    {
+        var info = ProjectActions.Detect(TestEnvironment.NewTempDir("facts"));
+        Assert.False(info.HasFiles);
+        Assert.False(info.IsProject);
+        Assert.False(info.HasReadme);
+    }
+
+    [Fact]
+    public void A_folder_with_only_a_dot_git_is_a_repository_but_still_has_no_files()
+    {
+        string dir = TestEnvironment.NewTempDir("facts");
+        Directory.CreateDirectory(Path.Combine(dir, ".git"));
+        var info = ProjectActions.Detect(dir);
+        Assert.False(info.HasFiles);
+        Assert.True(info.IsGitRepo);
+        Assert.True(info.IsProject);
+    }
+
+    [Theory]
+    [InlineData("package.json")]
+    [InlineData("pyproject.toml")]
+    [InlineData("go.mod")]
+    [InlineData("Cargo.toml")]
+    [InlineData("App.sln")]
+    [InlineData("App.csproj")]
+    [InlineData("MAKEFILE")]
+    public void A_project_marker_file_makes_the_folder_a_project(string marker)
+    {
+        string dir = TestEnvironment.NewTempDir("facts");
+        File.WriteAllText(Path.Combine(dir, marker), "x");
+        var info = ProjectActions.Detect(dir);
+        Assert.True(info.HasFiles);
+        Assert.True(info.IsProject);
+    }
+
+    [Fact]
+    public void Plain_files_are_not_a_project_but_a_readme_is_noticed()
+    {
+        string dir = TestEnvironment.NewTempDir("facts");
+        File.WriteAllText(Path.Combine(dir, "notes.txt"), "x");
+        var plain = ProjectActions.Detect(dir);
+        Assert.True(plain.HasFiles);
+        Assert.False(plain.IsProject);
+        Assert.False(plain.HasReadme);
+
+        File.WriteAllText(Path.Combine(dir, "README.md"), "# hi");
+        Assert.True(ProjectActions.Detect(dir).HasReadme);
+    }
+}

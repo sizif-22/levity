@@ -87,17 +87,20 @@
         <p class="welcome-sub">Levity runs the Antigravity CLI on this PC.<br><span class="remote-only">You are controlling it from your phone.</span></p>
 
         <div class="chips">
-          <button class="chip chip-primary" id="chipReviewAll">
+          <button class="chip chip-primary" id="chipReviewAll" hidden>
             <span class="chip-ico"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg></span>
             <span><strong>Review all my projects</strong><small>Refresh docs and skills across your drive</small></span>
           </button>
-          <button class="chip" id="chipIde">
-            <span class="chip-ico"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
-            <span><strong>Open in Antigravity IDE</strong><small>Opens the current project instantly</small></span>
+          <button class="chip" id="chipNew" hidden data-prompt="This folder is empty. Ask me what I want to build here, then set up a sensible starting project.">
+            <span class="chip-ico"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+            <span><strong>Start a new project</strong><small>This folder is empty</small></span>
           </button>
-          <button class="chip" data-prompt="What files and structure are in the current working directory?"><span class="chip-ico"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span><span><strong>Inspect workspace</strong></span></button>
-          <button class="chip" data-prompt="Check the git status and recent commits of this repository."><span class="chip-ico"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 8v8M18 10c0 4-6 3-12 6"/></svg></span><span><strong>Git status</strong></span></button>
-          <button class="chip" data-prompt="Explain what this project does and recommend next steps."><span class="chip-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/></svg></span><span><strong>Project overview</strong></span></button>
+          <button class="chip" id="chipInspect" hidden data-prompt="What files and structure are in the current working directory?"><span class="chip-ico"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span><span><strong>Inspect workspace</strong></span></button>
+          <button class="chip" id="chipGit" hidden data-prompt="Check the git status and recent commits of this repository."><span class="chip-ico"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 8v8M18 10c0 4-6 3-12 6"/></svg></span><span><strong>Git status</strong></span></button>
+          <button class="chip" id="chipTests" hidden data-prompt="Run the project's tests and summarize any failures.">
+            <span class="chip-ico"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span><span><strong>Run the tests</strong></span>
+          </button>
+          <button class="chip" id="chipOverview" hidden data-prompt="Explain what this project does and recommend next steps."><span class="chip-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/></svg></span><span><strong>Project overview</strong></span></button>
         </div>
       </div>
       <div class="messages-list" id="messagesList"></div>
@@ -112,6 +115,7 @@
       <div class="queue" id="queueList" hidden></div>
       <div class="quick-commands">
         <span class="cmd-chip" id="diagramChip" data-cmd="/diagram" title="Draw this project's architecture (git projects)" hidden>/diagram</span>
+        <span class="cmd-chip" id="ideChip" data-cmd="/open-ide" title="Open this folder in the Antigravity IDE" hidden>/open-ide</span>
         <span class="cmd-chip" id="runChip" data-cmd="/run" title="Run a script from this folder's package.json" hidden>/run</span>
         <span class="cmd-chip" id="gitChip" data-cmd="/git" title="Common git steps: add, commit, push..." hidden>/git</span>
         <span class="cmd-chip" data-cmd="/cmd{$}" title="Run a CLI command directly (no AI), e.g. /cmd{$git status}. Add -b to run it in the background. Without $ the agent runs it.">/cmd</span>

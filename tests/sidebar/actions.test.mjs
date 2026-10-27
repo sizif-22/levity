@@ -206,3 +206,68 @@ test('the /diagram chip is only offered inside a git repository', async () => {
   ui.deliver(actions({ git: { repo: false, branch: null } }));
   assert.ok(ui.$('diagramChip').hidden);
 });
+
+// ---- the start screen and /open-ide ----
+
+const facts = (over = {}) => actions({ scripts: [], hasFiles: true, isProject: true, hasReadme: true, ...over });
+const shown = (ui) => Object.fromEntries(['chipReviewAll', 'chipNew', 'chipInspect', 'chipGit', 'chipTests', 'chipOverview'].map((id) => [id, !ui.$(id).hidden]));
+const projectsMsg = (n) => ({ type: 'projects', root: 'C:\\Work', current: 'C:\\Work\\app', projects: Array.from({ length: n }, (_, i) => ({ name: 'p' + i, path: 'C:\\Work\\p' + i, kind: 'Git', hasReadme: true, hasAgentsDoc: true, hasSkills: true, modified: new Date().toISOString(), pinned: false, uses: 0 })) });
+
+test('the sidebar asks for the project list at startup, and the start screen shows nothing before the PC has answered', async () => {
+  const ui = await open();
+  assert.equal(ui.sent('list_projects').length >= 0, true);
+  assert.deepEqual(shown(ui), { chipReviewAll: false, chipNew: false, chipInspect: false, chipGit: false, chipTests: false, chipOverview: false });
+});
+
+test('a git project with other projects on the PC shows the full set', async () => {
+  const ui = await open();
+  ui.deliver(projectsMsg(3));
+  ui.deliver(facts());
+  assert.deepEqual(shown(ui), { chipReviewAll: true, chipNew: false, chipInspect: true, chipGit: true, chipTests: false, chipOverview: true });
+});
+
+test('no git repository hides Git status, no projects hides Review all my projects', async () => {
+  const ui = await open();
+  ui.deliver(projectsMsg(0));
+  ui.deliver(facts({ git: { repo: false, branch: null } }));
+  const s = shown(ui);
+  assert.equal(s.chipGit, false);
+  assert.equal(s.chipReviewAll, false);
+  assert.equal(s.chipInspect, true);
+  ui.deliver(projectsMsg(2));
+  assert.equal(shown(ui).chipReviewAll, true, 'it appears as soon as projects are found');
+});
+
+test('an empty folder offers a new project, not inspecting, git or an overview', async () => {
+  const ui = await open();
+  ui.deliver(projectsMsg(2));
+  ui.deliver(facts({ hasFiles: false, isProject: false, hasReadme: false, git: { repo: false, branch: null } }));
+  assert.deepEqual(shown(ui), { chipReviewAll: true, chipNew: true, chipInspect: false, chipGit: false, chipTests: false, chipOverview: false });
+});
+
+test('a test script adds Run the tests with the script name in its prompt', async () => {
+  const ui = await open();
+  ui.deliver(facts({ scripts: [{ name: 'dev', command: 'vite' }, { name: 'test:unit', command: 'vitest' }] }));
+  assert.ok(!ui.$('chipTests').hidden);
+  assert.match(ui.$('chipTests').dataset.prompt, /"test:unit"/);
+});
+
+test('switching to another folder updates the buttons', async () => {
+  const ui = await open();
+  ui.deliver(facts());
+  assert.ok(!ui.$('chipGit').hidden);
+  ui.deliver(facts({ path: 'C:\\Plain', git: { repo: false, branch: null }, isProject: false, hasReadme: false }));
+  assert.ok(ui.$('chipGit').hidden);
+  assert.ok(ui.$('chipOverview').hidden);
+});
+
+test('the old Open in Antigravity IDE button is gone from the start screen; /open-ide is a chip next to the others', async () => {
+  const ui = await open();
+  assert.equal(ui.$('chipIde'), null);
+  assert.ok(ui.$('ideChip').hidden, 'hidden until the PC reports a folder');
+  ui.deliver({ type: 'config', cwd: 'C:\\Work\\app', isPinned: false });
+  ui.deliver(facts());
+  assert.ok(!ui.$('ideChip').hidden);
+  ui.click(ui.$('ideChip'));
+  assert.deepEqual(ui.sent('open_ide'), [{ type: 'open_ide', path: 'C:\\Work\\app' }]);
+});

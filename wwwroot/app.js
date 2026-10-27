@@ -52,6 +52,7 @@ if (isHost) {
     }
   });
   postToHost({ type: 'ready' });
+  postToHost({ type: 'list_projects' });   // so the start screen knows whether "Review all my projects" makes sense
 }
 
 // ---------------------------------------------------------------------------
@@ -419,7 +420,7 @@ document.querySelectorAll('.chip[data-prompt]').forEach(chip => {
   chip.addEventListener('click', () => sendPrompt(chip.dataset.prompt));
 });
 document.querySelectorAll('.cmd-chip').forEach(cmd => {
-  if (cmd.dataset.cmd === '/diagram' || cmd.dataset.cmd === '/run' || cmd.dataset.cmd === '/git') return; // these open their own views (diagram.js, actions.js)
+  if (['/diagram', '/run', '/git', '/open-ide'].includes(cmd.dataset.cmd)) return; // these open their own views (diagram.js, actions.js)
   cmd.addEventListener('click', () => {
     const c = cmd.dataset.cmd;
     promptInput.value = c.endsWith('}') ? c : c + ' ';
@@ -624,7 +625,7 @@ $('cwdButton').addEventListener('click', () => openSheet('projectsSheet'));
 $('pickFolderBtn').addEventListener('click', () => { closeSheet('projectsSheet'); postToHost({ type: 'pick_folder' }); });
 $('noProjectBtn').addEventListener('click', () => { postToHost({ type: 'no_project' }); closeSheet('projectsSheet'); });
 $('chipReviewAll').addEventListener('click', () => openSheet('projectsSheet'));
-$('chipIde').addEventListener('click', () => postToHost({ type: 'open_ide', path: currentCwd }));
+$('ideChip').addEventListener('click', () => { if (currentCwd) postToHost({ type: 'open_ide', path: currentCwd }); });
 $('mobileBtn').addEventListener('click', () => openSheet('mobileSheet'));
 
 // ---------------------------------------------------------------------------
@@ -685,6 +686,7 @@ function renderProjects(msg) {
   if (msg.current) currentCwd = msg.current;
   $('rootInput').value = msg.root || '';
   const missing = projects.filter(p => !p.hasReadme || !p.hasAgentsDoc || !p.hasSkills).length;
+  if (typeof updateOnboarding === 'function') updateOnboarding();
   $('projSub').textContent = `${projects.length} projects found · ${missing} missing docs or skills`;
 
   // Re-rendering after a pin must not reset what the user already unchecked.

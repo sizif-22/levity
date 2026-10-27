@@ -23,8 +23,37 @@ function actionsOnMessage(msg) {
   }
 }
 
+// Which start-screen buttons make sense here. Mirrored by web/src/lib/onboarding.ts (the phone), and tested on both sides.
+function onboardingChips(d, projectCount) {
+  d = d || {};
+  const testScript = (d.scripts || []).find(s => /^test/i.test(s.name));
+  const known = !!act.data;   // nothing is offered until the PC has said what the folder is
+  return {
+    reviewAll: known && projectCount >= 1,
+    newProject: known && d.hasFiles === false,
+    inspect: known && d.hasFiles !== false,
+    git: known && !!(d.git && d.git.repo),
+    tests: known && !!testScript,
+    testScript: testScript ? testScript.name : null,
+    overview: known && !!(d.isProject || d.hasReadme),
+  };
+}
+
+function updateOnboarding() {
+  const c = onboardingChips(act.data, typeof projects !== 'undefined' && projects ? projects.length : 0);
+  $('chipReviewAll').hidden = !c.reviewAll;
+  $('chipNew').hidden = !c.newProject;
+  $('chipInspect').hidden = !c.inspect;
+  $('chipGit').hidden = !c.git;
+  $('chipTests').hidden = !c.tests;
+  $('chipOverview').hidden = !c.overview;
+  if (c.testScript) $('chipTests').dataset.prompt = `Run the project's "${c.testScript}" script and summarize any failures.`;
+}
+
 function updateActionChips() {
   const d = act.data || {};
+  $('ideChip').hidden = !d.path;
+  updateOnboarding();
   $('runChip').hidden = !(d.scripts && d.scripts.length);
   $('gitChip').hidden = !(d.git && d.git.repo);
   $('diagramChip').hidden = !(d.git && d.git.repo);   // the diagram is for projects: a folder that is not a git repository gets no chip

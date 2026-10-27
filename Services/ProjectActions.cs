@@ -11,7 +11,8 @@ namespace Levity.Services
     public sealed record ProjectScript(string Name, string Command);
 
     /// <summary>What can be offered as one-tap buttons for a folder: the scripts in its package.json and whether it is a git repository.</summary>
-    public sealed record ProjectActionsInfo(string Path, string? PackageManager, IReadOnlyList<ProjectScript> Scripts, bool IsGitRepo, string? Branch);
+    public sealed record ProjectActionsInfo(string Path, string? PackageManager, IReadOnlyList<ProjectScript> Scripts, bool IsGitRepo, string? Branch,
+        bool HasFiles = false, bool IsProject = false, bool HasReadme = false);
 
     public static class ProjectActions
     {
@@ -25,7 +26,34 @@ namespace Levity.Services
             var scripts = ReadScripts(path);
             string? pm = scripts.Count > 0 ? DetectPackageManager(path) : null;
             string? gitDir = FindGitDir(path);
-            return new ProjectActionsInfo(path, pm, scripts, gitDir != null, gitDir == null ? null : ReadBranch(gitDir));
+            var (hasFiles, isProject, hasReadme) = Describe(path, gitDir != null);
+            return new ProjectActionsInfo(path, pm, scripts, gitDir != null, gitDir == null ? null : ReadBranch(gitDir), hasFiles, isProject, hasReadme);
+        }
+
+        private static readonly string[] ProjectMarkers =
+        {
+            "package.json", "pyproject.toml", "requirements.txt", "setup.py", "go.mod", "Cargo.toml", "pom.xml", "build.gradle", "composer.json",
+            "Gemfile", "deno.json", "Makefile", "CMakeLists.txt", "pubspec.yaml"
+        };
+
+        /// <summary>Is there anything in the folder, does it look like a project, does it have a README? Cheap: a handful of file checks, no scanning.</summary>
+        public static (bool HasFiles, bool IsProject, bool HasReadme) Describe(string folder, bool isGitRepo)
+        {
+            bool hasFiles = false, isProject = isGitRepo, hasReadme = false;
+            try
+            {
+                foreach (string entry in Directory.EnumerateFileSystemEntries(folder))
+                {
+                    string name = System.IO.Path.GetFileName(entry);
+                    if (name.Equals(".git", StringComparison.OrdinalIgnoreCase)) continue;
+                    hasFiles = true;
+                    if (!isProject && (ProjectMarkers.Contains(name, StringComparer.OrdinalIgnoreCase) || name.EndsWith(".sln", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)))
+                        isProject = true;
+                    if (name.StartsWith("readme", StringComparison.OrdinalIgnoreCase)) hasReadme = true;
+                }
+            }
+            catch { }
+            return (hasFiles, isProject, hasReadme);
         }
 
         /// <summary>The "scripts" of the folder's own package.json (not parent folders'), in file order. Anything that is not a plain string is skipped.</summary>

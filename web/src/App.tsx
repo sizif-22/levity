@@ -13,6 +13,7 @@ import { FastLearnerCard } from './components/FastLearnerCard';
 import { DiagramSheet } from './components/DiagramSheet';
 import { GitSheet, RunSheet } from './components/ActionSheets';
 import type { ActionsMsg, GitStateMsg } from './lib/actions';
+import { onboardingChips } from './lib/onboarding';
 import { sameFolder, type DiagramMsg, type DiagramPrepared, type DiagramState } from './lib/diagram';
 import { ProjectsSheet, syncCounts, type ProjectsMsg, type SyncState } from './components/ProjectsSheet';
 import { ConfirmDialog, Logo, LockScreen, PairScreen, SettingsSheet } from './components/Screens';
@@ -123,6 +124,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const confirm = useCallback((title: string, text: string, ok: string) =>
     new Promise<boolean>((resolve) => setDialog({ title, text, ok, resolve })), []);
 
+  const chips = onboardingChips(actions, projects?.projects.length ?? 0);
   const send = useCallback((m: Json) => { void conn.current?.send(m); }, []);
 
   useEffect(() => {
@@ -296,19 +298,22 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
             <h2>What are we building?</h2>
             <p className="welcome-sub">You are controlling Levity on your PC.</p>
             <div className="chips">
-              <button className="chip chip-primary" onClick={openProjects}>
-                <span className="chip-ico"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /></svg></span>
-                <span><strong>Review all my projects</strong><small>Refresh docs and skills across your drive</small></span>
-              </button>
-              <button className="chip" onClick={() => send({ type: 'open_ide', path: chat.cwd })}>
-                <span className="chip-ico"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
-                <span><strong>Open in Antigravity IDE</strong><small>Opens the current project on your PC</small></span>
-              </button>
-              {['What files and structure are in the current working directory?', 'Check the git status and recent commits of this repository.', 'Explain what this project does and recommend next steps.'].map((t, i) => (
-                <button key={t} className="chip" onClick={() => send({ type: 'send_prompt', text: t })}>
-                  <span><strong>{['Inspect workspace', 'Git status', 'Project overview'][i]}</strong></span>
+              {chips.reviewAll && (
+                <button className="chip chip-primary" onClick={openProjects}>
+                  <span className="chip-ico"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /></svg></span>
+                  <span><strong>Review all my projects</strong><small>Refresh docs and skills across your drive</small></span>
                 </button>
-              ))}
+              )}
+              {chips.newProject && (
+                <button className="chip" onClick={() => send({ type: 'send_prompt', text: 'This folder is empty. Ask me what I want to build here, then set up a sensible starting project.' })}>
+                  <span className="chip-ico"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></span>
+                  <span><strong>Start a new project</strong><small>This folder is empty</small></span>
+                </button>
+              )}
+              {chips.inspect && <button className="chip" onClick={() => send({ type: 'send_prompt', text: 'What files and structure are in the current working directory?' })}><span><strong>Inspect workspace</strong></span></button>}
+              {chips.git && <button className="chip" onClick={() => send({ type: 'send_prompt', text: 'Check the git status and recent commits of this repository.' })}><span><strong>Git status</strong></span></button>}
+              {chips.tests && <button className="chip" onClick={() => send({ type: 'send_prompt', text: `Run the project's "${chips.testScript}" script and summarize any failures.` })}><span><strong>Run the tests</strong></span></button>}
+              {chips.overview && <button className="chip" onClick={() => send({ type: 'send_prompt', text: 'Explain what this project does and recommend next steps.' })}><span><strong>Project overview</strong></span></button>}
             </div>
           </div>
         ) : (
@@ -365,6 +370,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         )}
         <div className="quick-commands">
           {!!actions?.git.repo && <span className="cmd-chip" title="Draw this project's architecture" onClick={() => openDiagram(chat.cwd)}>/diagram</span>}
+          {!!chat.cwd && <span className="cmd-chip" title="Open this folder in the Antigravity IDE on your PC" onClick={() => send({ type: 'open_ide', path: chat.cwd })}>/open-ide</span>}
           {!!actions?.scripts.length && <span className="cmd-chip" title="Run a script from this folder's package.json" onClick={() => setSheet('run')}>/run</span>}
           {!!actions?.git.repo && <span className="cmd-chip" title="Common git steps: add, commit, push..." onClick={() => { setGitState(null); setSheet('git'); }}>/git</span>}
           <span className="cmd-chip" title="Run a CLI command directly (no AI), e.g. /cmd{$git status}. Add -b to run it in the background." onClick={() => { setDraft('/cmd{$}'); setTimeout(() => { composer.current?.focus(); composer.current?.setSelectionRange(6, 6); }, 0); }}>/cmd</span>

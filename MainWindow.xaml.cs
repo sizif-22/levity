@@ -1275,7 +1275,10 @@ namespace Levity
                 path = info.Path,
                 packageManager = info.PackageManager,
                 scripts = info.Scripts.Select(s => new { name = s.Name, command = s.Command }),
-                git = new { repo = info.IsGitRepo, branch = info.Branch }
+                git = new { repo = info.IsGitRepo, branch = info.Branch },
+                hasFiles = info.HasFiles,
+                isProject = info.IsProject,
+                hasReadme = info.HasReadme
             };
             if (clientId == null && _hub != null) RawPublish(JsonSerializer.Serialize(msg)); else Reply(clientId, msg);
         }

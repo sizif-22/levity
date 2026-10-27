@@ -8,6 +8,10 @@ export interface ActionsMsg {
   packageManager: string | null;
   scripts: ProjectScript[];
   git: { repo: boolean; branch: string | null };
+  /** Anything in the folder besides .git; whether it looks like a project; whether it has a README. */
+  hasFiles?: boolean;
+  isProject?: boolean;
+  hasReadme?: boolean;
 }
 
 export interface GitStateMsg {
