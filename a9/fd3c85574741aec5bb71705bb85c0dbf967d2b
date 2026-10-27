@@ -1,0 +1,55 @@
+tests/Levity.Tests/MermaidContractTests.cs
+  s_d7448d4eb56c88::t_6535e3df4c40c2 1-64,66-235,239-249
+  s_d7448d4eb56c88::t_c0438acbc37d9d 65,236-238
+Services/DiagramDocs.cs
+  s_d7448d4eb56c88::t_e6d8f254d7ff72 24,28-32,98,116
+web/src/styles.css
+  s_d7448d4eb56c88::t_c7e19a3c8967bf 611-640
+  s_d7448d4eb56c88::t_653c09346af9b5 641-650
+tests/repo/Validate-Repo.ps1
+  s_d7448d4eb56c88::t_019204bf728dd9 159-175
+tests/Levity.Tests/DiagramFlatTests.cs
+  s_d7448d4eb56c88::t_4ae8e24079d722 1-111
+tests/Levity.Tests/DiagramIngestTests.cs
+  s_d7448d4eb56c88::t_44e4418eb3c551 37-41,144,148
+  s_d7448d4eb56c88::t_f073658c1c776f 118
+tests/sidebar/diagram.test.mjs
+  s_d7448d4eb56c88::t_9ec79824a1e8e7 27,31,397-464
+.gitattributes
+  s_d7448d4eb56c88::t_8da4c1273c6a01 1-4
+Services/DiagramCompiler.cs
+  s_d7448d4eb56c88::t_cca3eb8fd4a0f1 11-14,17,22-23,25-30,34-36,42-46,57,62,64-77,79,82,94-96,101
+THIRD-PARTY-NOTICES.md
+  s_d7448d4eb56c88::t_d3624f603654bf 1-50
+wwwroot/diagram.js
+  s_d7448d4eb56c88::t_6326038662e73a 135-158,165,172-173,179-185,187-191,194
+wwwroot/index.html
+  s_d7448d4eb56c88::t_2f75541b752589 249-250
+wwwroot/style.css
+  s_d7448d4eb56c88::t_41e78bee78bb90 621-630
+wwwroot/vendor/README.md
+  s_d7448d4eb56c88::t_b83512331c6b69 1-7
+.github/workflows/ci.yml
+  s_d7448d4eb56c88::t_b5f0ce92a4670d 106-108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a9fd3c85574741aec5bb71705bb85c0dbf967d2b",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
