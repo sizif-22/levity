@@ -235,8 +235,9 @@
           <p class="diag-overview" id="diagOverview"></p>
           <div class="diag-toolbar">
             <button class="icon-btn" id="diagZoomOut" title="Zoom out"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
-            <button class="icon-btn" id="diagFit" title="Fit to window"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+            <button class="icon-btn" id="diagFit" title="Fit to view"><svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M3 8V4h4M21 8V4h-4M3 16v4h4M21 16v4h-4"/></svg></button>
             <button class="icon-btn" id="diagZoomIn" title="Zoom in"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            <button class="icon-btn diag-expand" id="diagExpand" title="Open full window" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg></button>
           </div>
           <div class="diag-canvas" id="diagCanvas" tabindex="0" aria-label="Architecture diagram. Drag to move, scroll to zoom, double-click to fit.">
             <div class="diag-stage" id="diagStage"></div>
@@ -364,6 +365,7 @@
   <script src="marked.min.js"></script>
   <script src="highlight.min.js"></script>
   <script src="app.js"></script>
+  <script src="diagram-theme.js"></script>
   <script src="diagram.js"></script>
 </body>
 </html>

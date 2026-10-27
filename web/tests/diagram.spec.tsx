@@ -228,7 +228,7 @@ describe('DiagramSheet: a diagram', () => {
     expect(scale()).toBeLessThan(start);
     fireEvent.wheel(container.querySelector('.diag-canvas')!, { deltaY: -100 });
     const afterWheel = scale();
-    fireEvent.click(screen.getByTitle('Fit to screen'));
+    fireEvent.click(screen.getByTitle('Fit to view'));
     expect(scale()).not.toBe(afterWheel);
   });
 
@@ -389,5 +389,54 @@ describe('DiagramSheet: when drawing is hard or the drawing is hostile', () => {
     await new Promise((r) => setTimeout(r, 30));
     expect(container.querySelector('.diag-stage')!.textContent).toContain('NEW');
     expect(container.querySelector('.diag-stage')!.textContent).not.toContain('OLD');
+  });
+});
+
+describe('DiagramSheet: waiting spinner and full screen', () => {
+  it('Make a diagram shows a spinner, ignores a second tap, and recovers when the PC answers', () => {
+    const { send, again, container } = setup();
+    const btn = screen.getByRole('button', { name: 'Make a diagram' });
+    fireEvent.click(btn);
+    const busy = screen.getByRole('button', { name: /Reading the project/ }) as HTMLButtonElement;
+    expect(busy.disabled).toBe(true);
+    expect(busy.querySelector('.spinner')).not.toBeNull();
+    fireEvent.click(busy);
+    expect(send.mock.calls.filter(([m]) => (m as { type: string }).type === 'diagram_prepare')).toHaveLength(1);
+
+    again({ prepared: prepared() });
+    expect(container.querySelector('#diagConfirm')).not.toBeNull();
+    expect(screen.queryByText(/Reading the project/)).toBeNull();
+  });
+
+  it('the spinner clears when the PC answers with an error', () => {
+    const { again } = setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Make a diagram' }));
+    again({ state: { type: 'diagram_state', path: PROJECT, phase: 'error', message: 'That folder is not available.' } as DiagramState });
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
+    expect((screen.getByRole('button', { name: 'Try again' }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('the expand button fills the screen and Escape or a second tap brings it back', async () => {
+    const { container } = setup({ data: diagram() });
+    await drawn(container);
+    const view = container.querySelector('#diagView')!;
+    expect(view.classList.contains('expanded')).toBe(false);
+    fireEvent.click(screen.getByTitle('Open full screen'));
+    expect(view.classList.contains('expanded')).toBe(true);
+    expect(screen.getByTitle('Back to the page').getAttribute('aria-pressed')).toBe('true');
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(view.classList.contains('expanded')).toBe(false);
+    fireEvent.click(screen.getByTitle('Open full screen'));
+    fireEvent.click(screen.getByTitle('Back to the page'));
+    expect(view.classList.contains('expanded')).toBe(false);
+  });
+
+  it('draws with the shared theme (readable text and group colours), not inherited fonts', async () => {
+    const m = fakeMermaid();
+    const { container } = setup({ data: diagram(), mermaid: m.api });
+    await drawn(container);
+    const cfg = m.calls.init.at(-1)! as { fontFamily: string; themeVariables: Record<string, string> };
+    expect(cfg.fontFamily).not.toBe('inherit');
+    for (const key of ['clusterBkg', 'clusterBorder', 'titleColor', 'edgeLabelBackground']) expect(cfg.themeVariables[key]).toBeTruthy();
   });
 });

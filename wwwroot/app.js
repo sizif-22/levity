@@ -80,7 +80,7 @@ function handleHostMessage(msg) {
       }
       break;
     case 'fast_learner': renderFastLearner(msg); break;
-    case 'diagram': case 'diagram_none': case 'diagram_prepared': case 'diagram_state':
+    case 'diagram': case 'diagram_none': case 'diagram_prepared': case 'diagram_state': case 'diagram_collapsed':
       if (typeof diagramOnMessage === 'function') diagramOnMessage(msg);
       break;
     case 'sessions': renderSessions(msg); break;

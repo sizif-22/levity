@@ -628,3 +628,15 @@ body.remote .composer-hl { font-size: 16px; } /* match the textarea (iOS zoom gu
 .diag-sw3 { background: #ffe4e6; border-color: #e11d48; }
 .diag-sw4 { background: #e0e7ff; border-color: #4f46e5; }
 .diag-sw5 { background: #ccfbf1; border-color: #0f766e; }
+
+/* Diagram: readable type, spinner on the buttons that start a run, and the full-window view */
+.diag-stage svg text, .diag-stage svg .nodeLabel, .diag-stage svg .edgeLabel { font-weight: 500; }
+.diag-stage svg .cluster-label text, .diag-stage svg .cluster text { font-weight: 600; }
+.diag-stage svg .edgeLabel rect { opacity: 0.9; }
+.diag-panel .btn.busy, .diag-actions .btn.busy, .diag-stale .btn.busy { display: inline-flex; align-items: center; }
+.diag-expand[aria-pressed="true"] { background: var(--accent); }
+
+#diagView.expanded { position: fixed; inset: 0; z-index: 300; display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: var(--background); }
+#diagView.expanded > :not(.diag-toolbar):not(.diag-canvas) { display: none; }
+#diagView.expanded .diag-toolbar { margin: 0; }
+#diagView.expanded .diag-canvas { flex: 1; height: auto; min-height: 0; }

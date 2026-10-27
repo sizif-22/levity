@@ -462,3 +462,97 @@ test('a diagram from an older PC (no flat version) that fails to draw still show
   await tick();
   assert.equal(ui.$('diagFallback').hidden, false);
 });
+
+// ---- spinner on the buttons that start a run ----
+
+test('Make a diagram shows a spinner and is disabled until the PC answers, then comes back', async () => {
+  const ui = await open({ mermaid: fakeMermaid() });
+  await openDiagramFor(ui);
+  const btn = ui.$('diagMakeBtn');
+  ui.click(btn);
+  assert.ok(btn.disabled && btn.classList.contains('busy'));
+  assert.ok(btn.querySelector('.spinner'));
+  assert.match(btn.textContent, /Reading the project/);
+
+  ui.click(btn);   // a second click while waiting must not ask the PC again
+  assert.equal(ui.sent('diagram_prepare').length, 1);
+
+  ui.deliver({ type: 'diagram_prepared', path: PROJECT, files: 3, excerpts: 1, indexed: 3, redactions: 0, truncated: false, kb: 2 });
+  assert.ok(!btn.disabled && !btn.classList.contains('busy'));
+  assert.equal(btn.textContent, 'Make a diagram');
+  assert.ok(visible(ui, 'diagConfirm'));
+});
+
+test('the spinner also clears when the PC answers with an error', async () => {
+  const ui = await open({ mermaid: fakeMermaid() });
+  await openDiagramFor(ui);
+  ui.click(ui.$('diagMakeBtn'));
+  ui.deliver({ type: 'diagram_state', path: PROJECT, phase: 'error', message: 'That folder is not available.' });
+  assert.ok(!ui.$('diagMakeBtn').disabled);
+  assert.equal(ui.$('diagMakeBtn').textContent, 'Make a diagram');
+  assert.ok(visible(ui, 'diagError'));
+});
+
+test('Try again and the stale Regenerate button show the spinner too', async () => {
+  const ui = await open({ mermaid: fakeMermaid() });
+  await openDiagramFor(ui);
+  ui.deliver({ type: 'diagram_state', path: PROJECT, phase: 'error', message: 'x' });
+  ui.click(ui.$('diagRetryBtn'));
+  assert.ok(ui.$('diagRetryBtn').classList.contains('busy'));
+  ui.deliver(diagram({ stale: true }));
+  await tick();
+  assert.ok(!ui.$('diagRetryBtn').classList.contains('busy'));
+  ui.click(ui.$('diagStaleBtn'));
+  assert.ok(ui.$('diagStaleBtn').classList.contains('busy'));
+});
+
+// ---- full window ----
+
+test('the expand button fills the window, tells the PC to widen the sidebar, and Escape puts it back', async () => {
+  const ui = await open({ mermaid: fakeMermaid() });
+  await openDiagramFor(ui);
+  ui.deliver(diagram());
+  await tick();
+
+  ui.click(ui.$('diagExpand'));
+  assert.ok(ui.$('diagView').classList.contains('expanded'));
+  assert.equal(ui.$('diagExpand').getAttribute('aria-pressed'), 'true');
+  assert.deepEqual(ui.sent('diagram_expand'), [{ type: 'diagram_expand', on: true }]);
+
+  ui.document.dispatchEvent(new ui.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  assert.ok(!ui.$('diagView').classList.contains('expanded'));
+  assert.deepEqual(ui.sent('diagram_expand').at(-1), { type: 'diagram_expand', on: false });
+});
+
+test('when the PC puts the window back to normal the page leaves full view without asking again', async () => {
+  const ui = await open({ mermaid: fakeMermaid() });
+  await openDiagramFor(ui);
+  ui.deliver(diagram());
+  await tick();
+  ui.click(ui.$('diagExpand'));
+  ui.posted.length = 0;
+  ui.deliver({ type: 'diagram_collapsed' });
+  assert.ok(!ui.$('diagView').classList.contains('expanded'));
+  assert.equal(ui.sent('diagram_expand').length, 0);
+});
+
+test('closing and reopening the diagram never starts in full view', async () => {
+  const ui = await open({ mermaid: fakeMermaid() });
+  await openDiagramFor(ui);
+  ui.deliver(diagram());
+  await tick();
+  ui.click(ui.$('diagExpand'));
+  ui.window.openDiagram(PROJECT);
+  assert.ok(!ui.$('diagView').classList.contains('expanded'));
+});
+
+test('the drawing is configured from the shared theme: readable text, group boxes and arrow labels', async () => {
+  const mermaid = fakeMermaid();
+  const ui = await open({ mermaid });
+  await openDiagramFor(ui);
+  ui.deliver(diagram());
+  await tick();
+  const cfg = mermaid.calls.init.at(-1);
+  assert.notEqual(cfg.fontFamily, 'inherit');
+  for (const key of ['clusterBkg', 'clusterBorder', 'titleColor', 'edgeLabelBackground', 'textColor', 'lineColor']) assert.ok(cfg.themeVariables[key], key);
+});

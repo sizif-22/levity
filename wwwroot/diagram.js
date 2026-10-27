@@ -2,7 +2,7 @@
 // Here: confirm what will be sent, show progress, draw the diagram (pan and zoom), and send node numbers back when a node is clicked.
 // Relies on helpers from app.js: $, postToHost, openSheet, closeSheet, toast, currentCwd.
 
-const diag = { path: '', data: null, scale: 1, x: 0, y: 0, moved: false, mermaidPromise: null, renderId: 0, armed: {} };
+const diag = { path: '', data: null, scale: 1, x: 0, y: 0, moved: false, mermaidPromise: null, renderId: 0, armed: {}, touched: false, expanded: false, busy: null, busyTimer: 0 };
 
 const DIAG_SVG_ICON = '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="6" rx="1"/><rect x="14" y="3" width="7" height="6" rx="1"/><rect x="8.5" y="15" width="7" height="6" rx="1"/><path d="M6.5 9v3h11V9M12 12v3"/></svg>';
 
@@ -16,6 +16,8 @@ function openDiagram(path) {
   if (!path) { toast('Open a project folder first.'); return; }
   diag.path = path;
   diag.data = null;
+  setDiagExpanded(false);
+  clearAsking();
   $('diagTitle').textContent = 'Architecture diagram';
   $('diagSub').textContent = path;
   diagShow('empty');
@@ -30,7 +32,9 @@ function diagShow(panel) {
 // ---- messages from the PC ----
 
 function diagramOnMessage(msg) {
+  if (msg && msg.type === 'diagram_collapsed') { setDiagExpanded(false, true); return; }   // the PC put the window back to normal width
   if (!msg || !diagSame(msg.path, diag.path)) return;
+  clearAsking();
   switch (msg.type) {
     case 'diagram': renderDiagram(msg); break;
     case 'diagram_none': diag.data = null; diagShow('empty'); break;
@@ -166,16 +170,7 @@ async function drawDiagram(d) {
   try {
     const mermaid = await loadMermaid();
     const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    mermaid.initialize({
-      startOnLoad: false,
-      securityLevel: 'strict',
-      // A directive hidden in a label (%%{init: ...}%%) must not be able to change any of these.
-      secure: ['secure', 'securityLevel', 'startOnLoad', 'maxTextSize', 'htmlLabels', 'flowchart'],
-      theme: 'base',
-      htmlLabels: false,
-      flowchart: { htmlLabels: false, curve: 'basis', useMaxWidth: false },
-      themeVariables: { lineColor: dark ? '#cbd5e1' : '#334155', textColor: dark ? '#e2e8f0' : '#0f172a', background: 'transparent', fontFamily: 'inherit' },
-    });
+    mermaid.initialize(diagramMermaidConfig(dark));   // diagram-theme.js
 
     let svg = null, flat = false, firstError = null;
     try { svg = await drawOne(mermaid, 'diagramSvg' + myRender, d.mermaid); }
@@ -192,7 +187,9 @@ async function drawDiagram(d) {
     stage.appendChild(svg);
     wireDiagramNodes(svg, d);
     showGroupLegend(d, flat);
+    diag.touched = false;
     fitDiagram();
+    requestAnimationFrame(() => { if (!diag.touched) fitDiagram(); });   // the sheet may not have had its size yet when the drawing finished
   } catch (e) {
     if (myRender !== diag.renderId) return;
     $('diagFallback').hidden = false;
@@ -255,6 +252,47 @@ function wireDiagramNodes(svg, d) {
   });
 }
 
+// ---- waiting for the PC to read the project (before the confirmation appears) ----
+
+function markAsking(btn) {
+  diag.busy = { btn, label: btn.textContent };
+  btn.classList.add('busy');
+  btn.disabled = true;
+  btn.textContent = '';
+  const sp = document.createElement('span');
+  sp.className = 'spinner';
+  btn.appendChild(sp);
+  btn.appendChild(document.createTextNode('Reading the project...'));
+  clearTimeout(diag.busyTimer);
+  diag.busyTimer = setTimeout(clearAsking, 45000);   // never leave a button stuck if the PC does not answer
+}
+
+function clearAsking() {
+  clearTimeout(diag.busyTimer);
+  const b = diag.busy;
+  if (!b) return;
+  diag.busy = null;
+  b.btn.classList.remove('busy');
+  b.btn.disabled = false;
+  b.btn.textContent = b.label;
+}
+
+// ---- full window ----
+
+function setDiagExpanded(on, fromHost) {
+  on = !!on;
+  if (on === diag.expanded) return;
+  diag.expanded = on;
+  $('diagView').classList.toggle('expanded', on);
+  document.body.classList.toggle('diag-full', on);
+  const btn = $('diagExpand');
+  btn.setAttribute('aria-pressed', String(on));
+  btn.title = on ? 'Back to the sidebar' : 'Open full window';
+  if (!fromHost) postToHost({ type: 'diagram_expand', on });   // the PC widens or restores the sidebar window
+  diag.touched = false;
+  requestAnimationFrame(fitDiagram);
+}
+
 // ---- pan and zoom ----
 
 function diagApply() {
@@ -289,6 +327,7 @@ function fitDiagram() {
 }
 
 function zoomDiagram(factor, cx, cy) {
+  diag.touched = true;
   const canvas = $('diagCanvas');
   if (cx === undefined) { cx = canvas.clientWidth / 2; cy = canvas.clientHeight / 2; }
   const next = Math.max(0.05, Math.min(6, diag.scale * factor));
@@ -310,6 +349,7 @@ function zoomDiagram(factor, cx, cy) {
   let drag = null;
   canvas.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
+    diag.touched = true;
     drag = { x: e.clientX, y: e.clientY, ox: diag.x, oy: diag.y };
     diag.moved = false;
     try { canvas.setPointerCapture(e.pointerId); } catch { /* not every environment supports capture */ }
@@ -325,18 +365,25 @@ function zoomDiagram(factor, cx, cy) {
   const end = () => { drag = null; setTimeout(() => { diag.moved = false; }, 0); };
   canvas.addEventListener('pointerup', end);
   canvas.addEventListener('pointercancel', end);
-  canvas.addEventListener('dblclick', fitDiagram);
+  canvas.addEventListener('dblclick', () => { diag.touched = false; fitDiagram(); });
+  // Until the user moves or zooms, keep the whole diagram in view whenever the canvas changes size (sheet opening, window stretching).
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => { if (!diag.touched && diag.data) fitDiagram(); }).observe(canvas);
 
   $('diagZoomIn').addEventListener('click', () => zoomDiagram(1.25));
   $('diagZoomOut').addEventListener('click', () => zoomDiagram(1 / 1.25));
-  $('diagFit').addEventListener('click', fitDiagram);
+  $('diagFit').addEventListener('click', () => { diag.touched = false; fitDiagram(); });
+  $('diagExpand').addEventListener('click', () => setDiagExpanded(!diag.expanded));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && diag.expanded) { e.stopPropagation(); setDiagExpanded(false); } }, true);
 
   // Starting a run always passes through a confirmation that shows what will be sent.
-  const ask = () => postToHost({ type: 'diagram_prepare', path: diag.path });
-  $('diagMakeBtn').addEventListener('click', ask);
-  $('diagRegenBtn').addEventListener('click', ask);
-  $('diagRetryBtn').addEventListener('click', ask);
-  $('diagStaleBtn').addEventListener('click', ask);
+  for (const id of ['diagMakeBtn', 'diagRegenBtn', 'diagRetryBtn', 'diagStaleBtn']) {
+    const btn = $(id);
+    btn.addEventListener('click', () => {
+      if (diag.busy) return;
+      markAsking(btn);
+      postToHost({ type: 'diagram_prepare', path: diag.path });
+    });
+  }
   $('diagSendBtn').addEventListener('click', () => { diagShow('progress'); $('diagProgressText').textContent = 'Starting...'; postToHost({ type: 'diagram_generate', path: diag.path }); });
   $('diagConfirmCancel').addEventListener('click', () => diagShow(diag.data ? 'view' : 'empty'));
   $('diagStopBtn').addEventListener('click', () => postToHost({ type: 'diagram_cancel' }));

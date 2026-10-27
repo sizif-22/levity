@@ -190,6 +190,29 @@ namespace Levity
             this.Left = offscreen ? _targetRight : _dockedLeft;
         }
 
+        private bool _diagramExpanded;
+
+        /// <summary>Stretches the sidebar over the whole work area so a big diagram can be read, and puts it back afterwards.</summary>
+        private void SetDiagramExpanded(bool on)
+        {
+            if (_isAnimating || !_isSidebarVisible) return;
+            if (on == _diagramExpanded) return;
+            _diagramExpanded = on;
+            if (on)
+            {
+                var screen = Screen.FromPoint(System.Windows.Forms.Cursor.Position);
+                var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(this);
+                double dpiX = dpi.DpiScaleX > 0 ? dpi.DpiScaleX : 1.0;
+                this.Left = screen.WorkingArea.Left / dpiX;
+                this.Width = screen.WorkingArea.Width / dpiX;
+            }
+            else
+            {
+                this.Width = _targetWidth;
+                this.Left = _dockedLeft;
+            }
+        }
+
         public void ToggleVisibility()
         {
             if (_isSidebarVisible)
@@ -252,6 +275,11 @@ namespace Levity
             if (_isAnimating || !_isSidebarVisible) return;
             _isAnimating = true;
 
+            if (_diagramExpanded)
+            {
+                _diagramExpanded = false;
+                PostJsonToWeb(new { type = "diagram_collapsed" });   // the page was stretched; tell it the window is back to normal
+            }
             PositionWindow(offscreen: false);
 
             var anim = new DoubleAnimation
@@ -336,6 +364,11 @@ namespace Levity
 
                     case "diagram_prepare":
                         _ = DiagramPrepareAsync(GetString(root, "path"), clientId);
+                        break;
+
+                    case "diagram_expand":
+                        if (clientId == null)   // only the sidebar itself: a phone cannot resize the PC window
+                            SetDiagramExpanded(root.TryGetProperty("on", out var ex) && ex.ValueKind == JsonValueKind.True);
                         break;
 
                     case "diagram_generate":
@@ -906,7 +939,11 @@ namespace Levity
         /// <summary>Tells the user what would be sent before anything is.</summary>
         private async Task DiagramPrepareAsync(string path, string? clientId)
         {
-            if (!DiagramGuard(path, clientId)) return;
+            if (!DiagramFolderAllowed(path, clientId))
+            {
+                Reply(clientId, new { type = "diagram_state", path = DiagramStore.NormalizeRoot(path), phase = "error", message = "That folder is not available." });
+                return;
+            }
             try
             {
                 var (stats, chars) = await _diagrams.PrepareAsync(path);
@@ -917,7 +954,7 @@ namespace Levity
                     redactions = stats.Redactions, truncated = stats.Truncated, kb = (chars + 1023) / 1024,
                 });
             }
-            catch { Reply(clientId, new { type = "toast", text = "Could not read that folder." }); }
+            catch { Reply(clientId, new { type = "diagram_state", path = DiagramStore.NormalizeRoot(path), phase = "error", message = "Could not read that folder." }); }
         }
 
         private async Task DiagramGenerateAsync(string path, string? clientId)
