@@ -1,0 +1,47 @@
+wwwroot/app.js
+  s_d7448d4eb56c88::t_97b835b3b9eaa5 82-83,111-112,334,340,404-466
+  s_d7448d4eb56c88::t_a6be523b562d46 467
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_d177295ddf04ab 5-6,81-83,315-332,334-335,337-341,640,642-655,657,659-660,663-741,763,765-782,786,789,921-922,1011-1012,1067
+Services/DirectShell.cs
+  s_d7448d4eb56c88::t_691216e2160233 6
+Services/AgyProcessManager.cs
+  s_d7448d4eb56c88::t_f9b5a655ab03a0 60,82-83,98,143-147
+  s_d7448d4eb56c88::t_abf5b3c567c456 148-149
+wwwroot/style.css
+  s_d7448d4eb56c88::t_97b835b3b9eaa5 540-556
+web/src/components/JobsSheet.tsx
+  s_d7448d4eb56c88::t_c565e8ba16ed3d 1-69
+web/src/App.tsx
+  s_d7448d4eb56c88::t_5c3b7d154d6a15 9,93-95,131-132,172,208-211,311-322,334-339,355
+web/src/styles.css
+  s_d7448d4eb56c88::t_97b835b3b9eaa5 560-576
+wwwroot/index.html
+  s_d7448d4eb56c88::t_97b835b3b9eaa5 45-48,108,119-122,176-188
+  s_d7448d4eb56c88::t_ea43652c1980af 189-190
+Services/JobManager.cs
+  s_d7448d4eb56c88::t_00919ea5449938 1-172
+README.md
+  s_d7448d4eb56c88::t_8d76c4a1d05a08 235-237
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "96ad8afa2e67363ffdb4ce6ba85c2a15cab4f997",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
