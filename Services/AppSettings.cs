@@ -23,6 +23,8 @@ namespace AntigravitySidebar.Services
         public string? SyncPrompt { get; set; }
 
         // Project list ordering: keys are lower-cased full paths
+        // Folders the user picked by hand (any path, not only under ProjectsRoot), newest first
+        public List<string> RecentFolders { get; set; } = new();
         public List<string> PinnedProjects { get; set; } = new();
         public Dictionary<string, int> ProjectUses { get; set; } = new();
         public Dictionary<string, DateTime> ProjectLastUsed { get; set; } = new();
@@ -36,6 +38,17 @@ namespace AntigravitySidebar.Services
             ProjectUses[key] = ProjectUses.GetValueOrDefault(key) + 1;
             ProjectLastUsed[key] = DateTime.UtcNow;
             Save();
+        }
+
+        public static string HomeFolder => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        public void AddRecentFolder(string path)
+        {
+            string full = Path.GetFullPath(path).TrimEnd('\\', '/');
+            if (full.Length == 0 || string.Equals(full, HomeFolder.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)) return;
+            RecentFolders.RemoveAll(r => string.Equals(r, full, StringComparison.OrdinalIgnoreCase));
+            RecentFolders.Insert(0, full);
+            if (RecentFolders.Count > 12) RecentFolders.RemoveRange(12, RecentFolders.Count - 12);
         }
 
         public void SetPinned(string path, bool pinned)
@@ -65,6 +78,12 @@ namespace AntigravitySidebar.Services
                         {
                             settings.WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                         }
+                        if (string.IsNullOrWhiteSpace(settings.ProjectsRoot) || !Directory.Exists(settings.ProjectsRoot))
+                        {
+                            settings.ProjectsRoot = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                        }
+                        settings.RecentFolders ??= new();
+                        settings.RecentFolders.RemoveAll(r => !Directory.Exists(r));
                         return settings;
                     }
                 }

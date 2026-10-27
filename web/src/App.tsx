@@ -202,7 +202,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
 
       <button className="cwd-pill" onClick={openProjects}>
         <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
-        <span>{cwdName}</span>
+        <span title={chat.cwd}><bdi>{chat.cwd || cwdName}</bdi></span>
         <svg className="chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9" /></svg>
       </button>
 

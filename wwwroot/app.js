@@ -89,8 +89,7 @@ function handleHostMessage(msg) {
 
 function setCwd(path) {
   currentCwd = path;
-  const parts = path.split(/[\\/]/).filter(Boolean);
-  $('cwdText').textContent = parts[parts.length - 1] || path;
+  $('cwdText').textContent = path;
   $('cwdButton').title = `Current project: ${path}`;
   markCurrentProject();
 }
@@ -409,6 +408,8 @@ document.addEventListener('keydown', (e) => {
 
 $('projectsBtn').addEventListener('click', () => openSheet('projectsSheet'));
 $('cwdButton').addEventListener('click', () => openSheet('projectsSheet'));
+$('pickFolderBtn').addEventListener('click', () => { closeSheet('projectsSheet'); postToHost({ type: 'pick_folder' }); });
+$('noProjectBtn').addEventListener('click', () => { postToHost({ type: 'no_project' }); closeSheet('projectsSheet'); });
 $('chipReviewAll').addEventListener('click', () => openSheet('projectsSheet'));
 $('chipIde').addEventListener('click', () => postToHost({ type: 'open_ide', path: currentCwd }));
 $('mobileBtn').addEventListener('click', () => openSheet('mobileSheet'));

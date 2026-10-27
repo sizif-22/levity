@@ -369,6 +369,10 @@ namespace AntigravitySidebar
                         SwitchProject(GetString(root, "path"), clientId);
                         break;
 
+                    case "no_project":
+                        SwitchProject(AppSettings.HomeFolder, clientId);
+                        break;
+
                     case "sync_start":
                         _ = StartSyncAsync(root, clientId);
                         break;
@@ -435,7 +439,17 @@ namespace AntigravitySidebar
         private async Task ListProjectsAsync(string? clientId)
         {
             string rootDir = _settings.ProjectsRoot;
-            var projects = await Task.Run(() => ProjectScanner.Scan(rootDir));
+            var projects = await Task.Run(() =>
+            {
+                var list = ProjectScanner.Scan(rootDir);
+                // Hand-picked folders outside the scanned root stay reachable.
+                foreach (string r in _settings.RecentFolders.ToList())
+                {
+                    if (Directory.Exists(r) && !list.Any(p => string.Equals(p.Path, r, StringComparison.OrdinalIgnoreCase)))
+                        list.Add(ProjectScanner.Describe(r));
+                }
+                return list;
+            });
             Reply(clientId, new
             {
                 type = "projects",
@@ -577,10 +591,12 @@ namespace AntigravitySidebar
             bool allowed = !string.IsNullOrWhiteSpace(path) && Directory.Exists(path);
             if (allowed && clientId != null)
             {
-                // Phones may only switch to folders under the projects root.
-                string full = Path.GetFullPath(path).TrimEnd('\\') + "\\";
-                string rootFull = Path.GetFullPath(_settings.ProjectsRoot).TrimEnd('\\') + "\\";
-                allowed = full.StartsWith(rootFull, StringComparison.OrdinalIgnoreCase);
+                // Phones may switch to folders under the projects root, folders already picked on the PC, or the home folder (no project).
+                static string Norm(string p) => Path.GetFullPath(p).TrimEnd('\\') + "\\";
+                string full = Norm(path);
+                allowed = full.StartsWith(Norm(_settings.ProjectsRoot), StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(full, Norm(AppSettings.HomeFolder), StringComparison.OrdinalIgnoreCase)
+                    || _settings.RecentFolders.Any(r => string.Equals(full, Norm(r), StringComparison.OrdinalIgnoreCase));
             }
             if (!allowed)
             {
@@ -589,6 +605,7 @@ namespace AntigravitySidebar
             }
 
             _settings.WorkingDirectory = path;
+            _settings.AddRecentFolder(path);
             _settings.RecordProjectUse(path);
             _agyManager.Restart(path);
             ClearHistory();
@@ -756,7 +773,7 @@ namespace AntigravitySidebar
         {
             using var dialog = new FolderBrowserDialog
             {
-                Description = "Select Project Folder for Levity",
+                Description = "Choose a working folder for Levity (any folder)",
                 UseDescriptionForTitle = true,
                 SelectedPath = _agyManager.CurrentWorkingDirectory
             };

@@ -54,6 +54,17 @@ namespace AntigravitySidebar.Services
             return found.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase).ToList();
         }
 
+        /// <summary>Describes any folder; falls back to a plain "Folder" entry when it has no project markers.</summary>
+        public static ProjectInfo Describe(string dir)
+        {
+            if (TryDescribe(dir, out var info)) return info;
+            bool Has(string name) => File.Exists(System.IO.Path.Combine(dir, name));
+            return new ProjectInfo(
+                System.IO.Path.GetFileName(dir.TrimEnd('\\', '/')) is { Length: > 0 } n ? n : dir, dir, "Folder",
+                Has("README.md") || Has("readme.md"), Has("AGENTS.md") || Has("GEMINI.md") || Has("CLAUDE.md"),
+                Directory.Exists(System.IO.Path.Combine(dir, ".agent", "skills")), LastActivity(dir));
+        }
+
         private static IEnumerable<string> SafeDirs(string dir)
         {
             try

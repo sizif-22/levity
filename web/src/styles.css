@@ -179,6 +179,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
 .cwd-pill svg { width: 14px; height: 14px; color: var(--muted-foreground); flex-shrink: 0; }
 .cwd-pill span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 .cwd-pill .chev { opacity: 0.6; }
+.cwd-pill span { direction: rtl; text-align: left; font-family: var(--mono); font-size: 12px; } /* long paths clip on the left so the current folder stays visible */
 
 /* ---------- Chat ---------- */
 
@@ -353,6 +354,8 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
 .btn.danger-ghost:hover { background: var(--accent); }
 
 /* shadcn Input */
+.folder-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.folder-row .btn { flex: 1; }
 .root-row { display: flex; gap: 8px; margin-bottom: 14px; }
 .root-row input { flex: 1; min-width: 0; height: 36px; padding: 0 12px; border-radius: calc(var(--radius) - 2px); border: 1px solid var(--input); background: transparent; box-shadow: var(--shadow-sm); outline: 0; font-family: var(--mono); font-size: 13px; }
 .root-row input:focus { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 35%, transparent); }

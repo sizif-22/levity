@@ -113,6 +113,9 @@ export function ProjectsSheet({ data, scanning, sync, onClose, send, confirm, st
       {!viewSync ? (
         <>
           <div className="sheet-body">
+            <div className="folder-row">
+              <button className="btn ghost" onClick={() => { send({ type: 'no_project' }); onClose(); }}>No project (general chat)</button>
+            </div>
             <div className="root-row">
               <input value={root} spellCheck={false} onChange={(e) => setRoot(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && root.trim() && send({ type: 'set_root', path: root.trim() })} />

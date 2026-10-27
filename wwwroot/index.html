@@ -54,7 +54,7 @@
       </div>
     </header>
 
-    <button class="cwd-pill" id="cwdButton" title="Change project">
+    <button class="cwd-pill" id="cwdButton" title="Current working folder — click to change">
       <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
       <span id="cwdText">Loading…</span>
       <svg class="chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
@@ -129,8 +129,12 @@
       </div>
 
       <div id="projListView" class="sheet-body">
+        <div class="folder-row">
+          <button class="btn ghost" id="pickFolderBtn" title="Work in any folder on this PC">Choose folder…</button>
+          <button class="btn ghost" id="noProjectBtn" title="Chat without a project (uses your home folder)">No project</button>
+        </div>
         <div class="root-row">
-          <input id="rootInput" type="text" spellcheck="false" autocomplete="off" placeholder="D:\">
+          <input id="rootInput" type="text" spellcheck="false" autocomplete="off" placeholder="Folder to scan for projects">
           <button class="btn ghost" id="rescanBtn"><span class="spinner" hidden></span><span class="lbl">Scan</span></button>
         </div>
         <div class="list-tools">
