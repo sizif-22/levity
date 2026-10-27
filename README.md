@@ -6,7 +6,7 @@
 
 Levity is an AI coding assistant that lives in your Windows tray. Press **Win + Alt + A** and it slides in beside your editor, already working in the repo you last chose. Ask it to fix a bug, explain a codebase or write tests; run `git`, build and test commands without spending a single token; leave a dev server running in the background; and check on all of it from your phone.
 
-It is the developer interface for the **Antigravity CLI** (`agy`), which provides the AI. Levity adds what a terminal chat lacks: a persistent sidebar, a project switcher, a message queue, saved chats per repo, background jobs, an IDE shortcut, phone access and skills that make repeated tasks faster. (Formerly "Antigravity Sidebar".)
+It is the developer interface for the **Antigravity CLI** (`agy`), which provides the AI. Levity adds what a terminal chat lacks: a persistent sidebar, a project switcher, a message queue, saved chats per repo, background jobs, an IDE shortcut, phone access and skills that make repeated tasks faster.
 
 ## Built for how developers work
 
