@@ -30,6 +30,11 @@
     <Compile Include="..\..\Services\AgyProcessManager.cs" Link="Services\AgyProcessManager.cs" />
     <Compile Include="..\..\Services\RelayCrypto.cs" Link="Services\RelayCrypto.cs" />
     <Compile Include="..\..\Services\FastLearnerDetector.cs" Link="Services\FastLearnerDetector.cs" />
+    <Compile Include="..\..\Services\DiagramModel.cs" Link="Services\DiagramModel.cs" />
+    <Compile Include="..\..\Services\DiagramText.cs" Link="Services\DiagramText.cs" />
+    <Compile Include="..\..\Services\DiagramContext.cs" Link="Services\DiagramContext.cs" />
+    <Compile Include="..\..\Services\DiagramValidator.cs" Link="Services\DiagramValidator.cs" />
+    <Compile Include="..\..\Services\DiagramCompiler.cs" Link="Services\DiagramCompiler.cs" />
   </ItemGroup>
 
 </Project>
