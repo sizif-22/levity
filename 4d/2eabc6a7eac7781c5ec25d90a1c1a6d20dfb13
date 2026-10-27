@@ -1,0 +1,45 @@
+web/src/styles.css
+  s_d7448d4eb56c88::t_ba13124953bd1c 357-358
+  s_d7448d4eb56c88::t_1758acd7741f57 182
+wwwroot/style.css
+  s_d7448d4eb56c88::t_1758acd7741f57 182
+  s_d7448d4eb56c88::t_ba13124953bd1c 357-358
+Services/ProjectScanner.cs
+  s_d7448d4eb56c88::t_dc35c2ba2cb123 57-62,64-67
+  s_d7448d4eb56c88::t_30c763e1f52733 63
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_ba13124953bd1c 372-375,442-452,594-599,608,776
+web/src/components/ProjectsSheet.tsx
+  s_d7448d4eb56c88::t_ba13124953bd1c 116-118
+wwwroot/index.html
+  s_d7448d4eb56c88::t_ba13124953bd1c 132-135,137
+  s_d7448d4eb56c88::t_1758acd7741f57 57
+web/src/App.tsx
+  s_d7448d4eb56c88::t_1758acd7741f57 205
+wwwroot/app.js
+  s_d7448d4eb56c88::t_7dd6fabe4c4d2b 92,411-412
+Services/AppSettings.cs
+  s_d7448d4eb56c88::t_dc35c2ba2cb123 26-27,43-46,49-53,81-86
+  s_d7448d4eb56c88::t_56cb5943d6a750 47-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4d2eabc6a7eac7781c5ec25d90a1c1a6d20dfb13",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
