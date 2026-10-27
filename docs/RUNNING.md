@@ -57,6 +57,8 @@ Copy `.env.example` to `.env`. All values are optional.
 | `LEVITY_PROJECTS_ROOT` | Folder scanned for projects | your user folder |
 | `AGY_PATH` | Full path to `agy.exe` | `%LOCALAPPDATA%\agy\bin\agy.exe`, then `PATH` |
 | `ANTIGRAVITY_IDE_PATH` | Full path to `antigravity.cmd` | `%LOCALAPPDATA%\Programs\Antigravity IDE\bin`, then `PATH` |
+| `LEVITY_DIAGRAM_EFFORT` | Assistant effort for architecture diagrams: `low`, `medium`, `high` | `low` |
+| `LEVITY_DIAGRAM_TIMEOUT` | Seconds to wait for a diagram (30 to 1800) | `300` |
 | `LEVITY_SIDEBAR_WIDTH` | Sidebar width in px | `460` |
 | `LEVITY_SETTINGS_DIR` | Settings, chat history and WebView cache | `%APPDATA%\AntigravitySidebar` |
 | `LEVITY_SKILLS_DIR` | Target for `Install-Skills.ps1` | `%USERPROFILE%\.gemini\config\skills` |
