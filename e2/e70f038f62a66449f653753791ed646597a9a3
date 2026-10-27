@@ -1,0 +1,54 @@
+tests/Levity.Tests/DiagramCoreTests.cs
+  s_d7448d4eb56c88::t_b95761ec1120d4 86,88-99,101-105,113-120
+  s_d7448d4eb56c88::t_93df1bd0c902b3 100
+tests/Levity.Tests/DiagramDocsTests.cs
+  s_d7448d4eb56c88::t_d175c7a3013689 42-51
+wwwroot/style.css
+  s_d7448d4eb56c88::t_c7e19a3c8967bf 591-620
+wwwroot/app.js
+  s_d7448d4eb56c88::t_c7e19a3c8967bf 83-85,358-364,404,687,693
+wwwroot/diagram.js
+  s_d7448d4eb56c88::t_0d520662eafe1a 175-176,178-180
+  s_d7448d4eb56c88::t_18b2dd3794fa77 231-234
+  s_d7448d4eb56c88::t_5ca82b7c5e9cdf 1-9,12-174,177,181-230,235-328,330
+  s_d7448d4eb56c88::t_1eb6cab5b4d66d 10-11
+  s_d7448d4eb56c88::t_17aacfec13fbf3 329
+web/package.json
+  s_d7448d4eb56c88::t_3aec7825f34bea 17
+wwwroot/index.html
+  s_d7448d4eb56c88::t_c7e19a3c8967bf 118,197-267,370
+tests/sidebar/harness.mjs
+  s_d7448d4eb56c88::t_dfbd038335bf9b 11,33-34
+tests/sidebar/diagram.test.mjs
+  s_d7448d4eb56c88::t_3eebf99ce43fa6 1-332,335-395
+  s_d7448d4eb56c88::t_112e9253512235 333-334
+Services/DiagramText.cs
+  s_d7448d4eb56c88::t_9acbb46b67876d 69-70,72-75,80-81,83-97
+web/package-lock.json
+  s_d7448d4eb56c88::t_845cb2bebb9c5b 15,31-61,375-431,938-959,1010-1018,1493-1745,1753-1758,1928-1939,2119-2150,2164-2178,2186-2194,2223-2226,2229,2232-2235,2238,2240-2250,2252-2253,2256-2268,2271-2307,2309,2312-2319,2321,2324-2328,2330,2333-2347,2349-2813,2981-2986,3078-3089,3103-3108,3213-3221,3308-3388,3460-3499,3523-3557,3600-3605,3619-3624,3649-3681,3736-3751,3794-3799,3846-3857,3865-3870,3940-3945,4043-4051,4066-4071,4103-4115,4265-4313
+wwwroot/vendor/mermaid.LICENSE
+  s_d7448d4eb56c88::t_feb60a24d7ed5c 1-21
+wwwroot/vendor/mermaid.min.js
+  s_d7448d4eb56c88::t_502c8d5251067f 1-2659
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e2e70f038f62a66449f653753791ed646597a9a3",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
