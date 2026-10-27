@@ -197,3 +197,12 @@ test('when the PC says a command is waiting for an answer the Jobs panel opens',
   ui.deliver({ type: 'jobs_open', id: 3 });
   assert.ok(ui.$('jobsSheet').classList.contains('open'));
 });
+
+test('the /diagram chip is only offered inside a git repository', async () => {
+  const ui = await open();
+  assert.ok(ui.$('diagramChip').hidden, 'hidden until the PC says what the folder is');
+  ui.deliver(actions());
+  assert.ok(!ui.$('diagramChip').hidden);
+  ui.deliver(actions({ git: { repo: false, branch: null } }));
+  assert.ok(ui.$('diagramChip').hidden);
+});

@@ -49,6 +49,7 @@ async function openApp() {
   await waitFor(() => expect(screen.getByPlaceholderText(/Ask Levity anything/)).toBeTruthy());
   const conn = live.conn!;
   await act(async () => { conn.handlers.onMessage({ type: 'config', cwd: PROJECT, isPinned: false }); });
+  await act(async () => { conn.handlers.onMessage({ type: 'actions', path: PROJECT, packageManager: null, scripts: [], git: { repo: true, branch: 'main' } }); });   // the diagram chip is for git projects
   conn.sent.length = 0;
   const deliver = (m: Record<string, unknown>) => act(async () => { conn.handlers.onMessage(m); });
   return { conn, deliver };
@@ -154,5 +155,16 @@ describe('phone App: architecture diagram', () => {
     fireEvent.click(screen.getByText('/diagram'));
     expect(screen.queryByText('Generate')).toBeNull();      // the old preview did not come back
     expect(screen.getByText('Make a diagram')).toBeTruthy();
+  });
+});
+
+describe('phone App: the /diagram chip', () => {
+  it('is not offered for a folder that is not a git repository, and comes back when it is one', async () => {
+    const { deliver } = await openApp();
+    expect(screen.queryByText('/diagram')).not.toBeNull();
+    await deliver({ type: 'actions', path: 'D:\Plain', packageManager: null, scripts: [], git: { repo: false, branch: null } });
+    expect(screen.queryByText('/diagram')).toBeNull();
+    await deliver({ type: 'actions', path: PROJECT, packageManager: null, scripts: [], git: { repo: true, branch: 'main' } });
+    expect(screen.queryByText('/diagram')).not.toBeNull();
   });
 });

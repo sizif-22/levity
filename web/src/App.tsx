@@ -364,7 +364,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           </div>
         )}
         <div className="quick-commands">
-          <span className="cmd-chip" title="Draw this project's architecture" onClick={() => openDiagram(chat.cwd)}>/diagram</span>
+          {!!actions?.git.repo && <span className="cmd-chip" title="Draw this project's architecture" onClick={() => openDiagram(chat.cwd)}>/diagram</span>}
           {!!actions?.scripts.length && <span className="cmd-chip" title="Run a script from this folder's package.json" onClick={() => setSheet('run')}>/run</span>}
           {!!actions?.git.repo && <span className="cmd-chip" title="Common git steps: add, commit, push..." onClick={() => { setGitState(null); setSheet('git'); }}>/git</span>}
           <span className="cmd-chip" title="Run a CLI command directly (no AI), e.g. /cmd{$git status}. Add -b to run it in the background." onClick={() => { setDraft('/cmd{$}'); setTimeout(() => { composer.current?.focus(); composer.current?.setSelectionRange(6, 6); }, 0); }}>/cmd</span>

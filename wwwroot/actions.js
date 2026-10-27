@@ -27,6 +27,7 @@ function updateActionChips() {
   const d = act.data || {};
   $('runChip').hidden = !(d.scripts && d.scripts.length);
   $('gitChip').hidden = !(d.git && d.git.repo);
+  $('diagramChip').hidden = !(d.git && d.git.repo);   // the diagram is for projects: a folder that is not a git repository gets no chip
 }
 
 // ---- /run ----
