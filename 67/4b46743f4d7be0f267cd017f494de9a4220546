@@ -1,0 +1,32 @@
+web/src/components/ProjectsSheet.tsx
+  s_cc3f3c4e50f86e::t_7488cb74a04305 49-51,150
+wwwroot/index.html
+  s_cc3f3c4e50f86e::t_7488cb74a04305 85-88
+wwwroot/app.js
+  s_cc3f3c4e50f86e::t_7488cb74a04305 413,427,512,517
+MainWindow.xaml.cs
+  s_cc3f3c4e50f86e::t_7488cb74a04305 364-367,460-528
+web/src/App.tsx
+  s_cc3f3c4e50f86e::t_7488cb74a04305 243-246
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "674b46743f4d7be0f267cd017f494de9a4220546",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_cc3f3c4e50f86e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "aff6ddc9-b2db-47e9-a1e1-fd9c6b94d78b",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
