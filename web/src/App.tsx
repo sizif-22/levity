@@ -7,6 +7,7 @@ import { clearDevice, loadDevice, type DeviceRecord } from './lib/store';
 import { hasPin } from './lib/pin';
 import { Markdown } from './components/Markdown';
 import { JobsSheet, type Job } from './components/JobsSheet';
+import { SessionsSheet, type SessionsMsg } from './components/SessionsSheet';
 import { ProjectsSheet, syncCounts, type ProjectsMsg, type SyncState } from './components/ProjectsSheet';
 import { Center, ConfirmDialog, Logo, LockScreen, PairScreen, SettingsSheet } from './components/Screens';
 
@@ -21,7 +22,8 @@ const CMD_RE = /^(\/(?:cmd|cli|run|sh)(?:\{|\s+)\s*\$?\s*)([^\s}]+)([\s\S]*)$/i;
 function UserText({ text }: { text: string }) {
   const m = CMD_RE.exec(text);
   if (!m) return <>{text}</>;
-  return <><span className="cmd-pre">{m[1]}</span><b className="cmd-word">{m[2]}</b>{m[3]}</>;
+  const f = /^([\s\S]*?\s|)(-b)(\}?\s*)$/.exec(m[3]); // the background flag reads as secondary
+  return <><span className="cmd-pre">{m[1]}</span><b className="cmd-word">{m[2]}</b>{f ? <>{f[1]}<span className="cmd-flag">{f[2]}</span>{f[3]}</> : m[3]}</>;
 }
 
 const visible = (m: Msg) => m.role === 'user' || !m.done || !!(m.text || m.thinking || m.tools.length || m.error);
@@ -90,7 +92,8 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const [projects, setProjects] = useState<ProjectsMsg | null>(null);
   const [scanning, setScanning] = useState(false);
   const [sync, setSync] = useState<SyncState | null>(null);
-  const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs'>('none');
+  const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs' | 'history'>('none');
+  const [sessions, setSessions] = useState<SessionsMsg | null>(null);
   const [queue, setQueue] = useState<{ id: number; text: string }[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [syncSeen, setSyncSeen] = useState(true);
@@ -129,6 +132,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
       },
       onMessage: (msg) => {
         const type = msg.type as string;
+        if (type === 'sessions') { setSessions(msg as unknown as SessionsMsg); return; }
         if (type === 'queue') { setQueue((msg.items as { id: number; text: string }[]) ?? []); return; }
         if (type === 'jobs') { setJobs((msg.jobs as Job[]) ?? []); return; }
         if (type === 'projects') { setProjects(msg as unknown as ProjectsMsg); setScanning(false); return; }
@@ -205,6 +209,9 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         <div className="header-actions">
           <button className="icon-btn" onClick={openProjects} title="Projects & review">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>
+          </button>
+          <button className="icon-btn" onClick={() => { setSheet('history'); send({ type: 'list_sessions' }); }} title="Chat history">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><polyline points="12 7 12 12 15 14" /></svg>
           </button>
           <button className="icon-btn" onClick={() => setSheet('jobs')} title="Background jobs">
             <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" /></svg>
@@ -358,6 +365,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           }}
         />
       )}
+      {sheet === 'history' && <SessionsSheet data={sessions} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'jobs' && <JobsSheet jobs={jobs} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'settings' && (
         <SettingsSheet device={device} onClose={() => setSheet('none')} onUnpair={onUnpair} confirm={confirm} toast={toast} />

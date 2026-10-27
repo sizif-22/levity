@@ -131,13 +131,13 @@ namespace AntigravitySidebar.Services
             }
         }
 
-        public void Restart(string? newWorkingDirectory = null)
+        public void Restart(string? newWorkingDirectory = null, string? resumeConversationId = null)
         {
             if (!string.IsNullOrWhiteSpace(newWorkingDirectory) && Directory.Exists(newWorkingDirectory))
             {
                 CurrentWorkingDirectory = newWorkingDirectory;
             }
-            Start();
+            Start(resumeConversationId);
         }
 
         /// <summary>Cancels the running turn by restarting agy on the same conversation, so context is kept.</summary>

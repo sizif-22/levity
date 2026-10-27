@@ -62,6 +62,7 @@ namespace AntigravitySidebar.Services
         // LEVITY_SETTINGS_DIR lets tests run without touching the real settings file.
         private static readonly string SettingsDir = Environment.GetEnvironmentVariable("LEVITY_SETTINGS_DIR")
             ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "AntigravitySidebar");
+        public static string DataDir => SettingsDir;
         private static readonly string SettingsFilePath = Path.Combine(SettingsDir, "settings.json");
 
         public static AppSettings Load()

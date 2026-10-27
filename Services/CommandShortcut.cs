@@ -38,6 +38,7 @@ namespace AntigravitySidebar.Services
                 command = command.Trim();
                 // "$" in front means: run it directly in PowerShell, no AI.
                 if (command.StartsWith("$")) { direct = true; command = command.Substring(1).Trim(); }
+                if (direct && after == "-b") { command += " -b"; after = ""; }
                 return command.Length > 0;
             }
             return false;

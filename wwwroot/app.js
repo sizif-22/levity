@@ -79,6 +79,7 @@ function handleHostMessage(msg) {
         requestScan(false); postToHost({ type: 'list_projects' });
       }
       break;
+    case 'sessions': renderSessions(msg); break;
     case 'queue': renderQueue(msg); break;
     case 'jobs': renderJobs(msg); break;
     case 'projects': renderProjects(msg); break;
@@ -314,7 +315,8 @@ const CMD_RE = /^(\/(?:cmd|cli|run|sh)(?:\{|\s+)\s*\$?\s*)([^\s}]+)([\s\S]*)$/i;
 function userBubbleHtml(text) {
   const m = CMD_RE.exec(text);
   if (!m) return escapeHtml(text);
-  return `<span class="cmd-pre">${escapeHtml(m[1])}</span><b class="cmd-word">${escapeHtml(m[2])}</b>${escapeHtml(m[3])}`;
+  const rest = escapeHtml(m[3]).replace(/(^|\s)(-b)(?=\}?\s*$)/, '$1<span class="cmd-flag">$2</span>'); // the background flag reads as secondary
+  return `<span class="cmd-pre">${escapeHtml(m[1])}</span><b class="cmd-word">${escapeHtml(m[2])}</b>${rest}`;
 }
 
 // Colour the command word inside the message box itself: a transparent-text textarea over a styled mirror.
@@ -433,6 +435,38 @@ function renderQueue(msg) {
   });
 }
 
+function renderSessions(msg) {
+  const list = $('sessList');
+  const items = msg.sessions || [];
+  $('sessSub').textContent = items.length ? `${items.length} saved on this PC` : 'No saved chats yet. Chats are saved automatically.';
+  list.innerHTML = '';
+  items.forEach(s => {
+    const folder = (s.cwd || '').split(/[\\/]/).filter(Boolean).pop() || s.cwd || '';
+    const isCurrent = s.id === msg.current;
+    const li = document.createElement('li');
+    li.className = 'sess' + (isCurrent ? ' current' : '');
+    li.innerHTML = `<div class="sess-main"><div class="sess-title"></div><div class="sess-meta"></div></div>
+      <button class="btn ghost sess-open"></button><button class="btn ghost sess-del">Delete</button>`;
+    li.querySelector('.sess-title').textContent = s.title || '(untitled)';
+    li.querySelector('.sess-meta').textContent = `${folder} · ${s.messages} message${s.messages === 1 ? '' : 's'} · ${ago(s.updated)}`;
+    const open = li.querySelector('.sess-open');
+    open.textContent = isCurrent ? 'Open now' : 'Open';
+    open.disabled = isCurrent;
+    const doOpen = () => { if (!isCurrent) { postToHost({ type: 'session_open', id: s.id }); closeSheet('sessionsSheet'); } };
+    open.addEventListener('click', doOpen);
+    li.querySelector('.sess-main').addEventListener('click', doOpen);
+    const del = li.querySelector('.sess-del');
+    let armed = null;
+    del.addEventListener('click', () => {
+      if (armed) { clearTimeout(armed); postToHost({ type: 'session_delete', id: s.id }); return; }
+      del.textContent = 'Sure?';
+      del.classList.add('danger');
+      armed = setTimeout(() => { armed = null; del.textContent = 'Delete'; del.classList.remove('danger'); }, 3000);
+    });
+    list.appendChild(li);
+  });
+}
+
 function jobElapsed(j) {
   const s = Math.max(0, Math.round(((j.ended ? new Date(j.ended) : new Date()) - new Date(j.started)) / 1000));
   return s < 60 ? `${s}s` : s < 3600 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
@@ -474,6 +508,7 @@ function renderJobs(msg) {
   });
 }
 
+$('sessionsBtn').addEventListener('click', () => openSheet('sessionsSheet'));
 $('jobsBtn').addEventListener('click', () => openSheet('jobsSheet'));
 $('jobsClearBtn').addEventListener('click', () => postToHost({ type: 'job_clear' }));
 $('stopBtn').addEventListener('click', () => postToHost({ type: 'stop_response' }));
@@ -484,6 +519,7 @@ function openSheet(id) {
   sheet.setAttribute('aria-hidden', 'false');
   if (id === 'projectsSheet') { requestScan(false); postToHost({ type: 'list_projects' }); syncSeen = true; updateSyncBanner(); }
   if (id === 'mobileSheet') postToHost({ type: 'remote_info' });
+  if (id === 'sessionsSheet') postToHost({ type: 'list_sessions' });
 }
 function closeSheet(id) {
   const sheet = $(id);

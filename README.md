@@ -58,10 +58,14 @@ Not covered: a malicious Vercel deployment could serve altered JavaScript. Only 
 
 - `/cmd{$git status}` (aliases `/cli`, `/run`, `/sh`; also `/cmd $git status`): the `$` runs it directly in PowerShell in the current folder, with no AI and no tokens. `cd` changes the working folder.
 - `/cmd{git status}` without the `$`, or any text after the brace (`/cmd{$npm test} summarize failures`): the agent runs it.
-- **Background jobs:** a `$` command still running after 3 s moves to the **Jobs** panel (terminal icon in the header) with live output and a Stop button. Add `-b` to start it in the background at once: `/cmd{$bun run dev -b}`.
+- **Background jobs:** a `$` command still running after 3 s moves to the **Jobs** panel (terminal icon in the header) with live output and a Stop button. Add `-b` to start it in the background at once: `/cmd{$bun run dev -b}` or `/cmd{$bun run dev} -b`. Jobs show on the phone too.
 - **Queue and stop:** messages sent while Levity is busy are queued (shown above the box, removable) and sent in order. The red square next to Send stops the AI's current response and keeps the conversation.
 
 Works from the phone too.
+
+## Chat history
+
+Every chat is saved on the PC automatically (`%APPDATA%\AntigravitySidebar\sessions`). The clock icon in the header lists them: **Open** brings the chat back, switches to its folder and resumes the same agent conversation, so the AI keeps its context. **Delete** (tap twice) removes it. The phone shows and opens the same list. The open chat can't be deleted.
 
 ## Project review
 

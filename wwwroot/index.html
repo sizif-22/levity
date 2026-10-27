@@ -42,6 +42,9 @@
           <svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
           <span class="badge" id="mobileBadge" hidden>0</span>
         </button>
+        <button class="icon-btn" id="sessionsBtn" title="Chat history">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+        </button>
         <button class="icon-btn" id="jobsBtn" title="Background jobs">
           <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
           <span class="badge" id="jobsBadge" hidden>0</span>
@@ -174,6 +177,20 @@
         <button class="btn ghost" id="syncBackBtn" hidden>Back to projects</button>
         <button class="btn danger" id="syncCancelBtn" hidden>Stop</button>
       </div>
+    </section>
+
+    <!-- Chat history sheet -->
+    <section class="sheet" id="sessionsSheet" aria-hidden="true">
+      <div class="sheet-head">
+        <div>
+          <h3>Chat history</h3>
+          <p class="sheet-sub" id="sessSub">Saved on this PC</p>
+        </div>
+        <button class="icon-btn" data-close-sheet="sessionsSheet" title="Close">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="sheet-body"><ul class="sess-list" id="sessList"></ul></div>
     </section>
 
     <!-- Background jobs sheet -->

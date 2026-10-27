@@ -86,6 +86,8 @@ namespace AntigravitySidebar
             _agyManager = new AgyProcessManager(_settings.WorkingDirectory!);
             _agyManager.OnEventReceived += HandleAgyEvent;
             _agyManager.OnStatusChanged += HandleAgyStatus;
+            _agyManager.OnConversationInitialized += id => Dispatcher.BeginInvoke(new Action(() => _sessionConvId = id));
+            _sessionCwd = _agyManager.CurrentWorkingDirectory;
             _agyManager.OnErrorReceived += HandleAgyError;
             _agyManager.Start();
             try { File.AppendAllText(log, "[TRACE 3] AgyManager started\n"); } catch { }
@@ -313,6 +315,18 @@ namespace AntigravitySidebar
                     case "send_prompt":
                         string prompt = GetString(root, "text").Trim();
                         if (prompt.Length > 0) HandlePrompt(prompt, remote, clientId);
+                        break;
+
+                    case "list_sessions":
+                        Reply(clientId, JsonDocument.Parse(SessionsJson()).RootElement);
+                        break;
+
+                    case "session_open":
+                        OpenSession(GetString(root, "id"), clientId);
+                        break;
+
+                    case "session_delete":
+                        DeleteSession(GetString(root, "id"), clientId);
                         break;
 
                     case "stop_response":
@@ -637,6 +651,154 @@ namespace AntigravitySidebar
             return true;
         }
 
+        // ---- Chat sessions: saved on this PC, reopenable from the PC or a phone ------------
+
+        private readonly SessionStore _sessions = new();
+        private string _sessionId = Guid.NewGuid().ToString("N");
+        private string _sessionCwd = "";
+        private string? _sessionConvId;
+        private DateTime _sessionCreated = DateTime.UtcNow;
+        private System.Windows.Threading.DispatcherTimer? _saveTimer;
+
+        private static string SessionTitle(IEnumerable<string> history)
+        {
+            foreach (string line in history)
+            {
+                if (!line.StartsWith("{\"type\":\"user_message\"")) continue;
+                try
+                {
+                    using var doc = JsonDocument.Parse(line);
+                    string text = doc.RootElement.GetProperty("text").GetString() ?? "";
+                    text = string.Join(" ", text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+                    return text.Length <= 60 ? text : text.Substring(0, 57) + "...";
+                }
+                catch { }
+            }
+            return "";
+        }
+
+        /// <summary>Writes the open chat to disk shortly after it changes (a chat with no user message is never saved).</summary>
+        private void ScheduleSessionSave()
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                _saveTimer ??= new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
+                _saveTimer.Tick -= OnSaveTick;
+                _saveTimer.Tick += OnSaveTick;
+                _saveTimer.Stop();
+                _saveTimer.Start();
+            }));
+        }
+
+        private void OnSaveTick(object? sender, EventArgs e)
+        {
+            _saveTimer?.Stop();
+            SaveSession();
+        }
+
+        private void SaveSession()
+        {
+            _saveTimer?.Stop();
+            string title = SessionTitle(_history);
+            if (title.Length == 0) return;
+            _sessions.Save(new ChatSession
+            {
+                Id = _sessionId,
+                Title = title,
+                Cwd = _sessionCwd,
+                ConversationId = _sessionConvId,
+                Created = _sessionCreated,
+                Updated = DateTime.UtcNow,
+                Messages = _history.Count(l => l.StartsWith("{\"type\":\"user_message\"")),
+                History = _history.ToList()
+            });
+            PublishSessions();
+        }
+
+        /// <summary>Saves the open chat, then starts a fresh, empty one in the current working folder.</summary>
+        private void BeginNewSession()
+        {
+            SaveSession();
+            _history.Clear();
+            _sessionId = Guid.NewGuid().ToString("N");
+            _sessionConvId = null;
+            _sessionCreated = DateTime.UtcNow;
+            _sessionCwd = _agyManager.CurrentWorkingDirectory;
+        }
+
+        private string SessionsJson() => JsonSerializer.Serialize(new
+        {
+            type = "sessions",
+            current = _sessionId,
+            sessions = _sessions.List().Select(s => new
+            {
+                id = s.Id,
+                title = s.Title,
+                cwd = s.Cwd,
+                updated = s.Updated,
+                messages = s.Messages
+            })
+        });
+
+        private void PublishSessions() => RawPublish(SessionsJson());
+
+        private void OpenSession(string id, string? clientId)
+        {
+            if (TurnBusy)
+            {
+                Reply(clientId, new { type = "toast", text = "Wait for the current turn to finish, or stop it, first." });
+                return;
+            }
+            if (id == _sessionId)
+            {
+                Reply(clientId, new { type = "toast", text = "That chat is already open." });
+                return;
+            }
+            var s = _sessions.Load(id);
+            if (s == null)
+            {
+                Reply(clientId, new { type = "toast", text = "That chat could not be loaded." });
+                return;
+            }
+
+            SaveSession();
+            string cwd = Directory.Exists(s.Cwd) ? s.Cwd : _agyManager.CurrentWorkingDirectory;
+            _settings.WorkingDirectory = cwd;
+            _settings.Save();
+            _queue.Clear();
+            PublishQueue();
+            _agyManager.Restart(cwd, s.ConversationId); // same agy conversation, so the AI keeps its context
+
+            _history.Clear();
+            _history.AddRange(s.History);
+            _sessionId = s.Id;
+            _sessionCwd = cwd;
+            _sessionConvId = s.ConversationId;
+            _sessionCreated = s.Created;
+
+            Publish(new { type = "config", cwd, isPinned = _settings.IsPinned });
+            RawPublish("{\"type\":\"clear_chat\"}");
+            var lines = _history.ToArray();
+            foreach (string line in lines) PostRawToWeb(line);
+            if (_hub.IsRunning)
+            {
+                for (int i = 0; i < lines.Length; i += 150)
+                    _ = _hub.BroadcastAsync($"{{\"type\":\"batch\",\"items\":[{string.Join(",", lines.Skip(i).Take(150))}]}}");
+            }
+            PublishSessions();
+        }
+
+        private void DeleteSession(string id, string? clientId)
+        {
+            if (id == _sessionId)
+            {
+                Reply(clientId, new { type = "toast", text = "This chat is open. Start a new chat, then delete it." });
+                return;
+            }
+            _sessions.Delete(id);
+            PublishSessions();
+        }
+
         // ---- Prompts: queue, direct commands, background jobs, stop -----------------------
 
         private record QueuedPrompt(int Id, string Text, bool Remote, string? ClientId);
@@ -947,7 +1109,7 @@ namespace AntigravitySidebar
             if (showWindow) SlideIn();
         }
 
-        private void ClearHistory() => _history.Clear();
+        private void ClearHistory() => BeginNewSession();
 
         private void HandlePickFolder()
         {
@@ -1027,6 +1189,7 @@ namespace AntigravitySidebar
             {
                 _history.Add(json);
                 if (_history.Count > MaxHistory) _history.RemoveRange(0, _history.Count - MaxHistory);
+                ScheduleSessionSave();
             }
             RawPublish(json);
         }
@@ -1066,6 +1229,7 @@ namespace AntigravitySidebar
             _agyManager?.Stop();
             try { _hub.Dispose(); } catch { }
             try { _jobs.Dispose(); } catch { }
+            try { SaveSession(); } catch { }
             _hotkeyManager?.Dispose();
             _trayManager?.Dispose();
             System.Windows.Application.Current.Shutdown();

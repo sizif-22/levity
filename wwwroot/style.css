@@ -566,3 +566,14 @@ body.remote .scroll-bottom-btn { bottom: 120px; }
 .composer-hl .cmd-word { color: oklch(0.55 0.17 55); -webkit-text-stroke: 0.7px currentColor; }
 @media (prefers-color-scheme: dark) { .composer-hl .cmd-word { color: oklch(0.82 0.15 85); } }
 body.remote .composer-hl { font-size: 16px; } /* match the textarea (iOS zoom guard) */
+
+.cmd-flag { opacity: 0.4; }
+
+/* ---------- Chat history ---------- */
+.sess-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.sess { display: flex; align-items: center; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow-sm); }
+.sess.current { border-color: var(--ring); }
+.sess-main { flex: 1; min-width: 0; cursor: pointer; }
+.sess-title { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sess-meta { font-size: 11.5px; color: var(--muted-foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sess .btn { height: 28px; padding: 0 10px; font-size: 12px; }
