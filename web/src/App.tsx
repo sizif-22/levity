@@ -11,6 +11,8 @@ import { SessionsSheet, type SessionsMsg } from './components/SessionsSheet';
 import { CMD_RE, UserText } from './components/UserText';
 import { FastLearnerCard } from './components/FastLearnerCard';
 import { DiagramSheet } from './components/DiagramSheet';
+import { GitSheet, RunSheet } from './components/ActionSheets';
+import type { ActionsMsg, GitStateMsg } from './lib/actions';
 import { sameFolder, type DiagramMsg, type DiagramPrepared, type DiagramState } from './lib/diagram';
 import { ProjectsSheet, syncCounts, type ProjectsMsg, type SyncState } from './components/ProjectsSheet';
 import { ConfirmDialog, Logo, LockScreen, PairScreen, SettingsSheet } from './components/Screens';
@@ -87,7 +89,9 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const [projects, setProjects] = useState<ProjectsMsg | null>(null);
   const [scanning, setScanning] = useState(false);
   const [sync, setSync] = useState<SyncState | null>(null);
-  const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs' | 'history' | 'diagram'>('none');
+  const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs' | 'history' | 'diagram' | 'run' | 'git'>('none');
+  const [actions, setActions] = useState<ActionsMsg | null>(null);
+  const [gitState, setGitState] = useState<GitStateMsg | null>(null);
   const [diagPath, setDiagPath] = useState('');
   const diagPathRef = useRef('');
   const [diagram, setDiagram] = useState<DiagramMsg | null>(null);
@@ -144,6 +148,9 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         if (type === 'fast_learner') { toast(String(msg.text ?? '')); dispatch(msg); return; }
         if (type === 'queue') { setQueue((msg.items as { id: number; text: string }[]) ?? []); return; }
         if (type === 'jobs') { setJobs((msg.jobs as Job[]) ?? []); return; }
+        if (type === 'actions') { setActions(msg as unknown as ActionsMsg); return; }
+        if (type === 'git_state') { setGitState(msg as unknown as GitStateMsg); return; }
+        if (type === 'jobs_open') { setSheet('jobs'); return; }   // a command is waiting for an answer
         if (type === 'projects') { setProjects(msg as unknown as ProjectsMsg); setScanning(false); return; }
         if (type === 'sync_state') {
           const next = msg as unknown as SyncState;
@@ -358,6 +365,8 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         )}
         <div className="quick-commands">
           <span className="cmd-chip" title="Draw this project's architecture" onClick={() => openDiagram(chat.cwd)}>/diagram</span>
+          {!!actions?.scripts.length && <span className="cmd-chip" title="Run a script from this folder's package.json" onClick={() => setSheet('run')}>/run</span>}
+          {!!actions?.git.repo && <span className="cmd-chip" title="Common git steps: add, commit, push..." onClick={() => { setGitState(null); setSheet('git'); }}>/git</span>}
           <span className="cmd-chip" title="Run a CLI command directly (no AI), e.g. /cmd{$git status}. Add -b to run it in the background." onClick={() => { setDraft('/cmd{$}'); setTimeout(() => { composer.current?.focus(); composer.current?.setSelectionRange(6, 6); }, 0); }}>/cmd</span>
         </div>
         <div className="composer">
@@ -396,6 +405,8 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         <DiagramSheet path={diagPath} data={diagram} prepared={diagPrepared} state={diagState} send={send}
           onClearPrepared={() => setDiagPrepared(null)} onClose={() => { setSheet('none'); setDiagPrepared(null); }} />
       )}
+      {sheet === 'run' && <RunSheet actions={actions} send={send} onClose={() => setSheet('none')} />}
+      {sheet === 'git' && <GitSheet state={gitState} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'history' && <SessionsSheet data={sessions} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'jobs' && <JobsSheet jobs={jobs} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'settings' && (

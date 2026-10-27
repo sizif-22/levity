@@ -112,6 +112,8 @@
       <div class="queue" id="queueList" hidden></div>
       <div class="quick-commands">
         <span class="cmd-chip" data-cmd="/diagram" title="Draw this project's architecture">/diagram</span>
+        <span class="cmd-chip" id="runChip" data-cmd="/run" title="Run a script from this folder's package.json" hidden>/run</span>
+        <span class="cmd-chip" id="gitChip" data-cmd="/git" title="Common git steps: add, commit, push..." hidden>/git</span>
         <span class="cmd-chip" data-cmd="/cmd{$}" title="Run a CLI command directly (no AI), e.g. /cmd{$git status}. Add -b to run it in the background. Without $ the agent runs it.">/cmd</span>
       </div>
       <div class="composer">
@@ -264,6 +266,71 @@
       </div>
     </section>
 
+    <!-- /run: scripts from package.json -->
+    <section class="sheet" id="runSheet" aria-hidden="true">
+      <div class="sheet-head">
+        <div>
+          <h3>Run a script</h3>
+          <p class="sheet-sub" id="runSub"></p>
+        </div>
+        <button class="icon-btn" data-close-sheet="runSheet" title="Close">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="sheet-body"><ul class="action-list" id="runList"></ul></div>
+      <div class="sheet-foot">
+        <label class="check"><input type="checkbox" id="runInteractive"> It may ask me questions</label>
+      </div>
+    </section>
+
+    <!-- /git: the common steps -->
+    <section class="sheet" id="gitSheet" aria-hidden="true">
+      <div class="sheet-head">
+        <div>
+          <h3>Git</h3>
+          <p class="sheet-sub" id="gitSub">Checking...</p>
+        </div>
+        <button class="icon-btn" data-close-sheet="gitSheet" title="Close">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="sheet-body">
+        <div class="git-grid" id="gitButtons">
+          <button class="git-btn" data-git="status"><strong>Status</strong><code>git status -sb</code></button>
+          <button class="git-btn" data-git="add"><strong>Stage all</strong><code>git add .</code></button>
+          <button class="git-btn" id="gitCommitOpen"><strong>Commit…</strong><code>git commit -m "…"</code></button>
+          <button class="git-btn" data-git="push"><strong>Push</strong><code>git push</code></button>
+          <button class="git-btn" data-git="pull"><strong>Pull</strong><code>git pull</code></button>
+          <button class="git-btn" data-git="fetch"><strong>Fetch</strong><code>git fetch --all --prune</code></button>
+          <button class="git-btn" data-git="log"><strong>Log</strong><code>git log --oneline -n 15</code></button>
+          <button class="git-btn" data-git="diff"><strong>Diff</strong><code>git diff --stat</code></button>
+          <button class="git-btn" data-git="branches"><strong>Branches</strong><code>git branch -vv</code></button>
+          <button class="git-btn" id="gitBranchOpen"><strong>New branch…</strong><code>git switch -c …</code></button>
+          <button class="git-btn" data-git="stash"><strong>Stash</strong><code>git stash</code></button>
+          <button class="git-btn" data-git="stash-pop"><strong>Stash pop</strong><code>git stash pop</code></button>
+        </div>
+
+        <div class="git-form" id="gitCommitForm" hidden>
+          <label for="gitMessage"><strong>Commit message</strong></label>
+          <textarea id="gitMessage" rows="4" placeholder="What changed and why?" maxlength="2000"></textarea>
+          <label class="check"><input type="checkbox" id="gitStage" checked> Stage all changes first (<code>git add .</code>)</label>
+          <div class="diag-actions">
+            <button class="btn primary" id="gitCommitBtn" disabled>Commit</button>
+            <button class="btn ghost" id="gitCommitCancel">Back</button>
+          </div>
+        </div>
+
+        <div class="git-form" id="gitBranchForm" hidden>
+          <label for="gitBranchName"><strong>New branch name</strong></label>
+          <input id="gitBranchName" type="text" placeholder="feature/login" maxlength="100" autocomplete="off" spellcheck="false">
+          <div class="diag-actions">
+            <button class="btn primary" id="gitBranchBtn">Create and switch</button>
+            <button class="btn ghost" id="gitBranchCancel">Back</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Background jobs sheet -->
     <section class="sheet" id="jobsSheet" aria-hidden="true">
       <div class="sheet-head">
@@ -366,6 +433,7 @@
   <script src="marked.min.js"></script>
   <script src="highlight.min.js"></script>
   <script src="app.js"></script>
+  <script src="actions.js"></script>
   <script src="diagram-theme.js"></script>
   <script src="diagram.js"></script>
 </body>

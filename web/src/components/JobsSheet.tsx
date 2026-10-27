@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { JOB_KEYS } from '../lib/actions';
 
 export interface Job {
   id: number;
@@ -8,6 +9,8 @@ export interface Job {
   exitCode: number | null;
   started: string;
   ended: string | null;
+  /** Runs in a terminal of its own, so it can ask questions that are answered here. */
+  interactive?: boolean;
   tail: string;
 }
 
@@ -28,6 +31,26 @@ function Output({ text }: { text: string }) {
       onScroll={(e) => { const el = e.currentTarget; stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24; }}>
       {text || '(no output yet)'}
     </pre>
+  );
+}
+
+/** Under a running interactive command: a box for typed answers and the keys menus need. */
+function Ask({ job, send, autoFocus }: { job: Job; send: (m: Record<string, unknown>) => void; autoFocus: boolean }) {
+  const [text, setText] = useState('');
+  const box = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (autoFocus) box.current?.focus(); }, [autoFocus]);
+  const reply = () => { send({ type: 'job_input', id: job.id, text, enter: true }); setText(''); };
+  return (
+    <div className="job-ask">
+      <div className="job-keys">
+        {JOB_KEYS.map((k) => <button key={k.key} className="key-btn" title={k.title} onClick={() => send({ type: 'job_key', id: job.id, key: k.key })}>{k.label}</button>)}
+      </div>
+      <div className="job-reply">
+        <input ref={box} className="job-input" type="text" value={text} placeholder="Type an answer, then Enter" autoComplete="off" spellCheck={false}
+          onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); reply(); } }} />
+        <button className="btn primary job-send" onClick={reply}>Send</button>
+      </div>
+    </div>
   );
 }
 
@@ -57,6 +80,7 @@ export function JobsSheet({ jobs, send, onClose }: { jobs: Job[]; send: (m: Reco
                 {j.state === 'running' && <button className="btn danger job-stop" onClick={() => send({ type: 'job_stop', id: j.id })}>Stop</button>}
               </div>
               <Output text={j.tail} />
+              {j.interactive && j.state === 'running' && <Ask job={j} send={send} autoFocus={false} />}
             </li>
           ))}
         </ul>

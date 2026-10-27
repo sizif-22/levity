@@ -29,6 +29,10 @@ namespace Levity.Services
         public int? ExitCode { get; internal set; }
         /// <summary>Shown in the Jobs panel (set once the command outlives the inline wait).</summary>
         public bool Background { get; set; }
+        /// <summary>Runs in a pseudo-console, so the command can ask questions that are answered from the Jobs panel.</summary>
+        public bool Interactive { get; init; }
+        internal VtScreen? Screen { get; set; }
+        internal PtyProcess? Pty { get; set; }
         internal Process? Proc { get; set; }
         internal WinJob? Win { get; set; }
         internal bool StopRequested { get; set; }
@@ -49,6 +53,11 @@ namespace Levity.Services
 
         public string Tail(int chars)
         {
+            if (Screen != null)
+            {
+                string shown = Screen.Text();
+                return shown.Length <= chars ? shown : "…" + shown.Substring(shown.Length - chars);
+            }
             lock (_gate)
             {
                 string all = _out.ToString().TrimEnd();
@@ -80,6 +89,73 @@ namespace Levity.Services
         public IReadOnlyList<ShellJob> Background
         {
             get { lock (_gate) return _jobs.Where(j => j.Background).ToList(); }
+        }
+
+        /// <summary>Types into a running interactive command. Text goes in as typed; pass enter to press Enter after it.</summary>
+        public bool SendText(int id, string text, bool enter)
+        {
+            ShellJob? job;
+            lock (_gate) job = _jobs.FirstOrDefault(j => j.Id == id);
+            if (job?.Pty == null || job.State != JobState.Running) return false;
+            if (text.Length > 4000) text = text.Substring(0, 4000);
+            return job.Pty.Write(text.Replace("\r\n", "\r").Replace('\n', '\r') + (enter ? "\r" : ""));
+        }
+
+        /// <summary>Presses a named key (see PtyProcess.KeyCode) in a running interactive command.</summary>
+        public bool SendKey(int id, string key)
+        {
+            string? code = PtyProcess.KeyCode(key);
+            if (code == null) return false;
+            ShellJob? job;
+            lock (_gate) job = _jobs.FirstOrDefault(j => j.Id == id);
+            if (job?.Pty == null || job.State != JobState.Running) return false;
+            return job.Pty.Write(code);
+        }
+
+        /// <summary>Like Start, but in a pseudo-console: programs see a real terminal, so prompts and menus work.</summary>
+        public ShellJob StartInteractive(string command, string cwd)
+        {
+            var job = new ShellJob { Id = Interlocked.Increment(ref _nextId) - 1, Command = command, Cwd = cwd, Interactive = true, Screen = new VtScreen() };
+            lock (_gate) _jobs.Add(job);
+            try
+            {
+                string line = "powershell.exe -NoLogo -NoProfile -Command " + QuoteArg("[Console]::OutputEncoding=[Text.Encoding]::UTF8; " + command);
+                var env = new Dictionary<string, string> { ["NO_COLOR"] = "1", ["FORCE_COLOR"] = "0" };
+                var pty = PtyProcess.Start(line, cwd, env, job.Screen.Columns, job.Screen.Rows, text => { job.Screen.Feed(text); Changed?.Invoke(); });
+                job.Pty = pty;
+                job.Win = WinJob.TryCreate(pty.ProcessHandle);
+                _ = pty.Exited.ContinueWith(async t =>
+                {
+                    // Let the last output arrive before the job is reported finished.
+                    await Task.WhenAny(pty.Drained, Task.Delay(1500));
+                    Finish(job, t.Result);
+                });
+            }
+            catch (Exception ex)
+            {
+                job.Screen.Feed($"Could not start the command: {ex.Message}");
+                job.ExitCode = -1;
+                job.EndedUtc = DateTime.UtcNow;
+                job.State = JobState.Failed;
+                job.Complete();
+            }
+            return job;
+        }
+
+        /// <summary>One argument for a Windows command line, quoted the way CommandLineToArgvW reads it.</summary>
+        internal static string QuoteArg(string arg)
+        {
+            var sb = new StringBuilder("\"");
+            int backslashes = 0;
+            foreach (char c in arg)
+            {
+                if (c == '\\') { backslashes++; continue; }
+                if (c == '"') sb.Append('\\', backslashes * 2 + 1).Append('"');
+                else sb.Append('\\', backslashes).Append(c);
+                backslashes = 0;
+            }
+            sb.Append('\\', backslashes * 2).Append('"');
+            return sb.ToString();
         }
 
         public ShellJob Start(string command, string cwd)
@@ -157,10 +233,11 @@ namespace Levity.Services
         {
             ShellJob? job;
             lock (_gate) job = _jobs.FirstOrDefault(j => j.Id == id);
-            if (job?.Proc == null || job.State != JobState.Running) return false;
+            if (job == null || (job.Proc == null && job.Pty == null) || job.State != JobState.Running) return false;
             job.StopRequested = true;
             job.Win?.Terminate();                                 // everything started by the command, even orphans
-            try { job.Proc.Kill(entireProcessTree: true); } catch { }
+            try { job.Proc?.Kill(entireProcessTree: true); } catch { }
+            try { job.Pty?.Kill(); } catch { }
             Finish(job, -1);                                      // show "stopped" now, not when the pipes finally close
             return true;
         }
@@ -184,6 +261,7 @@ namespace Levity.Services
                 j.StopRequested = true;
                 j.Win?.Terminate();
                 try { j.Proc?.Kill(entireProcessTree: true); } catch { }
+                try { j.Pty?.Dispose(); } catch { }
             }
         }
     }
@@ -193,7 +271,9 @@ namespace Levity.Services
     {
         private IntPtr _handle;
 
-        public static WinJob? TryCreate(Process p)
+        public static WinJob? TryCreate(Process p) => TryCreate(p.Handle);
+
+        public static WinJob? TryCreate(IntPtr process)
         {
             try
             {
@@ -209,7 +289,7 @@ namespace Levity.Services
                     if (!SetInformationJobObject(h, 9, ptr, (uint)len)) { CloseHandle(h); return null; }
                 }
                 finally { Marshal.FreeHGlobal(ptr); }
-                if (!AssignProcessToJobObject(h, p.Handle)) { CloseHandle(h); return null; }
+                if (!AssignProcessToJobObject(h, process)) { CloseHandle(h); return null; }
                 return new WinJob { _handle = h };
             }
             catch { return null; }

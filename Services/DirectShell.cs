@@ -17,6 +17,25 @@ namespace Levity.Services
             return stripped.Length > 0 && stripped != command.Trim();
         }
 
+        /// <summary>
+        /// Reads the flags in front of or after a command: "-b" (background) and "-i" (interactive, the command can ask questions).
+        /// "-i" is only recognised at the start, because it is a real option of many tools (grep -i, sed -i).
+        /// </summary>
+        public static void StripFlags(string command, out string stripped, out bool background, out bool interactive)
+        {
+            string s = (command ?? "").Trim();
+            background = interactive = false;
+            while (true)
+            {
+                if (s.StartsWith("-i ", StringComparison.Ordinal)) { interactive = true; s = s.Substring(3).TrimStart(); continue; }
+                if (s.StartsWith("-b ", StringComparison.Ordinal)) { background = true; s = s.Substring(3).TrimStart(); continue; }
+                if (s.EndsWith(" -b", StringComparison.Ordinal)) { background = true; s = s.Substring(0, s.Length - 3).TrimEnd(); continue; }
+                break;
+            }
+            if (s.Length == 0) { stripped = (command ?? "").Trim(); background = interactive = false; return; }
+            stripped = s;
+        }
+
         /// <summary>If the command is a plain "cd", returns the absolute target (may not exist); otherwise null.</summary>
         public static string? ResolveCd(string command, string cwd)
         {

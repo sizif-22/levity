@@ -87,3 +87,36 @@ Header grid icon (or tray, **Review All Projects...**). It keeps README, `AGENTS
 **You are told when it happens.** A card appears inside the reply ("Fast Learner · Learning", "Saving a skill: windows-wallpaper-manager", "Updating docs", "Taking a note for later", "Finished"), with a toast. If the sidebar is hidden you get a Windows notification. The phone shows the same cards, and they are kept when you reopen the chat.
 
 How it works: the assistant runs the skill's small `announce.ps1` script before it saves anything, and Levity recognises that call in the agent's activity. If a skill is written without an announcement, Levity still notices the write into a skills folder and shows a "Skills" card. Re-run `.\Install-Skills.ps1 -Name fast-learner -Force` after updating Levity to refresh the skill the assistant uses. More in [RUNNING.md](RUNNING.md#6-agent-skills).
+
+## One-tap buttons: /run and /git
+
+Next to `/diagram` and `/cmd` two more chips appear when they make sense for the folder you are in:
+
+- **/run** shows when the folder has a `package.json` with scripts. It lists them (with the command behind each one) and runs the one you
+  tap with the package manager the project uses (`bun`, `pnpm`, `yarn` or `npm`, picked from the lock file). Only the script's name travels;
+  the PC checks it against the real `package.json` and builds the command itself. Tick **It may ask me questions** if the script prompts.
+- **/git** shows when the folder (or a parent) is a git repository. The dialog header shows the branch, how many files changed and what is
+  waiting to be pushed or pulled. Buttons: Status, Stage all (`git add .`), **Commit…**, Push, Pull, Fetch, Log, Diff, Branches,
+  **New branch…**, Stash, Stash pop. **Commit…** asks for a message first and can stage everything before committing. The message is passed
+  to git in a temporary file, so quotes, `$` and accents can never break or change the command.
+
+Both run like a `/cmd{$...}` command: the result appears in the chat, and anything still running after a few seconds moves to the Jobs panel.
+Phones get the same two chips.
+
+## Commands that ask questions
+
+Some tools stop and ask you things (`bun convex deploy`, `npm create vite`, `gh auth login`). They need a real terminal, so Levity runs them
+in a pseudo-console instead of plain pipes. Levity recognises the common ones; for any other command put `-i` in front:
+
+```
+/cmd{$-i bun convex deploy}
+```
+
+The command moves to the **Jobs** panel (it opens by itself) where you can:
+
+- type an answer and press **Enter** (or **Send**), on the PC or on the phone;
+- use the **arrow**, **Space**, **Tab**, **Esc**, **Enter** and **Ctrl+C** buttons for menus and "press a key" prompts;
+- press **Stop** to end it.
+
+`-i` is only read at the very start, because `grep -i` and `sed -i` are real options. Colours are dropped; the text of menus and prompts is
+kept as you would see it in a terminal. This needs Windows 10 version 1809 or newer.

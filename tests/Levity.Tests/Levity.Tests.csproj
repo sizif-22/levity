@@ -20,6 +20,9 @@
   <!-- Compile the UI-free service sources directly so the tests need no WPF host. -->
   <ItemGroup>
     <Compile Include="..\..\Services\AgentLaunch.cs" Link="Services\AgentLaunch.cs" />
+    <Compile Include="..\..\Services\VtScreen.cs" Link="Services\VtScreen.cs" />
+    <Compile Include="..\..\Services\PtyProcess.cs" Link="Services\PtyProcess.cs" />
+    <Compile Include="..\..\Services\ProjectActions.cs" Link="Services\ProjectActions.cs" />
     <Compile Include="..\..\Services\CommandShortcut.cs" Link="Services\CommandShortcut.cs" />
     <Compile Include="..\..\Services\DirectShell.cs" Link="Services\DirectShell.cs" />
     <Compile Include="..\..\Services\DotEnv.cs" Link="Services\DotEnv.cs" />

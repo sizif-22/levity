@@ -449,6 +449,36 @@ namespace Levity
                         PublishJobs();
                         break;
 
+                    case "job_input":
+                        if (root.TryGetProperty("id", out var iid) && iid.TryGetInt32(out int inputJob))
+                        {
+                            bool enter = !root.TryGetProperty("enter", out var enterProp) || enterProp.ValueKind != JsonValueKind.False;
+                            if (!_jobs.SendText(inputJob, GetString(root, "text"), enter)) Reply(clientId, new { type = "toast", text = "That job is not waiting for input." });
+                        }
+                        break;
+
+                    case "job_key":
+                        if (root.TryGetProperty("id", out var kid) && kid.TryGetInt32(out int keyJob))
+                            _jobs.SendKey(keyJob, GetString(root, "key"));
+                        break;
+
+                    case "actions_get":
+                        PublishActions(clientId);
+                        break;
+
+                    case "git_state":
+                        _ = PublishGitStateAsync(clientId);
+                        break;
+
+                    case "run_script":
+                        RunScriptButton(GetString(root, "name"), root.TryGetProperty("interactive", out var ri) && ri.ValueKind == JsonValueKind.True, remote, clientId);
+                        break;
+
+                    case "git_run":
+                        GitButton(GetString(root, "action"), GetString(root, "message"), GetString(root, "name"),
+                            root.TryGetProperty("stage", out var gs) && gs.ValueKind == JsonValueKind.True, remote, clientId);
+                        break;
+
                     case "queue_remove":
                         if (root.TryGetProperty("id", out var qid) && qid.TryGetInt32(out int queueId))
                         {
@@ -792,6 +822,7 @@ namespace Levity
             _agyManager.Restart(path);
             ClearHistory();
             Publish(new { type = "config", cwd = path, isPinned = _settings.IsPinned });
+            PublishActions(null);
             Publish(new { type = "clear_chat" });
             return true;
         }
@@ -922,6 +953,7 @@ namespace Levity
             _sessionCreated = s.Created;
 
             Publish(new { type = "config", cwd, isPinned = _settings.IsPinned });
+            PublishActions(null);
             RawPublish("{\"type\":\"clear_chat\"}");
             var lines = _history.ToArray();
             foreach (string line in lines) PostRawToWeb(line);
@@ -1070,7 +1102,7 @@ namespace Levity
 
         // ---- Prompts: queue, direct commands, background jobs, stop -----------------------
 
-        private record QueuedPrompt(int Id, string Text, bool Remote, string? ClientId);
+        private record QueuedPrompt(int Id, string Text, bool Remote, string? ClientId, string? DirectCommand = null);
 
         private readonly List<QueuedPrompt> _queue = new();
         private readonly JobManager _jobs = new();
@@ -1083,19 +1115,25 @@ namespace Levity
         private bool TurnBusy => _agyManager.IsBusy || _inlineShell;
 
         /// <summary>Entry point for every typed message: runs it now, or queues it while a turn is in progress.</summary>
-        private void HandlePrompt(string prompt, bool remote, string? clientId)
+        private void HandlePrompt(string prompt, bool remote, string? clientId, string? directCommand = null)
         {
             if (TurnBusy)
             {
-                _queue.Add(new QueuedPrompt(_nextQueueId++, prompt, remote, clientId));
+                _queue.Add(new QueuedPrompt(_nextQueueId++, prompt, remote, clientId, directCommand));
                 PublishQueue();
                 return;
             }
-            RunPrompt(prompt, remote, clientId);
+            RunPrompt(prompt, remote, clientId, directCommand);
         }
 
-        private void RunPrompt(string prompt, bool remote, string? clientId)
+        private void RunPrompt(string prompt, bool remote, string? clientId, string? directCommand = null)
         {
+            if (directCommand != null)
+            {
+                // A button (/run, /git): the text shown in the chat is `prompt`, what runs is the command built by the PC.
+                _ = RunDirectCommandAsync(prompt, directCommand, remote, clientId);
+                return;
+            }
             if (CommandShortcut.TryParse(prompt, out string shellCmd, out string shellAfter, out bool shellDirect) && shellDirect && shellAfter.Length == 0)
             {
                 // /cmd{$...}: run it directly, no AI, no tokens.
@@ -1114,7 +1152,7 @@ namespace Levity
             var next = _queue[0];
             _queue.RemoveAt(0);
             PublishQueue();
-            RunPrompt(next.Text, next.Remote, next.ClientId);
+            RunPrompt(next.Text, next.Remote, next.ClientId, next.DirectCommand);
         }
 
         private void PublishQueue()
@@ -1146,6 +1184,7 @@ namespace Levity
                     exitCode = j.ExitCode,
                     started = j.StartedUtc,
                     ended = j.EndedUtc,
+                    interactive = j.Interactive,
                     tail = j.Tail(8000)
                 })
             });
@@ -1174,7 +1213,8 @@ namespace Levity
             try
             {
                 string cwd = _agyManager.CurrentWorkingDirectory;
-                bool forceBackground = DirectShell.StripBackgroundFlag(command, out command);
+                DirectShell.StripFlags(command, out command, out bool forceBackground, out bool wantInteractive);
+                bool interactive = wantInteractive || InteractiveCommands.LooksInteractive(command);
                 string? cdTarget = DirectShell.ResolveCd(command, cwd);
                 if (cdTarget != null)
                 {
@@ -1192,13 +1232,19 @@ namespace Levity
 
                 Publish(new { type = "user_message", text = typed, source });
                 RawPublish(JsonSerializer.Serialize(new { type = "status", text = "Running command...", state = "busy" }));
-                var job = _jobs.Start(command, cwd);
+                var job = interactive ? _jobs.StartInteractive(command, cwd) : _jobs.Start(command, cwd);
 
-                if (forceBackground || !await job.WaitAsync(TimeSpan.FromSeconds(3)))
+                if (forceBackground || !await job.WaitAsync(TimeSpan.FromSeconds(interactive ? 2 : 3)))
                 {
                     job.Background = true;
                     PublishJobs();
-                    FinishDirectTurn($"{(forceBackground ? "Started in the background as" : "Still running, so it moved to the background as")} **job #{job.Id}**. Watch it or stop it from the **Jobs** button in the header. Chat is free.", 0);
+                    if (interactive)
+                    {
+                        Reply(clientId, new { type = "jobs_open", id = job.Id });   // the Jobs panel is where it is answered, on the device that started it
+                        FinishDirectTurn($"**Job #{job.Id}** is running and may ask you something. Answer it in the **Jobs** panel (it just opened): type a reply, or use the arrow, Enter and Space buttons for menus. Chat is free.", 0);
+                    }
+                    else
+                        FinishDirectTurn($"{(forceBackground ? "Started in the background as" : "Still running, so it moved to the background as")} **job #{job.Id}**. Watch it or stop it from the **Jobs** button in the header. Chat is free.", 0);
                     return;
                 }
 
@@ -1213,6 +1259,65 @@ namespace Levity
                 _inlineShell = false;
                 Dispatcher.BeginInvoke(new Action(DrainQueue), System.Windows.Threading.DispatcherPriority.Background);
             }
+        }
+
+        // ---- /run and /git buttons -----------------------------------------------------------
+
+        /// <summary>Tells the UI which buttons make sense for the current folder (scripts in package.json, a git repository). Sent to one client, or to all.</summary>
+        private void PublishActions(string? clientId)
+        {
+            ProjectActionsInfo info;
+            try { info = ProjectActions.Detect(_agyManager.CurrentWorkingDirectory); }
+            catch { info = new ProjectActionsInfo(_agyManager.CurrentWorkingDirectory, null, Array.Empty<ProjectScript>(), false, null); }
+            var msg = new
+            {
+                type = "actions",
+                path = info.Path,
+                packageManager = info.PackageManager,
+                scripts = info.Scripts.Select(s => new { name = s.Name, command = s.Command }),
+                git = new { repo = info.IsGitRepo, branch = info.Branch }
+            };
+            if (clientId == null && _hub != null) RawPublish(JsonSerializer.Serialize(msg)); else Reply(clientId, msg);
+        }
+
+        /// <summary>Branch, changes and ahead/behind for the git dialog. Runs git with a time limit so a huge repository cannot freeze anything.</summary>
+        private async Task PublishGitStateAsync(string? clientId)
+        {
+            string cwd = _agyManager.CurrentWorkingDirectory;
+            try
+            {
+                var psi = new System.Diagnostics.ProcessStartInfo("git", "status --porcelain=v1 -b")
+                {
+                    WorkingDirectory = cwd, RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8
+                };
+                using var proc = System.Diagnostics.Process.Start(psi);
+                if (proc == null) throw new InvalidOperationException();
+                var read = proc.StandardOutput.ReadToEndAsync();
+                if (!proc.WaitForExit(6000)) { try { proc.Kill(true); } catch { } throw new TimeoutException(); }
+                var st = GitStatusParser.Parse(await read);
+                Reply(clientId, new { type = "git_state", path = cwd, ok = true, branch = st.Branch, upstream = st.Upstream, ahead = st.Ahead, behind = st.Behind, changes = st.Changes });
+            }
+            catch { Reply(clientId, new { type = "git_state", path = cwd, ok = false }); }
+        }
+
+        private void RunScriptButton(string name, bool interactive, bool remote, string? clientId)
+        {
+            string cwd = _agyManager.CurrentWorkingDirectory;
+            string? command = ProjectActions.RunCommand(cwd, name);   // only a script that really exists in this folder's package.json
+            if (command == null) { Reply(clientId, new { type = "toast", text = "That script is not in this folder's package.json." }); return; }
+            HandlePrompt($"/run {name}", remote, clientId, (interactive ? "-i " : "") + command);
+        }
+
+        private void GitButton(string action, string message, string name, bool stage, bool remote, string? clientId)
+        {
+            string cwd = _agyManager.CurrentWorkingDirectory;
+            if (ProjectActions.FindGitDir(cwd) == null) { Reply(clientId, new { type = "toast", text = "This folder is not a git repository." }); return; }
+            var built = GitActions.Build(action, message, name, stage, Path.GetTempPath());
+            if (built == null) { Reply(clientId, new { type = "toast", text = action == "commit" ? "Write a commit message first." : "That git action is not available." }); return; }
+            try { GitActions.WriteMessage(built, message); }
+            catch { Reply(clientId, new { type = "toast", text = "Could not prepare the commit message." }); return; }
+            HandlePrompt(built.Typed, remote, clientId, built.Command);
         }
 
         private void FinishDirectTurn(string markdown, double seconds, bool error = false, bool cancelled = false)
@@ -1349,6 +1454,7 @@ namespace Levity
                 isPinned = _settings.IsPinned,
                 effort = AgentLaunch.NormalizeEffort(_settings.Effort)
             });
+            PublishActions(clientId);
             if (_lastStatusJson != null) ReplyRaw(clientId, _lastStatusJson);
             ReplyRaw(clientId, _lastSyncJson ?? IdleSyncJson);
             if (_lastQueueJson != null) ReplyRaw(clientId, _lastQueueJson);

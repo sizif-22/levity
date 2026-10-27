@@ -81,6 +81,9 @@ function handleHostMessage(msg) {
       }
       break;
     case 'fast_learner': renderFastLearner(msg); break;
+    case 'actions': case 'git_state': case 'jobs_open':
+      if (typeof actionsOnMessage === 'function') actionsOnMessage(msg);
+      break;
     case 'diagram': case 'diagram_none': case 'diagram_prepared': case 'diagram_state': case 'diagram_collapsed':
       if (typeof diagramOnMessage === 'function') diagramOnMessage(msg);
       break;
@@ -416,7 +419,7 @@ document.querySelectorAll('.chip[data-prompt]').forEach(chip => {
   chip.addEventListener('click', () => sendPrompt(chip.dataset.prompt));
 });
 document.querySelectorAll('.cmd-chip').forEach(cmd => {
-  if (cmd.dataset.cmd === '/diagram') return; // opens the diagram view (diagram.js)
+  if (cmd.dataset.cmd === '/diagram' || cmd.dataset.cmd === '/run' || cmd.dataset.cmd === '/git') return; // these open their own views (diagram.js, actions.js)
   cmd.addEventListener('click', () => {
     const c = cmd.dataset.cmd;
     promptInput.value = c.endsWith('}') ? c : c + ' ';
@@ -553,7 +556,25 @@ function renderJobs(msg) {
       li.className = 'job';
       li.dataset.id = j.id;
       li.innerHTML = `<div class="job-head"><i class="job-dot"></i><code class="job-cmd"></code><span class="job-meta"></span>
-        <button class="btn danger job-stop">Stop</button></div><pre class="job-out"></pre>`;
+        <button class="btn danger job-stop">Stop</button></div><pre class="job-out"></pre>
+        <div class="job-ask" hidden>
+          <div class="job-keys">
+            <button class="key-btn" data-key="up" title="Up">↑</button><button class="key-btn" data-key="down" title="Down">↓</button>
+            <button class="key-btn" data-key="left" title="Left">←</button><button class="key-btn" data-key="right" title="Right">→</button>
+            <button class="key-btn" data-key="space">Space</button><button class="key-btn" data-key="tab">Tab</button>
+            <button class="key-btn" data-key="esc">Esc</button><button class="key-btn" data-key="enter">Enter</button>
+            <button class="key-btn" data-key="ctrl-c" title="Interrupt">Ctrl+C</button>
+          </div>
+          <div class="job-reply"><input class="job-input" type="text" placeholder="Type an answer, then Enter" autocomplete="off" spellcheck="false"><button class="btn primary job-send">Send</button></div>
+        </div>`;
+      const sendReply = () => {
+        const box = li.querySelector('.job-input');
+        postToHost({ type: 'job_input', id: j.id, text: box.value, enter: true });
+        box.value = '';
+      };
+      li.querySelector('.job-send').addEventListener('click', sendReply);
+      li.querySelector('.job-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendReply(); } });
+      li.querySelectorAll('.key-btn').forEach(b => b.addEventListener('click', () => postToHost({ type: 'job_key', id: j.id, key: b.dataset.key })));
       li.querySelector('.job-cmd').textContent = `#${j.id} ${j.command}`;
       li.querySelector('.job-stop').addEventListener('click', () => postToHost({ type: 'job_stop', id: j.id }));
       list.prepend(li);
@@ -562,6 +583,7 @@ function renderJobs(msg) {
     li.querySelector('.job-meta').textContent = j.state === 'running' ? `running ${jobElapsed(j)}`
       : `${j.state}${j.exitCode != null ? ` (exit ${j.exitCode})` : ''} · ${jobElapsed(j)}`;
     li.querySelector('.job-stop').hidden = j.state !== 'running';
+    li.querySelector('.job-ask').hidden = !(j.interactive && j.state === 'running');   // only a running interactive command can be answered
     const pre = li.querySelector('.job-out');
     const atBottom = pre.scrollHeight - pre.scrollTop - pre.clientHeight < 24;
     if (pre.textContent !== j.tail) {
