@@ -66,7 +66,7 @@ How it is read: `LEVITY_ENV_FILE`, then `.env` next to `Levity.exe`, then `.env`
 
 ## 5. Phone access (optional)
 
-The phone talks to your PC through a small relay. Nothing listens on your PC; both ends connect outward and messages are end-to-end encrypted (see the Security model in the README).
+The phone talks to your PC through a small relay. Nothing listens on your PC; both ends connect outward and messages are end-to-end encrypted (see the security model in [PHONE.md](PHONE.md#security-model)). The steps below are the short version; [PHONE.md](PHONE.md) has the full guide.
 
 1. **Relay** (Cloudflare Worker, free plan is enough):
    ```powershell
