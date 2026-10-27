@@ -111,3 +111,49 @@ public class DataFolderTests
         Assert.Equal("AntigravitySidebar", AppSettings.LegacyDataFolderName);
     }
 }
+
+public class AgentLaunchTests
+{
+    [Fact]
+    public void The_assistant_starts_with_fast_effort_unless_told_otherwise()
+    {
+        Assert.Contains("--effort low", AgentLaunch.Arguments(null, null));
+        Assert.Contains("--effort low", AgentLaunch.Arguments(null, "nonsense"));
+        Assert.Contains("--effort high", AgentLaunch.Arguments(null, "HIGH"));
+        Assert.Contains("--effort medium", AgentLaunch.Arguments(null, " medium "));
+    }
+
+    [Fact]
+    public void A_conversation_is_resumed_only_with_a_plain_id()
+    {
+        Assert.Contains("--conversation 4b467c95-d05b-4092-b269-ec71a3e37a3f", AgentLaunch.Arguments("4b467c95-d05b-4092-b269-ec71a3e37a3f", "low"));
+        Assert.DoesNotContain("--conversation", AgentLaunch.Arguments(null, "low"));
+        Assert.DoesNotContain("--conversation", AgentLaunch.Arguments("  ", "low"));
+        Assert.DoesNotContain("--conversation", AgentLaunch.Arguments("abc & calc", "low"));
+        Assert.DoesNotContain("--conversation", AgentLaunch.Arguments("abc\" --x", "low"));
+    }
+
+    [Fact]
+    public void The_permission_and_streaming_flags_are_kept()
+    {
+        string args = AgentLaunch.Arguments(null, "low");
+        Assert.Contains("--dangerously-skip-permissions", args);
+        Assert.Contains("--input-format=stream-json", args);
+        Assert.Contains("--output-format=stream-json", args);
+    }
+
+    [Fact]
+    public void The_efficiency_hint_goes_on_the_first_message_only_and_never_changes_the_message()
+    {
+        string first = AgentLaunch.WithHint("fix the bug", true);
+        Assert.StartsWith(AgentLaunch.EfficiencyHint, first, StringComparison.Ordinal);
+        Assert.EndsWith("fix the bug", first, StringComparison.Ordinal);
+        Assert.Equal("and another thing", AgentLaunch.WithHint("and another thing", false));
+    }
+
+    [Fact]
+    public void The_marker_a_shell_profile_looks_for_is_stable()
+    {
+        Assert.Equal("LEVITY_AGENT", AgentLaunch.EnvMarker);
+    }
+}

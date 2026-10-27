@@ -66,6 +66,7 @@ function handleHostMessage(msg) {
     case 'config':
       if (msg.cwd) setCwd(msg.cwd);
       if (msg.isPinned !== undefined) updatePinState(msg.isPinned);
+      if (msg.effort !== undefined) updateEffort(msg.effort);
       break;
     case 'clear_chat': resetChatUI(); break;
     case 'focus_input':
@@ -101,6 +102,18 @@ function setCwd(path) {
   markCurrentProject();
 }
 let currentCwd = '';
+
+// Fast (low effort) is the default; Deep thinks harder and takes longer.
+let effortLevel = 'low';
+function updateEffort(level) {
+  effortLevel = level === 'high' || level === 'medium' ? level : 'low';
+  const deep = effortLevel !== 'low';
+  const btn = $('effortBtn');
+  btn.textContent = deep ? 'Deep' : 'Fast';
+  btn.classList.toggle('deep', deep);
+  btn.setAttribute('aria-pressed', String(deep));
+}
+$('effortBtn').addEventListener('click', () => postToHost({ type: 'set_effort', value: effortLevel === 'low' ? 'high' : 'low' }));
 
 function updatePinState(pinned) {
   $('pinBtn').classList.toggle('active', pinned);
@@ -272,7 +285,9 @@ function renderToolExecution(su) {
     if (typing) contentEl.insertBefore(pill, typing); else contentEl.appendChild(pill);
   }
   pill.className = 'tool-pill' + (running ? ' running' : '');
-  pill.innerHTML = `${running ? '<span class="spinner mini"></span>' : ''}<strong>${escapeHtml(name)}</strong> ${escapeHtml(toolSummary(su) || (pill.dataset.args || ''))}`;
+  // How long a step took, once it is done: slow steps (shell starts, searches) are easy to spot.
+  const took = !running && Number(su.duration_seconds) >= 3 ? ` <span class="tool-time">${Math.round(su.duration_seconds)}s</span>` : '';
+  pill.innerHTML = `${running ? '<span class="spinner mini"></span>' : ''}<strong>${escapeHtml(name)}</strong> ${escapeHtml(toolSummary(su) || (pill.dataset.args || ''))}${took}`;
   if (toolSummary(su)) pill.dataset.args = toolSummary(su);
   if (autoScroll) scrollToBottom();
 }

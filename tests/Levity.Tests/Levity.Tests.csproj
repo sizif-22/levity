@@ -19,6 +19,7 @@
 
   <!-- Compile the UI-free service sources directly so the tests need no WPF host. -->
   <ItemGroup>
+    <Compile Include="..\..\Services\AgentLaunch.cs" Link="Services\AgentLaunch.cs" />
     <Compile Include="..\..\Services\CommandShortcut.cs" Link="Services\CommandShortcut.cs" />
     <Compile Include="..\..\Services\DirectShell.cs" Link="Services\DirectShell.cs" />
     <Compile Include="..\..\Services\DotEnv.cs" Link="Services\DotEnv.cs" />

@@ -84,7 +84,7 @@ namespace Levity
                 RawPublish(JsonSerializer.Serialize(new { type = "toast", text = $"Job #{j.Id} {(j.State == JobState.Stopped ? "stopped" : j.ExitCode == 0 ? "finished" : $"failed (exit {j.ExitCode})")}" }))));
 
             // Agy Process Manager
-            _agyManager = new AgyProcessManager(_settings.WorkingDirectory!);
+            _agyManager = new AgyProcessManager(_settings.WorkingDirectory!) { Effort = AgentLaunch.NormalizeEffort(_settings.Effort) };
             _agyManager.OnEventReceived += HandleAgyEvent;
             _agyManager.OnStatusChanged += HandleAgyStatus;
             _agyManager.OnConversationInitialized += id => Dispatcher.BeginInvoke(new Action(() => _sessionConvId = id));
@@ -188,6 +188,24 @@ namespace Levity
             this.Top = _targetTop;
             this.Height = _targetHeight;
             this.Left = offscreen ? _targetRight : _dockedLeft;
+        }
+
+        /// <summary>Fast or deep thinking. The assistant is restarted on the same conversation (context is kept); never in the middle of an answer.</summary>
+        private void SetEffort(string value, string? clientId)
+        {
+            string effort = AgentLaunch.NormalizeEffort(value);
+            if (effort == AgentLaunch.NormalizeEffort(_settings.Effort)) { Reply(clientId, new { type = "config", effort }); return; }
+            if (TurnBusy)
+            {
+                Reply(clientId, new { type = "toast", text = "Switch speed after the current answer finishes." });
+                Reply(clientId, new { type = "config", effort = AgentLaunch.NormalizeEffort(_settings.Effort) });
+                return;
+            }
+            _settings.Effort = effort;
+            _settings.Save();
+            _agyManager.Effort = effort;
+            _agyManager.Restart(null, _agyManager.CurrentConversationId);
+            Publish(new { type = "config", effort });
         }
 
         private bool _diagramExpanded;
@@ -450,6 +468,10 @@ namespace Levity
 
                     case "pick_folder" when !remote:
                         HandlePickFolder();
+                        break;
+
+                    case "set_effort":
+                        SetEffort(GetString(root, "value"), clientId);
                         break;
 
                     case "toggle_pin" when !remote:
@@ -1324,7 +1346,8 @@ namespace Levity
             {
                 type = "config",
                 cwd = _agyManager.CurrentWorkingDirectory,
-                isPinned = _settings.IsPinned
+                isPinned = _settings.IsPinned,
+                effort = AgentLaunch.NormalizeEffort(_settings.Effort)
             });
             if (_lastStatusJson != null) ReplyRaw(clientId, _lastStatusJson);
             ReplyRaw(clientId, _lastSyncJson ?? IdleSyncJson);

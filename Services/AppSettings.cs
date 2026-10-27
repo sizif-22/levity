@@ -12,6 +12,9 @@ namespace Levity.Services
         public double SidebarWidth { get; set; } = DotEnv.GetDouble("LEVITY_SIDEBAR_WIDTH", 460);
         public bool LaunchOnStartup { get; set; } = false;
 
+        /// <summary>How hard the assistant thinks: low (fast, the default), medium or high (deep). Fast is plenty for most tasks and much quicker.</summary>
+        public string Effort { get; set; } = AgentLaunch.Fast;
+
         // Mobile access through the relay (off until the user turns it on)
         public bool RemoteEnabled { get; set; } = false;
         public string? RelayUrl { get; set; } = DotEnv.Get("LEVITY_RELAY_URL"); // wss://levity-relay.<account>.workers.dev

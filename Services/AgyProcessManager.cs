@@ -21,6 +21,11 @@ namespace Levity.Services
 
         public string CurrentWorkingDirectory { get; private set; }
         public string? CurrentConversationId { get; private set; }
+
+        /// <summary>Thinking effort for new turns (low, medium or high). Takes effect the next time the assistant is started.</summary>
+        public string Effort { get; set; } = AgentLaunch.Fast;
+
+        private bool _hinted;   // the efficiency hint goes out once per assistant process
         public bool IsRunning => _process != null && !_process.HasExited;
         public bool IsBusy { get; private set; } = false;
 
@@ -83,8 +88,7 @@ namespace Levity.Services
                     var psi = new ProcessStartInfo
                     {
                         FileName = agyPath,
-                        Arguments = "--dangerously-skip-permissions --input-format=stream-json --output-format=stream-json --print=\"\"" +
-                            (string.IsNullOrWhiteSpace(resumeConversationId) ? "" : $" --conversation {resumeConversationId}"),
+                        Arguments = AgentLaunch.Arguments(resumeConversationId, Effort),
                         WorkingDirectory = CurrentWorkingDirectory,
                         UseShellExecute = false,
                         RedirectStandardInput = true,
@@ -94,6 +98,9 @@ namespace Levity.Services
                         StandardOutputEncoding = Encoding.UTF8,
                         StandardErrorEncoding = Encoding.UTF8
                     };
+
+                    psi.Environment[AgentLaunch.EnvMarker] = "1";   // lets a shell profile skip its slow extras for the assistant's shells
+                    _hinted = false;
 
                     _process = new Process { StartInfo = psi, EnableRaisingEvents = true };
 
@@ -186,6 +193,8 @@ namespace Levity.Services
                 {
                     IsBusy = true;
                     OnStatusChanged?.Invoke("Thinking...");
+                    promptText = AgentLaunch.WithHint(promptText, !_hinted);
+                    _hinted = true;
 
                     // NDJSON message format: {"event": "user", "message": {"content": "..."}}
                     var payload = new

@@ -307,3 +307,26 @@ test('an error result is shown to the user', async () => {
   ui.deliver(result({ status: 'ERROR', error: 'quota exceeded' }));
   assert.match(ui.q('.error-banner').textContent, /quota exceeded/);
 });
+
+test('the Fast/Deep switch shows the current level and asks the PC to change it', async () => {
+  const ui = await open();
+  assert.equal(ui.$('effortBtn').textContent, 'Fast');
+  ui.deliver({ type: 'config', cwd: 'C:\\Work', isPinned: false, effort: 'high' });
+  assert.equal(ui.$('effortBtn').textContent, 'Deep');
+  assert.ok(ui.$('effortBtn').classList.contains('deep'));
+  ui.click(ui.$('effortBtn'));
+  assert.deepEqual(ui.sent('set_effort'), [{ type: 'set_effort', value: 'low' }]);
+  ui.deliver({ type: 'config', effort: 'low' });
+  ui.click(ui.$('effortBtn'));
+  assert.deepEqual(ui.sent('set_effort').at(-1), { type: 'set_effort', value: 'high' });
+});
+
+test('slow tool steps show how long they took, quick ones do not', async () => {
+  const ui = await open();
+  const step = (idx, secs) => ({ type: 'agy_event', payload: { event: 'step_update', step_update: { step_type: 'tool', state: 'DONE', step_index: idx, tool_name: 'run_command', duration_seconds: secs, tool_info: { name: 'run_command', parameters: { CommandLine: 'ls' } } } } });
+  ui.deliver({ type: 'agy_event', payload: { event: 'step_update', step_update: { step_type: 'agent_response', state: 'ACTIVE', text_delta: 'x' } } });
+  ui.deliver(step(1, 8.4));
+  ui.deliver(step(2, 0.3));
+  const times = ui.qa('.tool-pill .tool-time').map((e) => e.textContent.trim());
+  assert.deepEqual(times, ['8s']);
+});

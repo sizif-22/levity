@@ -52,6 +52,7 @@ You need Windows 10 or 11, the [.NET 8 SDK](https://dotnet.microsoft.com/downloa
 | [Using Levity](docs/USING.md) | developer workflows, folders, queue and stop, `/cmd` commands, background jobs, chat history, project review |
 | [Phone access](docs/PHONE.md) | relay and web app setup, pairing, security model |
 | [Architecture](docs/ARCHITECTURE.md) | this project drawn by its own `/diagram` feature |
+| [Speed](docs/PERFORMANCE.md) | Fast/Deep switch, why chats feel slow, skipping your shell profile for the assistant |
 | [Testing](docs/TESTING.md) | the test suites and CI |
 
 ## Safety
