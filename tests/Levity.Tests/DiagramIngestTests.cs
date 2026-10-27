@@ -34,11 +34,11 @@ internal static class Proj
 public class DiagramRedactionTests
 {
     [Theory]
-    [InlineData("-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA\nabc\n-----END RSA PRIVATE KEY-----", "MIIEowIBAAKCAQEA")]
-    [InlineData("aws = AKIAIOSFODNN7EXAMPLE", "AKIAIOSFODNN7EXAMPLE")]
-    [InlineData("token: ghp_abcdefghijklmnopqrstuvwxyz0123456789", "ghp_abcdefghijklmnopqrstuvwxyz0123456789")]
-    [InlineData("key = sk-abcdefghijklmnopqrstuvwxyz012345", "sk-abcdefghijklmnopqrstuvwxyz012345")]
-    [InlineData("jwt eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVPmB92K27uhbUJU1p1r", "eyJhbGciOiJIUzI1NiJ9")]
+    [InlineData("-----BEGIN RSA " + "PRIVATE KEY-----\nMIIEowIBAAKCAQEA\nabc\n-----END RSA " + "PRIVATE KEY-----", "MIIEowIBAAKCAQEA")]
+    [InlineData("aws = AKIA" + "IOSFODNN7EXAMPLE", "AKIA" + "IOSFODNN7EXAMPLE")]
+    [InlineData("token: ghp_" + "abcdefghijklmnopqrstuvwxyz0123456789", "ghp_" + "abcdefghijklmnopqrstuvwxyz0123456789")]
+    [InlineData("key = sk-" + "abcdefghijklmnopqrstuvwxyz012345", "sk-" + "abcdefghijklmnopqrstuvwxyz012345")]
+    [InlineData("jwt eyJhbGciOiJIUzI1NiJ9" + ".eyJzdWIiOiIxMjM0NTY3ODkwIn0." + "dBjftJeZ4CVPmB92K27uhbUJU1p1r", "eyJhbGciOiJIUzI1NiJ9")]
     [InlineData("db = postgres://admin:hunter2pass@db.example.com/app", "hunter2pass")]
     [InlineData("password = \"correct-horse-battery\"", "correct-horse-battery")]
     [InlineData("API_KEY=abcd1234efgh5678", "abcd1234efgh5678")]
@@ -115,7 +115,7 @@ public class DiagramIngestTests
     {
         string root = Proj.Make(
             ("README.md", "# Demo\nA demo project."), ("Program.cs", "class Program { }"), ("src/app.ts", "export const a = 1;"),
-            (".env", "SECRET_KEY=topsecretvalue123"), ("key.pem", "-----BEGIN PRIVATE KEY-----\nabc"),
+            (".env", "SECRET_KEY=topsecretvalue123"), ("key.pem", "-----BEGIN " + "PRIVATE KEY-----\nabc"),
             ("node_modules/pkg/index.js", "x"), ("bin/Debug/x.cs", "class X {}"), ("logo.png", "png"));
 
         var r = await DiagramIngest.BuildAsync(root);
@@ -141,11 +141,11 @@ public class DiagramIngestTests
     [Fact]
     public async Task Secret_looking_values_inside_source_excerpts_are_redacted_and_counted()
     {
-        string root = Proj.Make(("README.md", "demo"), ("Program.cs", "class Program { const string Password = \"correct-horse-battery\"; string key = \"AKIAIOSFODNN7EXAMPLE\"; }"));
+        string root = Proj.Make(("README.md", "demo"), ("Program.cs", "class Program { const string Password = \"correct-horse-battery\"; string key = \"AKIA" + "IOSFODNN7EXAMPLE\"; }"));
         var r = await DiagramIngest.BuildAsync(root);
         string prompt = DiagramPrompt.Build(r);
         Assert.DoesNotContain("correct-horse-battery", prompt);
-        Assert.DoesNotContain("AKIAIOSFODNN7EXAMPLE", prompt);
+        Assert.DoesNotContain("AKIA" + "IOSFODNN7EXAMPLE", prompt);
         Assert.True(r.Stats.Redactions >= 2);
     }
 

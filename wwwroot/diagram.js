@@ -132,30 +132,66 @@ function loadMermaid() {
   return diag.mermaidPromise;
 }
 
+// Mermaid's layout engine can fail on diagrams with many relationships crossing between the same group boxes.
+// The flat version (groups shown by colour) always lays out, so it is tried when the boxed one cannot be drawn.
+async function drawOne(mermaid, id, source) {
+  const out = await mermaid.render(id, source);
+  const svg = sanitizeSvg(out.svg);
+  if (!svg) throw new Error('The drawing was rejected as unsafe');
+  return svg;
+}
+
+function showGroupLegend(d, flat) {
+  const list = $('diagGroups');
+  list.textContent = '';
+  (d.groups || []).forEach(g => {
+    const li = document.createElement('li');
+    const sw = document.createElement('i');
+    sw.className = 'diag-sw diag-sw' + (Number(g.tone) || 0);
+    li.appendChild(sw);
+    li.appendChild(document.createTextNode(' ' + g.label));
+    list.appendChild(li);
+  });
+  $('diagFlatNote').hidden = !flat;
+  list.hidden = !flat || !(d.groups && d.groups.length);
+}
+
 async function drawDiagram(d) {
-  const canvas = $('diagCanvas');
   const stage = $('diagStage');
   const myRender = ++diag.renderId;
   stage.textContent = '';
   $('diagFallback').hidden = true;
   $('diagList').open = false;
+  showGroupLegend(d, false);
   try {
     const mermaid = await loadMermaid();
     const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     mermaid.initialize({
       startOnLoad: false,
       securityLevel: 'strict',
+      // A directive hidden in a label (%%{init: ...}%%) must not be able to change any of these.
+      secure: ['secure', 'securityLevel', 'startOnLoad', 'maxTextSize', 'htmlLabels', 'flowchart'],
       theme: 'base',
       htmlLabels: false,
       flowchart: { htmlLabels: false, curve: 'basis', useMaxWidth: false },
       themeVariables: { lineColor: dark ? '#cbd5e1' : '#334155', textColor: dark ? '#e2e8f0' : '#0f172a', background: 'transparent', fontFamily: 'inherit' },
     });
-    const out = await mermaid.render('diagramSvg' + myRender, d.mermaid);
+
+    let svg = null, flat = false, firstError = null;
+    try { svg = await drawOne(mermaid, 'diagramSvg' + myRender, d.mermaid); }
+    catch (e) {
+      firstError = e;
+      if (!d.mermaidFlat || d.mermaidFlat === d.mermaid) throw e;
+    }
     if (myRender !== diag.renderId) return;             // a newer diagram replaced this one while it was drawing
-    const svg = sanitizeSvg(out.svg);
-    if (!svg) throw new Error('The drawing was rejected as unsafe');
+    if (!svg) {
+      flat = true;
+      svg = await drawOne(mermaid, 'diagramSvgFlat' + myRender, d.mermaidFlat);
+      if (myRender !== diag.renderId) return;
+    }
     stage.appendChild(svg);
     wireDiagramNodes(svg, d);
+    showGroupLegend(d, flat);
     fitDiagram();
   } catch (e) {
     if (myRender !== diag.renderId) return;

@@ -156,6 +156,23 @@ Check "no secrets, personal config or local state are tracked" {
     if (-not (Select-String -Path (Join-Path $root ".gitignore") -Pattern '^!\.env\.example$' -Quiet)) { ".gitignore must keep .env.example" }
 }
 
+Check "vendored files match their recorded hashes and their licenses are acknowledged" {
+    $readme = Get-Content (Join-Path $root "wwwroot\vendor\README.md") -Raw
+    foreach ($m in [regex]::Matches($readme, '\|\s*(?<file>[\w.\-]+)\s*\|[^|]*\|\s*`(?<hash>[0-9a-f]{64})`')) {
+        $file = Join-Path $root ("wwwroot\vendor\" + $m.Groups["file"].Value)
+        if (-not (Test-Path $file)) { "$($m.Groups['file'].Value) is listed but missing"; continue }
+        $actual = (Get-FileHash $file -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($actual -ne $m.Groups["hash"].Value) { "$($m.Groups['file'].Value) does not match its recorded hash (line endings changed? edited?)" }
+    }
+    if ($readme -notmatch 'mermaid\.min\.js') { "wwwroot/vendor/README.md does not record mermaid.min.js" }
+    $notices = Get-Content (Join-Path $root "THIRD-PARTY-NOTICES.md") -Raw
+    foreach ($needle in "GitDiagram", "Ahmed Khaleel", "Mermaid", "MIT") { if ($notices -notmatch $needle) { "THIRD-PARTY-NOTICES.md does not mention $needle" } }
+    if (-not (Test-Path (Join-Path $root "wwwroot\vendor\mermaid.LICENSE"))) { "Mermaid's license text is missing from wwwroot/vendor" }
+    if ((Get-Content (Join-Path $root ".gitattributes") -Raw) -notmatch 'wwwroot/vendor/\*\* -text') { ".gitattributes must keep vendored files byte-for-byte" }
+    $prompt = Get-Content (Join-Path $root "Services\DiagramPrompt.cs") -Raw
+    if ($prompt -notmatch 'GitDiagram' -or $prompt -notmatch 'MIT License') { "DiagramPrompt.cs must credit GitDiagram's MIT license for the adapted wording" }
+}
+
 Check "license and notice are in place" {
     $lic = Join-Path $root "LICENSE"
     if (-not (Test-Path $lic)) { "LICENSE is missing"; return }

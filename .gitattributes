@@ -1,0 +1,4 @@
+# Vendored third-party files are kept byte-for-byte: no line-ending conversion, so their recorded hashes stay valid on every checkout.
+wwwroot/vendor/** -text
+wwwroot/*.min.js -text
+wwwroot/*.min.css -text

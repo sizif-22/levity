@@ -24,10 +24,11 @@ function fakeMermaid(svg = SVG) {
 
 const diagram = (over = {}) => ({
   type: 'diagram', path: PROJECT, overview: 'A small app that starts and syncs.',
-  groups: [{ id: 'core', label: 'Core' }],
+  groups: [{ id: 'core', label: 'Core', tone: 0 }, { id: 'web', label: 'Web', tone: 1 }],
   nodes: [{ i: 1, label: 'Entry point', group: 'core', path: 'Program.cs', shape: 'box' }, { i: 2, label: 'Cloud relay', group: null, path: null, shape: 'box' }],
   edges: [{ from: 1, to: 2, label: 'syncs', support: 'inferred', evidence: null }],
   mermaid: 'flowchart TD\n  n1["Entry point"]\n  n2["Cloud relay"]\n  n1 -.->|"syncs"| n2\n',
+  mermaidFlat: 'flowchart TD\n  n1["Entry point"]\n  n2["Cloud relay"]\n  n1 -.->|"syncs"| n2\n',
   generatedUtc: '2026-10-27T12:00:00Z', head: 'abc', stale: false, stats: null, notes: [], tokens: 12345, ...over,
 });
 
@@ -392,4 +393,72 @@ test('a newer diagram replaces an older one that was still being drawn', async (
   assert.match(ui.$('diagStage').textContent, /NEW/);
   assert.doesNotMatch(ui.$('diagStage').textContent, /OLD/);
   assert.equal(ui.$('diagOverview').textContent, 'second');
+});
+
+// ---- when Mermaid cannot lay out the boxed version ----
+
+test('if the boxed diagram cannot be laid out, the flat colour-coded one is drawn with a legend and a note', async () => {
+  const sources = [];
+  const mermaid = {
+    initialize() {},
+    render: async (id, src) => {
+      sources.push(src);
+      if (src.includes('SUBGRAPHS')) throw new Error("Cannot set properties of undefined (setting 'order')");
+      return { svg: SVG };
+    },
+  };
+  const ui = await open({ mermaid });
+  await openDiagramFor(ui);
+  ui.deliver(diagram({ mermaid: 'flowchart TD\n  subgraph g1["x"] SUBGRAPHS\n  end\n', mermaidFlat: 'flowchart TD\n  n1["flat"]\n' }));
+  await tick();
+
+  assert.equal(sources.length, 2);
+  assert.match(sources[1], /flat/);
+  assert.ok(ui.q('#diagStage svg'), 'the flat version is on screen');
+  assert.equal(ui.$('diagFallback').hidden, true, 'no failure message when the fallback worked');
+  assert.equal(ui.$('diagFlatNote').hidden, false);
+  assert.deepEqual(ui.qa('#diagGroups li').map((li) => li.textContent.trim()), ['Core', 'Web']);
+  assert.ok(ui.q('#diagGroups .diag-sw0') && ui.q('#diagGroups .diag-sw1'));
+  assert.ok(ui.q('#flowchart-n1-0').classList.contains('diag-click'), 'components stay clickable in the flat version');
+});
+
+test('the group legend is not shown when the boxed diagram drew fine', async () => {
+  const ui = await open({ mermaid: fakeMermaid() });
+  await openDiagramFor(ui);
+  ui.deliver(diagram());
+  await tick();
+  assert.equal(ui.$('diagFlatNote').hidden, true);
+  assert.equal(ui.$('diagGroups').hidden, true);
+});
+
+test('if both versions fail the lists are shown with the reason', async () => {
+  const mermaid = { initialize() {}, render: async () => { throw new Error('layout failed'); } };
+  const ui = await open({ mermaid });
+  await openDiagramFor(ui);
+  ui.deliver(diagram());
+  await tick();
+  assert.equal(ui.$('diagFallback').hidden, false);
+  assert.match(ui.$('diagFallbackText').textContent, /layout failed/);
+  assert.equal(ui.$('diagList').open, true);
+});
+
+test('Mermaid is told to protect its own settings from directives hidden in labels', async () => {
+  const mermaid = fakeMermaid();
+  const ui = await open({ mermaid });
+  await openDiagramFor(ui);
+  ui.deliver(diagram());
+  await tick();
+  const secure = mermaid.calls.init.at(-1).secure;
+  for (const key of ['secure', 'securityLevel', 'startOnLoad', 'maxTextSize', 'htmlLabels', 'flowchart']) assert.ok(secure.includes(key), `${key} must be protected`);
+});
+
+test('a diagram from an older PC (no flat version) that fails to draw still shows the lists', async () => {
+  const mermaid = { initialize() {}, render: async () => { throw new Error('boom'); } };
+  const ui = await open({ mermaid });
+  await openDiagramFor(ui);
+  const d = diagram();
+  delete d.mermaidFlat;
+  ui.deliver(d);
+  await tick();
+  assert.equal(ui.$('diagFallback').hidden, false);
 });

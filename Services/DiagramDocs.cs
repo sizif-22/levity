@@ -21,10 +21,15 @@ namespace AntigravitySidebar.Services
             sb.AppendLine();
             if (r.Graph.Overview.Length > 0) { sb.AppendLine(EscapeMarkdown(r.Graph.Overview)); sb.AppendLine(); }
             sb.AppendLine("```mermaid");
-            sb.Append(r.Compiled.Mermaid.TrimEnd());
+            sb.Append(r.Compiled.MermaidFlat.TrimEnd());
             sb.AppendLine();
             sb.AppendLine("```");
             sb.AppendLine();
+            if (r.Graph.Groups.Count > 0)
+            {
+                sb.AppendLine("Colours: " + string.Join("; ", r.Graph.Groups.Select(g => EscapeMarkdown(g.Label))) + " (in this order: blue, amber, green, rose, indigo, teal, then repeating).");
+                sb.AppendLine();
+            }
             sb.AppendLine("Solid arrows are backed by a reference in the code. Dashed arrows are inferred: plausible, but no reference was found in the files that were read.");
             sb.AppendLine();
             sb.AppendLine("### Components");
@@ -90,7 +95,7 @@ namespace AntigravitySidebar.Services
                 type = "diagram",
                 path = r.Root,
                 overview = r.Graph.Overview,
-                groups = r.Graph.Groups.Select(g => new { id = g.Id, label = g.Label }),
+                groups = r.Graph.Groups.Select((g, i) => new { id = g.Id, label = g.Label, tone = DiagramCompiler.ToneOf(i) }),
                 nodes = r.Compiled.Nodes.Select(n => new
                 {
                     i = n.Index,
@@ -108,6 +113,7 @@ namespace AntigravitySidebar.Services
                     evidence = e.EvidencePath,
                 }),
                 mermaid = r.Compiled.Mermaid,
+                mermaidFlat = r.Compiled.MermaidFlat,
                 generatedUtc = r.GeneratedUtc,
                 head = r.Head,
                 stale = r.Stale,

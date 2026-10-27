@@ -608,3 +608,43 @@ body.remote .composer-hl { font-size: 16px; } /* match the textarea (iOS zoom gu
 .fl-detail { color: var(--muted-foreground); word-break: break-word; }
 .fl-card.running .fl-ico { animation: pulse 1.2s ease-in-out infinite; }
 .fl-card.done { opacity: 0.85; }
+
+/* ---------- Architecture diagram ---------- */
+.diag-body { display: flex; flex-direction: column; gap: 10px; }
+.diag-panel { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 1.5; }
+.diag-panel p { margin: 0; }
+.diag-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.diag-actions .btn { height: 30px; padding: 0 12px; font-size: 12.5px; }
+.diag-overview { font-size: 13px; line-height: 1.5; margin: 0 0 8px; color: var(--muted-foreground); }
+.diag-stale { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; margin-bottom: 8px; border: 1px solid var(--warning); border-radius: var(--radius); font-size: 12.5px; }
+.diag-stale .btn { height: 26px; padding: 0 10px; font-size: 12px; }
+.diag-toolbar { display: flex; gap: 4px; margin-bottom: 6px; }
+.diag-canvas { position: relative; height: min(58vh, 520px); overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); cursor: grab; touch-action: none; }
+.diag-canvas:active { cursor: grabbing; }
+.diag-canvas:focus-visible { outline: 2px solid var(--ring); }
+.diag-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.diag-stage svg { display: block; max-width: none; overflow: visible; }
+.diag-stage svg g.diag-click { cursor: pointer; }
+.diag-stage svg g.diag-click:hover > rect, .diag-stage svg g.diag-click:hover > path, .diag-stage svg g.diag-click:hover > polygon, .diag-stage svg g.diag-click:hover > circle { filter: brightness(0.9); }
+.diag-stage svg g.diag-click:focus-visible { outline: 2px solid var(--ring); }
+.diag-legend { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 11.5px; color: var(--muted-foreground); }
+.diag-solid, .diag-dashed { display: inline-block; width: 22px; height: 0; border-top: 2px solid currentColor; }
+.diag-dashed { border-top-style: dashed; margin-left: 10px; }
+.diag-fallback { padding: 8px 10px; margin: 6px 0; border: 1px solid var(--border); border-radius: var(--radius); font-size: 12.5px; }
+#diagList summary { cursor: pointer; font-size: 12.5px; padding: 4px 0; }
+.diag-nodes, .diag-edges { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+.diag-nodes li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.diag-nodes code, .diag-edges li { font-family: var(--mono); font-size: 11.5px; color: var(--muted-foreground); word-break: break-all; }
+.diag-edge.inferred { font-style: italic; }
+.diag-open { height: 22px; padding: 0 8px; font-size: 11px; }
+.diag-meta { font-size: 11.5px; color: var(--muted-foreground); margin: 4px 0; }
+
+.diag-groups { list-style: none; margin: 4px 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; }
+.diag-groups li { display: inline-flex; align-items: center; gap: 4px; }
+.diag-sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1.5px solid; }
+.diag-sw0 { background: #dbeafe; border-color: #2563eb; }
+.diag-sw1 { background: #fef3c7; border-color: #d97706; }
+.diag-sw2 { background: #dcfce7; border-color: #16a34a; }
+.diag-sw3 { background: #ffe4e6; border-color: #e11d48; }
+.diag-sw4 { background: #e0e7ff; border-color: #4f46e5; }
+.diag-sw5 { background: #ccfbf1; border-color: #0f766e; }
