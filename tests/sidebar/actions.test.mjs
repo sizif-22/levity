@@ -271,3 +271,19 @@ test('the old Open in Antigravity IDE button is gone from the start screen; /ope
   ui.click(ui.$('ideChip'));
   assert.deepEqual(ui.sent('open_ide'), [{ type: 'open_ide', path: 'C:\\Work\\app' }]);
 });
+
+// ---- project cards ----
+
+test('each project card keeps its buttons together, and the pin button (not the diagram button) pins', async () => {
+  const ui = await open();
+  ui.deliver(projectsMsg(2));
+  const card = ui.q('#projList .proj');
+  assert.ok(card.querySelector('.proj-actions .open-btn'), 'the buttons are grouped so they can move to their own line when space is tight');
+  assert.equal(card.querySelectorAll('.proj-actions button').length, 4);
+
+  ui.click(card.querySelector('.diag-btn'));
+  assert.equal(ui.sent('pin_project').length, 0, 'the diagram button must not pin');
+  ui.click(card.querySelector('.pin-toggle'));
+  assert.equal(ui.sent('pin_project').length, 1);
+  assert.equal(ui.sent('pin_project')[0].pinned, true);
+});

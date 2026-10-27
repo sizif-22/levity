@@ -725,15 +725,17 @@ function projectRow(p, checked) {
         ${dot(p.hasReadme, 'README')}${dot(p.hasAgentsDoc, 'AGENTS')}${dot(p.hasSkills, 'Skills')}
         <span>${escapeHtml(meta)}</span></div>
     </div>
-    <button class="pin-btn diag-btn" title="Architecture diagram">${DIAG_SVG_ICON}</button>
-    <button class="pin-btn ide-btn" title="Open in Antigravity IDE">${IDE_SVG}</button>
-    <button class="pin-btn ${p.pinned ? 'on' : ''}" title="${p.pinned ? 'Unpin' : 'Pin to top'}">${PIN_SVG}</button>
-    <button class="open-btn">Open</button>`;
+    <div class="proj-actions">
+      <button class="pin-btn diag-btn" title="Architecture diagram">${DIAG_SVG_ICON}</button>
+      <button class="pin-btn ide-btn" title="Open in Antigravity IDE">${IDE_SVG}</button>
+      <button class="pin-btn pin-toggle ${p.pinned ? 'on' : ''}" title="${p.pinned ? 'Unpin' : 'Pin to top'}">${PIN_SVG}</button>
+      <button class="open-btn">Open</button>
+    </div>`;
   li.querySelector('.proj-main').addEventListener('click', () => { const cb = li.querySelector('.cb'); cb.checked = !cb.checked; updateSyncButton(); });
   li.querySelector('.cb').addEventListener('change', updateSyncButton);
   li.querySelector('.diag-btn').addEventListener('click', () => { closeSheet('projectsSheet'); openDiagram(p.path); });
   li.querySelector('.ide-btn').addEventListener('click', () => postToHost({ type: 'open_ide', path: p.path }));
-  li.querySelector('.pin-btn').addEventListener('click', () => postToHost({ type: 'pin_project', path: p.path, pinned: !p.pinned }));
+  li.querySelector('.pin-toggle').addEventListener('click', () => postToHost({ type: 'pin_project', path: p.path, pinned: !p.pinned }));
   li.querySelector('.open-btn').addEventListener('click', () => {
     postToHost({ type: 'set_cwd', path: p.path });
     closeSheet('projectsSheet');

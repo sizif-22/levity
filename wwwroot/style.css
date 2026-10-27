@@ -672,3 +672,12 @@ body.remote .composer-hl { font-size: 16px; } /* match the textarea (iOS zoom gu
 .job-input { flex: 1; min-width: 0; height: 32px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); font-size: 13px; }
 .job-input:focus { outline: 2px solid var(--ring); }
 .job-send { height: 32px; padding: 0 14px; font-size: 12.5px; }
+
+/* Project card: when there is no room for everything on one line, the buttons drop to a line of their own instead of squeezing the text. */
+.proj { flex-wrap: wrap; row-gap: 8px; }
+.proj-main { flex: 1 1 150px; }
+.proj-meta { flex-wrap: wrap; row-gap: 2px; }
+.proj-meta .kind { white-space: nowrap; flex-shrink: 0; }
+.proj-meta > span:last-child { white-space: nowrap; }
+.proj-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; flex-shrink: 0; }
+.open-btn { white-space: nowrap; flex-shrink: 0; }

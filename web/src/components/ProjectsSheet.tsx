@@ -154,12 +154,14 @@ export function ProjectsSheet({ data, scanning, sync, onClose, send, confirm, st
                               <span>{meta}</span>
                             </div>
                           </div>
-                          {onDiagram && <button className="pin-btn" title="Architecture diagram" onClick={() => onDiagram(p.path)}>{DIAGRAM}</button>}
-                          <button className="pin-btn" title="Open in Antigravity IDE" onClick={() => send({ type: 'open_ide', path: p.path })}>{IDE}</button>
-                          <button className={`pin-btn ${p.pinned ? 'on' : ''}`} title={p.pinned ? 'Unpin' : 'Pin to top'}
-                            onClick={() => send({ type: 'pin_project', path: p.path, pinned: !p.pinned })}>{PIN}</button>
-                          <button className="open-btn" disabled={current}
-                            onClick={() => { send({ type: 'set_cwd', path: p.path }); onClose(); }}>{current ? 'Active' : 'Open'}</button>
+                          <div className="proj-actions">
+                            {onDiagram && <button className="pin-btn" title="Architecture diagram" onClick={() => onDiagram(p.path)}>{DIAGRAM}</button>}
+                            <button className="pin-btn" title="Open in Antigravity IDE" onClick={() => send({ type: 'open_ide', path: p.path })}>{IDE}</button>
+                            <button className={`pin-btn ${p.pinned ? 'on' : ''}`} title={p.pinned ? 'Unpin' : 'Pin to top'}
+                              onClick={() => send({ type: 'pin_project', path: p.path, pinned: !p.pinned })}>{PIN}</button>
+                            <button className="open-btn" disabled={current}
+                              onClick={() => { send({ type: 'set_cwd', path: p.path }); onClose(); }}>{current ? 'Active' : 'Open'}</button>
+                          </div>
                         </li>
                       );
                     })}
