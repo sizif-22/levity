@@ -1,0 +1,33 @@
+web/src/components/DiagramSheet.tsx
+  s_d7448d4eb56c88::t_a7aeeb2c4de7bb 24-36,147
+  s_d7448d4eb56c88::t_f5095f7d6c26d6 317
+wwwroot/diagram.js
+  s_d7448d4eb56c88::t_f5095f7d6c26d6 167,189
+  s_d7448d4eb56c88::t_a7aeeb2c4de7bb 190,238-246
+  s_d7448d4eb56c88::t_9a6a5088179a42 247-248
+tests/sidebar/diagram.test.mjs
+  s_d7448d4eb56c88::t_78093ba9326e7a 569-581
+web/tests/diagram.spec.tsx
+  s_d7448d4eb56c88::t_d9d9824d343c86 443-453
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c17bde2a8e7b6fe7550bf11d6a3ed1dbd8c0268d",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
