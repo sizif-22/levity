@@ -566,3 +566,16 @@ test('opening the diagram asks the PC to pin the sidebar and closing it releases
   ui.window.closeSheet('diagramSheet');
   assert.deepEqual(ui.sent('diagram_pin').at(-1), { type: 'diagram_pin', on: false });
 });
+
+test('components are drawn as gray boxes with white text, whatever colours Mermaid gave them', async () => {
+  const coloured = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+    <g class="node" id="flowchart-n1-0"><rect width="60" height="30" style="fill:#dbeafe !important"/><text style="fill:#0f172a !important">Entry</text></g></svg>`;
+  const ui = await open({ mermaid: fakeMermaid(coloured) });
+  await openDiagramFor(ui);
+  ui.deliver(diagram());
+  await tick();
+  const rect = ui.q('#diagStage g.node rect'), text = ui.q('#diagStage g.node text');
+  assert.equal(rect.style.getPropertyValue('fill'), '#525252');
+  assert.equal(rect.style.getPropertyPriority('fill'), 'important');
+  assert.equal(text.style.getPropertyValue('fill'), '#ffffff');
+});

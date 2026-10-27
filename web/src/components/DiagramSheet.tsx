@@ -21,6 +21,19 @@ interface Props {
   loadMermaid?: () => Promise<MermaidApi>;
 }
 
+/**
+ * Black and white: every component is a gray box with white text. Mermaid writes its colours as inline !important styles, which a
+ * stylesheet cannot override, so the drawn shapes are recoloured here. The colour-coded fallback keeps its colours (the colour is what
+ * shows a component's group there) but gets dark text so it stays readable on its light fills.
+ */
+function paintNodes(svg: SVGSVGElement, flat: boolean) {
+  const put = (el: Element, prop: string, value: string) => (el as SVGElement).style.setProperty(prop, value, 'important');
+  svg.querySelectorAll('g.node').forEach((g) => {
+    if (!flat) g.querySelectorAll('rect, path, polygon, circle, ellipse').forEach((s) => { put(s, 'fill', '#525252'); put(s, 'stroke', '#a3a3a3'); });
+    g.querySelectorAll('text, tspan').forEach((t) => put(t, 'fill', flat ? '#0f172a' : '#ffffff'));
+  });
+}
+
 /** A button that must be pressed twice (for actions that change files or data). */
 function TwoStep({ label, onConfirm, id }: { label: string; onConfirm: () => void; id: string }) {
   const [armed, setArmed] = useState(false);
@@ -131,6 +144,7 @@ export function DiagramSheet({ path, data, prepared, state, send, onClearPrepare
           if (mine !== draw.current) return;
         }
         host.appendChild(svg);
+        paintNodes(svg, usedFlat);
         setFlat(usedFlat);
 
         const byIndex = new Map(data.nodes.map((n) => [n.i, n]));
@@ -300,7 +314,7 @@ export function DiagramSheet({ path, data, prepared, state, send, onClearPrepare
               <button className="icon-btn diag-expand" title={full ? 'Back to the page' : 'Open full screen'} aria-pressed={full} onClick={toggleFull}><svg viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" /></svg></button>
             </div>
             <div className="diag-canvas" ref={canvas} tabIndex={0} aria-label="Architecture diagram. Drag to move, pinch or scroll to zoom, double-tap to fit.">
-              <div className="diag-stage" ref={stage} />
+              <div className={`diag-stage ${flat ? 'flat' : ''}`} ref={stage} />
             </div>
             {flat && (
               <>

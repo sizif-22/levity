@@ -164,6 +164,7 @@ async function drawDiagram(d) {
   const stage = $('diagStage');
   const myRender = ++diag.renderId;
   stage.textContent = '';
+  stage.classList.remove('flat');
   $('diagFallback').hidden = true;
   $('diagList').open = false;
   showGroupLegend(d, false);
@@ -185,6 +186,8 @@ async function drawDiagram(d) {
       if (myRender !== diag.renderId) return;
     }
     stage.appendChild(svg);
+    stage.classList.toggle('flat', flat);
+    paintNodes(svg, flat);
     wireDiagramNodes(svg, d);
     showGroupLegend(d, flat);
     diag.touched = false;
@@ -230,6 +233,17 @@ function sanitizeSvg(svgText) {
   for (const attr of Array.from(root.attributes)) if (attr.name.toLowerCase().startsWith('on')) root.removeAttribute(attr.name);
   walk(root);
   return document.importNode(root, true);
+}
+
+// Black and white: every component is a gray box with white text. Mermaid writes its colours as inline !important styles,
+// which a stylesheet cannot override, so the drawn shapes are recoloured here. The colour-coded fallback keeps its colours
+// (the colour is what shows a component's group there) but gets dark text so it stays readable on its light fills.
+function paintNodes(svg, flat) {
+  const put = (el, prop, value) => el.style.setProperty(prop, value, 'important');
+  svg.querySelectorAll('g.node').forEach(g => {
+    if (!flat) g.querySelectorAll('rect, path, polygon, circle, ellipse').forEach(s => { put(s, 'fill', '#525252'); put(s, 'stroke', '#a3a3a3'); });
+    g.querySelectorAll('text, tspan').forEach(t => put(t, 'fill', flat ? '#0f172a' : '#ffffff'));
+  });
 }
 
 function wireDiagramNodes(svg, d) {
