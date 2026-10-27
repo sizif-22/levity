@@ -1,0 +1,30 @@
+wwwroot/style.css
+  s_d7448d4eb56c88::t_22a1f73827f347 643
+web/src/styles.css
+  s_d7448d4eb56c88::t_22a1f73827f347 663
+web/src/lib/diagramTheme.ts
+  s_d7448d4eb56c88::t_22a1f73827f347 8,26,29
+wwwroot/diagram-theme.js
+  s_d7448d4eb56c88::t_22a1f73827f347 10,28,31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b338fd47ad14072576bc8e18c17bbbfadb9332af",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
