@@ -190,6 +190,7 @@ async function drawDiagram(d) {
     stage.appendChild(svg);
     stage.classList.toggle('flat', flat);
     paintNodes(svg, flat);
+    separateEdgeLabels(svg);   // diagram-theme.js
     wireDiagramNodes(svg, d);
     showGroupLegend(d, flat);
     diag.touched = false;

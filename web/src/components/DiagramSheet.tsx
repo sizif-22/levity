@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SUPPORT_TEXT, toneClass, type DiagramMsg, type DiagramPrepared, type DiagramState } from '../lib/diagram';
 import { sanitizeSvg, svgSize } from '../lib/svg';
-import { diagramMermaidConfig, loadDiagramFont } from '../lib/diagramTheme';
+import { diagramMermaidConfig, loadDiagramFont, separateEdgeLabels } from '../lib/diagramTheme';
 
 /** The part of Mermaid this view uses. Injected in tests; loaded on demand in the app so it never slows down startup. */
 export interface MermaidApi {
@@ -149,6 +149,7 @@ export function DiagramSheet({ path, data, prepared, state, send, onClearPrepare
         }
         host.appendChild(svg);
         paintNodes(svg, usedFlat);
+        separateEdgeLabels(svg);
         setFlat(usedFlat);
 
         const byIndex = new Map(data.nodes.map((n) => [n.i, n]));

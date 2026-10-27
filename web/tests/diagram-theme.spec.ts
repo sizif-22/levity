@@ -20,3 +20,11 @@ describe('diagram theme', () => {
     expect(cfg.fontFamily).not.toBe('inherit');
   });
 });
+
+describe('separateEdgeLabels', () => {
+  it('does nothing (and does not throw) when there is no layout to measure, e.g. in tests or a hidden sheet', async () => {
+    const { separateEdgeLabels } = await import('../src/lib/diagramTheme');
+    document.body.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><g class="edgeLabel" transform="translate(1, 1)"><text>a</text></g><g class="edgeLabel" transform="translate(1, 1)"><text>b</text></g></svg>';
+    expect(separateEdgeLabels(document.querySelector('svg') as unknown as SVGSVGElement)).toBe(0);
+  });
+});
