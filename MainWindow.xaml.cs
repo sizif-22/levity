@@ -415,6 +415,7 @@ namespace AntigravitySidebar
                         break;
 
                     case "sync_cancel":
+                        if (_syncStarting) _syncCancelPending = true; // still scanning: nothing to kill yet, stop it before it starts
                         _sync.Cancel();
                         break;
 
@@ -577,9 +578,12 @@ namespace AntigravitySidebar
             }
         }
 
+        private bool _syncStarting;
+        private bool _syncCancelPending;
+
         private async Task StartSyncAsync(JsonElement root, string? clientId)
         {
-            if (_sync.IsRunning)
+            if (_sync.IsRunning || _syncStarting)
             {
                 Reply(clientId, new { type = "toast", text = "A project review is already running." });
                 return;
@@ -593,9 +597,30 @@ namespace AntigravitySidebar
             }
 
             // Only folders the scanner itself finds under the configured root can be reviewed.
-            string rootDir = _settings.ProjectsRoot;
-            var known = await Task.Run(() => ProjectScanner.Scan(rootDir));
-            var selected = known.Where(k => wanted.Contains(k.Path)).ToList();
+            _syncStarting = true;
+            _syncCancelPending = false;
+            List<ProjectInfo> selected;
+            try
+            {
+                string rootDir = _settings.ProjectsRoot;
+                var known = await Task.Run(() => ProjectScanner.Scan(rootDir));
+                selected = known.Where(k => wanted.Contains(k.Path)).ToList();
+                if (_syncCancelPending)
+                {
+                    // Stopped before the first project began: report every project as cancelled so the UI leaves "Starting".
+                    _lastSyncJson = JsonSerializer.Serialize(new
+                    {
+                        type = "sync_state",
+                        running = false,
+                        mode = GetString(root, "mode"),
+                        items = selected.Select(p => new SyncItem { Name = p.Name, Path = p.Path, Status = "cancelled" })
+                    });
+                    RawPublish(_lastSyncJson);
+                    return;
+                }
+            }
+            finally { _syncStarting = false; }
+
             if (selected.Count == 0)
             {
                 Reply(clientId, new { type = "toast", text = "No valid projects selected." });
