@@ -1,0 +1,50 @@
+web/src/App.tsx
+  s_d7448d4eb56c88::t_e60992a3d28a75 382,390
+tests/Levity.Tests/CommandTests.cs
+  s_d7448d4eb56c88::t_e07b1938c6b7e6 18-32,81-84,174-219
+  s_d7448d4eb56c88::t_b1339236147a05 220
+README.md
+  s_d7448d4eb56c88::t_e60992a3d28a75 14-15,28,31,33
+Services/CommandShortcut.cs
+  s_d7448d4eb56c88::t_e60992a3d28a75 6,8-9,37,44-45
+wwwroot/index.html
+  s_d7448d4eb56c88::t_e60992a3d28a75 121,126
+tests/sidebar/actions.test.mjs
+  s_d7448d4eb56c88::t_e07b1938c6b7e6 290-323
+docs/USING.md
+  s_d7448d4eb56c88::t_e60992a3d28a75 11,13-14,22,103,112
+  s_d7448d4eb56c88::t_6a8963d0007f46 58-60
+docs/RUNNING.md
+  s_d7448d4eb56c88::t_e60992a3d28a75 45
+web/tests/components.spec.tsx
+  s_d7448d4eb56c88::t_e07b1938c6b7e6 29-47,51
+docs/PHONE.md
+  s_d7448d4eb56c88::t_e60992a3d28a75 12
+web/src/components/JobsSheet.tsx
+  s_d7448d4eb56c88::t_e60992a3d28a75 64
+wwwroot/app.js
+  s_d7448d4eb56c88::t_e60992a3d28a75 338-339,343-345,428,431,549
+web/src/components/UserText.tsx
+  s_d7448d4eb56c88::t_e60992a3d28a75 1-2,8-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "99a58973ae32eafe84711c0d34db6ab4d2938f28",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
