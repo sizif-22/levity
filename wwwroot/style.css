@@ -640,3 +640,4 @@ body.remote .composer-hl { font-size: 16px; } /* match the textarea (iOS zoom gu
 #diagView.expanded > :not(.diag-toolbar):not(.diag-canvas) { display: none; }
 #diagView.expanded .diag-toolbar { margin: 0; }
 #diagView.expanded .diag-canvas { flex: 1; height: auto; min-height: 0; }
+.diag-canvas, .diag-canvas * { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }

@@ -7,7 +7,7 @@
 async function loadDiagramFont() {
   try {
     if (!document.fonts || !document.fonts.load) return;
-    await Promise.race([document.fonts.load('400 14px "Plus Jakarta Sans"'), new Promise(r => setTimeout(r, 2500))]);
+    await Promise.race([document.fonts.load('400 18px "Plus Jakarta Sans"'), new Promise(r => setTimeout(r, 2500))]);
   } catch { /* the fallback fonts are fine */ }
 }
 
@@ -25,10 +25,10 @@ function diagramMermaidConfig(dark) {
     // Mermaid measures every label once while drawing, so the font must already be loaded then (see loadDiagramFont) and the
     // weight must not change afterwards. The system fonts are only the fallback if it cannot be loaded.
     fontFamily: '"Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-    flowchart: { htmlLabels: false, curve: 'basis', useMaxWidth: false, padding: 12, nodeSpacing: 40, rankSpacing: 48, wrappingWidth: 180 },
+    flowchart: { htmlLabels: false, curve: 'basis', useMaxWidth: false, padding: 12, nodeSpacing: 40, rankSpacing: 48, wrappingWidth: 220 },
     themeVariables: {
       background: 'transparent',
-      fontSize: '14px',
+      fontSize: '18px',
       textColor: c.text,
       titleColor: c.text,
       lineColor: c.line,
