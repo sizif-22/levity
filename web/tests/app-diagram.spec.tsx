@@ -168,3 +168,30 @@ describe('phone App: the /diagram chip', () => {
     expect(screen.queryByText('/diagram')).not.toBeNull();
   });
 });
+
+describe('phone App: Fast / Deep', () => {
+  it('shows the level the PC reports and asks the PC to switch when tapped', async () => {
+    const { conn, deliver } = await openApp();
+    const chip = () => screen.getByTitle(/Fast: quick answers/);
+    expect(chip().textContent).toBe('Fast');
+
+    await deliver({ type: 'config', effort: 'high' });
+    expect(chip().textContent).toBe('Deep');
+    expect(chip().getAttribute('aria-pressed')).toBe('true');
+
+    fireEvent.click(chip());
+    expect(conn.sent.at(-1)).toEqual({ type: 'set_effort', value: 'low' });
+
+    await deliver({ type: 'config', effort: 'low' });
+    expect(chip().textContent).toBe('Fast');
+    fireEvent.click(chip());
+    expect(conn.sent.at(-1)).toEqual({ type: 'set_effort', value: 'high' });
+  });
+
+  it('keeps the old level when a config message does not mention it (a folder change)', async () => {
+    const { deliver } = await openApp();
+    await deliver({ type: 'config', effort: 'high' });
+    await deliver({ type: 'config', cwd: 'D:\\Other', isPinned: false });
+    expect(screen.getByTitle(/Fast: quick answers/).textContent).toBe('Deep');
+  });
+});

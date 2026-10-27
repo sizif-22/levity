@@ -92,6 +92,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const [sync, setSync] = useState<SyncState | null>(null);
   const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs' | 'history' | 'diagram' | 'run' | 'git'>('none');
   const [actions, setActions] = useState<ActionsMsg | null>(null);
+  const [effort, setEffort] = useState<'low' | 'medium' | 'high'>('low');   // Fast (low) or Deep (medium/high), set on the PC
   const [gitState, setGitState] = useState<GitStateMsg | null>(null);
   const [diagPath, setDiagPath] = useState('');
   const diagPathRef = useRef('');
@@ -138,6 +139,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
       },
       onMessage: (msg) => {
         const type = msg.type as string;
+        if (type === 'config' && msg.effort !== undefined) setEffort(msg.effort === 'high' || msg.effort === 'medium' ? msg.effort : 'low');
         if (type === 'sessions') { setSessions(msg as unknown as SessionsMsg); return; }
         if (type === 'diagram' || type === 'diagram_none' || type === 'diagram_prepared' || type === 'diagram_state') {
           if (!sameFolder(String(msg.path ?? ''), diagPathRef.current)) return;   // about another project
@@ -370,6 +372,10 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         )}
         <div className="quick-commands">
           {!!actions?.git.repo && <span className="cmd-chip" title="Draw this project's architecture" onClick={() => openDiagram(chat.cwd)}>/diagram</span>}
+          <button className={`cmd-chip effort-chip ${effort !== 'low' ? 'deep' : ''}`} aria-pressed={effort !== 'low'}
+            title="Fast: quick answers. Deep: thinks harder, slower." onClick={() => send({ type: 'set_effort', value: effort === 'low' ? 'high' : 'low' })}>
+            {effort === 'low' ? 'Fast' : 'Deep'}
+          </button>
           {!!chat.cwd && <span className="cmd-chip" title="Open this folder in the Antigravity IDE on your PC" onClick={() => send({ type: 'open_ide', path: chat.cwd })}>/open-ide</span>}
           {!!actions?.scripts.length && <span className="cmd-chip" title="Run a script from this folder's package.json" onClick={() => setSheet('run')}>/run</span>}
           {!!actions?.git.repo && <span className="cmd-chip" title="Common git steps: add, commit, push..." onClick={() => { setGitState(null); setSheet('git'); }}>/git</span>}

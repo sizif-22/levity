@@ -700,3 +700,7 @@ body.remote .job-input, body.remote .git-form textarea, body.remote .git-form in
 .proj-meta > span:last-child { white-space: nowrap; }
 .proj-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; flex-shrink: 0; }
 .open-btn { white-space: nowrap; flex-shrink: 0; }
+
+/* Fast / Deep switch, first chip in the row */
+.effort-chip { font-family: inherit; font-weight: 500; flex-shrink: 0; }
+.effort-chip.deep { color: var(--foreground); border-color: var(--foreground); }
