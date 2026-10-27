@@ -743,6 +743,7 @@ namespace AntigravitySidebar
             try
             {
                 string cwd = _agyManager.CurrentWorkingDirectory;
+                bool forceBackground = DirectShell.StripBackgroundFlag(command, out command);
                 string? cdTarget = DirectShell.ResolveCd(command, cwd);
                 if (cdTarget != null)
                 {
@@ -762,11 +763,11 @@ namespace AntigravitySidebar
                 RawPublish(JsonSerializer.Serialize(new { type = "status", text = "Running command...", state = "busy" }));
                 var job = _jobs.Start(command, cwd);
 
-                if (!await job.WaitAsync(TimeSpan.FromSeconds(3)))
+                if (forceBackground || !await job.WaitAsync(TimeSpan.FromSeconds(3)))
                 {
                     job.Background = true;
                     PublishJobs();
-                    FinishDirectTurn($"Still running, so it moved to the background as **job #{job.Id}**. Watch it or stop it from the **Jobs** button in the header. Chat is free.", 0);
+                    FinishDirectTurn($"{(forceBackground ? "Started in the background as" : "Still running, so it moved to the background as")} **job #{job.Id}**. Watch it or stop it from the **Jobs** button in the header. Chat is free.", 0);
                     return;
                 }
 

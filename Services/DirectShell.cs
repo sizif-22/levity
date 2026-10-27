@@ -8,6 +8,15 @@ namespace AntigravitySidebar.Services
     {
         private static readonly Regex CdPattern = new(@"^(?:cd|chdir|set-location|sl)(?:\s+/d)?(?:\s+(?<p>.+))?$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+        private static readonly Regex BackgroundFlag = new(@"(?:^-b\s+|\s+-b$)", RegexOptions.Compiled);
+
+        /// <summary>"-b" at the start or end asks for a background job straight away. Returns the command without the flag.</summary>
+        public static bool StripBackgroundFlag(string command, out string stripped)
+        {
+            stripped = BackgroundFlag.Replace(command.Trim(), "").Trim();
+            return stripped.Length > 0 && stripped != command.Trim();
+        }
+
         /// <summary>If the command is a plain "cd", returns the absolute target (may not exist); otherwise null.</summary>
         public static string? ResolveCd(string command, string cwd)
         {

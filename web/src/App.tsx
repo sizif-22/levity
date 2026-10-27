@@ -324,7 +324,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           {['/plan', '/goal', '/boost', '/compact', '/help'].map((c) => (
             <span key={c} className="cmd-chip" onClick={() => setDraft(c + ' ')}>{c}</span>
           ))}
-          <span className="cmd-chip" title="Run a CLI command directly (no AI), e.g. /cmd{$git status}" onClick={() => { setDraft('/cmd{$}'); setTimeout(() => { composer.current?.focus(); composer.current?.setSelectionRange(6, 6); }, 0); }}>/cmd</span>
+          <span className="cmd-chip" title="Run a CLI command directly (no AI), e.g. /cmd{$git status}. Add -b to run it in the background." onClick={() => { setDraft('/cmd{$}'); setTimeout(() => { composer.current?.focus(); composer.current?.setSelectionRange(6, 6); }, 0); }}>/cmd</span>
         </div>
         <div className="composer">
           <textarea
