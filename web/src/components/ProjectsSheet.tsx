@@ -49,6 +49,9 @@ const PIN = (
 const IDE = (
   <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
 );
+const DIAGRAM = (
+  <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="6" rx="1" /><rect x="14" y="3" width="7" height="6" rx="1" /><rect x="8.5" y="15" width="7" height="6" rx="1" /><path d="M6.5 9v3h11V9M12 12v3" /></svg>
+);
 const SYNC_ICON = { pending: '○', running: '◌', done: '✓', error: '✕', cancelled: '–' } as const;
 
 interface Props {
@@ -59,9 +62,10 @@ interface Props {
   send: (m: Record<string, unknown>) => void;
   confirm: (title: string, text: string, ok: string) => Promise<boolean>;
   startSync: (paths: string[], mode: 'update' | 'report') => void;
+  onDiagram?: (path: string) => void;
 }
 
-export function ProjectsSheet({ data, scanning, sync, onClose, send, confirm, startSync }: Props) {
+export function ProjectsSheet({ data, scanning, sync, onClose, send, confirm, startSync, onDiagram }: Props) {
   const projects = data?.projects ?? [];
   const [unchecked, setUnchecked] = useState<Set<string>>(new Set());
   const [mode, setMode] = useState<'update' | 'report'>('update');
@@ -150,6 +154,7 @@ export function ProjectsSheet({ data, scanning, sync, onClose, send, confirm, st
                               <span>{meta}</span>
                             </div>
                           </div>
+                          {onDiagram && <button className="pin-btn" title="Architecture diagram" onClick={() => onDiagram(p.path)}>{DIAGRAM}</button>}
                           <button className="pin-btn" title="Open in Antigravity IDE" onClick={() => send({ type: 'open_ide', path: p.path })}>{IDE}</button>
                           <button className={`pin-btn ${p.pinned ? 'on' : ''}`} title={p.pinned ? 'Unpin' : 'Pin to top'}
                             onClick={() => send({ type: 'pin_project', path: p.path, pinned: !p.pinned })}>{PIN}</button>

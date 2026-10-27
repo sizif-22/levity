@@ -17,8 +17,24 @@
 | Return to an earlier investigation | clock icon, **Open**: same folder, same conversation |
 | Teach the assistant a repeatable task | write a skill in `agent/skills/<name>/SKILL.md` and run `.\Install-Skills.ps1`, or let **Fast Learner** create one |
 | Keep README, `AGENTS.md` and skills current | grid icon, **Project review** |
+| Understand how a project fits together | `/diagram`: components, verified relationships, click to open files |
 
 Direct `/cmd{$...}` commands run in Windows PowerShell with the repo as the working directory. A bare `cd` is handled by Levity (the assistant follows you); chained lines such as `cd .. && dir` go to PowerShell as written.
+
+## Architecture diagrams
+
+Draws how a project fits together, so you or a new teammate can understand it quickly. Open it with the diagram button on a project in the Projects list, the **/diagram** chip, or by typing `/diagram`. It works on the PC and on the phone.
+
+1. **Preview.** Levity reads the project folder on your PC and shows what it would send before anything leaves it: how many files are listed, how many source excerpts, the size, and how many secret-looking values were removed. Nothing is sent until you press **Generate**.
+2. **Draw.** Your assistant (the same `agy` service your chats use) returns a structured graph of components and relationships. It runs in an empty temporary folder, cannot use tools, and is stopped after a time limit. It uses tokens like a chat message; a project of about 140 files cost roughly 43 thousand and took 40 seconds. Results vary a little from run to run.
+3. **Check.** Levity validates the answer itself. Every file link is checked against the real project, and every relationship is checked against the code: a **solid** arrow means a file on one side references the other, a **dotted** arrow is inferred (plausible, but nothing in the code that was read shows it), and the README can document one too. The assistant's own claim never makes an arrow solid.
+4. **Use.** Pan and zoom the picture. Tapping a component opens its file in the Antigravity IDE (the PC looks the file up itself; the phone only ever sends a component number). A list of components and relationships sits under the picture. If the group boxes cannot be laid out, the groups are shown by colour instead.
+
+Other actions: **Regenerate** (the preview appears again), **Copy Mermaid**, **Save to docs/ARCHITECTURE.md** and **Delete**. Saving writes a marked section into `docs/ARCHITECTURE.md` and never touches the rest of the file, so you can run it again to refresh the diagram. A diagram is remembered per project and marked as out of date when the project has new commits.
+
+**What is read and what is not.** Files tracked by git (or the folder's files if it is not a repository), minus folders such as `node_modules` and `bin`. Files like `.env`, keys, certificates and credentials are never read. Links and junctions are never followed outside the project. Values that look like secrets (tokens, passwords, connection strings, private keys) are replaced with `[REDACTED]` before anything is sent. This is a safety net, so keep real secrets out of source files anyway.
+
+**Limits.** At most 34 components, 48 relationships and 10 groups. Relationships are verified for TypeScript and JavaScript imports, C# type usage and Python imports; for other languages the picture is still drawn but its arrows are all shown as inferred. Settings: `LEVITY_DIAGRAM_EFFORT` and `LEVITY_DIAGRAM_TIMEOUT` in `.env`.
 
 ## Choose where the assistant works
 

@@ -10,6 +10,8 @@ import { JobsSheet, type Job } from './components/JobsSheet';
 import { SessionsSheet, type SessionsMsg } from './components/SessionsSheet';
 import { CMD_RE, UserText } from './components/UserText';
 import { FastLearnerCard } from './components/FastLearnerCard';
+import { DiagramSheet } from './components/DiagramSheet';
+import { sameFolder, type DiagramMsg, type DiagramPrepared, type DiagramState } from './lib/diagram';
 import { ProjectsSheet, syncCounts, type ProjectsMsg, type SyncState } from './components/ProjectsSheet';
 import { Center, ConfirmDialog, Logo, LockScreen, PairScreen, SettingsSheet } from './components/Screens';
 
@@ -85,7 +87,12 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const [projects, setProjects] = useState<ProjectsMsg | null>(null);
   const [scanning, setScanning] = useState(false);
   const [sync, setSync] = useState<SyncState | null>(null);
-  const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs' | 'history'>('none');
+  const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs' | 'history' | 'diagram'>('none');
+  const [diagPath, setDiagPath] = useState('');
+  const diagPathRef = useRef('');
+  const [diagram, setDiagram] = useState<DiagramMsg | null>(null);
+  const [diagPrepared, setDiagPrepared] = useState<DiagramPrepared | null>(null);
+  const [diagState, setDiagState] = useState<DiagramState | null>(null);
   const [sessions, setSessions] = useState<SessionsMsg | null>(null);
   const [queue, setQueue] = useState<{ id: number; text: string }[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -126,6 +133,14 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
       onMessage: (msg) => {
         const type = msg.type as string;
         if (type === 'sessions') { setSessions(msg as unknown as SessionsMsg); return; }
+        if (type === 'diagram' || type === 'diagram_none' || type === 'diagram_prepared' || type === 'diagram_state') {
+          if (!sameFolder(String(msg.path ?? ''), diagPathRef.current)) return;   // about another project
+          if (type === 'diagram') { setDiagram(msg as unknown as DiagramMsg); setDiagState(null); }
+          else if (type === 'diagram_none') { setDiagram(null); setDiagState(null); }
+          else if (type === 'diagram_prepared') { setDiagPrepared(msg as unknown as DiagramPrepared); setDiagState(null); }
+          else setDiagState(msg as unknown as DiagramState);
+          return;
+        }
         if (type === 'fast_learner') { toast(String(msg.text ?? '')); dispatch(msg); return; }
         if (type === 'queue') { setQueue((msg.items as { id: number; text: string }[]) ?? []); return; }
         if (type === 'jobs') { setJobs((msg.jobs as Job[]) ?? []); return; }
@@ -172,9 +187,21 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
     if (!draft && composer.current) composer.current.style.height = 'auto';
   }, [draft]);
 
+  const openDiagram = useCallback((path: string) => {
+    if (!path) return;
+    diagPathRef.current = path;
+    setDiagPath(path);
+    setDiagram(null);
+    setDiagPrepared(null);
+    setDiagState(null);
+    setSheet('diagram');
+    send({ type: 'diagram_get', path });
+  }, [send]);
+
   const submit = () => {
     const text = draft.trim();
     if (!text || !online) return; // while busy the PC queues it
+    if (text.toLowerCase() === '/diagram') { setDraft(''); openDiagram(chat.cwd); return; } // a view, not a chat message
     send({ type: 'send_prompt', text });
     setDraft('');
   };
@@ -333,6 +360,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           {['/plan', '/goal', '/boost', '/compact', '/help'].map((c) => (
             <span key={c} className="cmd-chip" onClick={() => setDraft(c + ' ')}>{c}</span>
           ))}
+          <span className="cmd-chip" title="Draw this project's architecture" onClick={() => openDiagram(chat.cwd)}>/diagram</span>
           <span className="cmd-chip" title="Run a CLI command directly (no AI), e.g. /cmd{$git status}. Add -b to run it in the background." onClick={() => { setDraft('/cmd{$}'); setTimeout(() => { composer.current?.focus(); composer.current?.setSelectionRange(6, 6); }, 0); }}>/cmd</span>
         </div>
         <div className="composer">
@@ -360,11 +388,16 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         <ProjectsSheet
           data={projects} scanning={scanning} sync={sync} confirm={confirm} send={(m) => { if (m.type === 'set_root') setScanning(true); send(m); }}
           onClose={() => setSheet('none')}
+          onDiagram={(path) => openDiagram(path)}
           startSync={(paths, mode) => {
             setSync({ running: true, mode, optimistic: true, items: paths.map((p) => ({ name: projects?.projects.find((x) => x.path === p)?.name ?? p, path: p, status: 'pending', summary: '', seconds: 0 })) });
             send({ type: 'sync_start', paths, mode });
           }}
         />
+      )}
+      {sheet === 'diagram' && (
+        <DiagramSheet path={diagPath} data={diagram} prepared={diagPrepared} state={diagState} send={send}
+          onClearPrepared={() => setDiagPrepared(null)} onClose={() => { setSheet('none'); setDiagPrepared(null); }} />
       )}
       {sheet === 'history' && <SessionsSheet data={sessions} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'jobs' && <JobsSheet jobs={jobs} send={send} onClose={() => setSheet('none')} />}

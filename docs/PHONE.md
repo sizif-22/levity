@@ -9,7 +9,7 @@ The phone app talks to your PC through a small relay. Nothing listens on your PC
 
 The phone app is static files, which cannot hold WebSockets, so the relay is a separate ~100-line Cloudflare Worker (`relay/`). It forwards opaque encrypted frames between a room's PC and phones and never holds a key.
 
-On the phone you can chat, stop a response, queue messages, run `/cmd{$...}` commands, watch and stop background jobs, reopen saved chats and start project reviews. Choosing a folder with the Windows folder picker stays on the PC.
+On the phone you can chat, stop a response, queue messages, run `/cmd{$...}` commands, watch and stop background jobs, reopen saved chats, start project reviews and view architecture diagrams (pinch to zoom, tap a component to open its file on the PC). Choosing a folder with the Windows folder picker stays on the PC.
 
 ## Set up (once)
 

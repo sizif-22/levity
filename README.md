@@ -16,6 +16,7 @@ It is the developer interface for the **Antigravity CLI** (`agy`), which provide
 - **Never blocked while it thinks.** Type the next request and it is **queued**. Hit **Stop** to cancel a wrong turn without losing the conversation.
 - **One chat per task, saved per repo.** Reopen yesterday's debugging session and the assistant remembers it, in its original folder.
 - **Straight to your editor.** One click opens any project in the Antigravity IDE, with no AI round trip.
+- **See the architecture.** `/diagram` draws how a project fits together from its real code: components you can click to open, relationships checked against the code (unverified ones are drawn dotted), saved to `docs/ARCHITECTURE.md` on request. It shows what it will send first and never reads secret files.
 - **Docs that stay true.** **Project review** has the agent refresh `README.md`, `AGENTS.md` and project skills across many repos. It edits docs and skills only, never source, configs or `.env`, and never commits. A report-only mode writes nothing.
 - **It learns your environment.** The bundled **Fast Learner** skill has the assistant save a working fix whenever a simple task took too long (a flaky CLI flag, a Windows quirk), so next time it takes one step. Drop your own skills into `agent/skills`.
 - **Your phone is a remote.** Start a build, walk away, and watch the job output, stop it or ask a follow-up from your phone. End-to-end encrypted, and **no port is opened on your PC**.
@@ -50,6 +51,7 @@ You need Windows 10 or 11, the [.NET 8 SDK](https://dotnet.microsoft.com/downloa
 | [Running Levity](docs/RUNNING.md) | prerequisites, build, every `.env` setting, where data lives, troubleshooting |
 | [Using Levity](docs/USING.md) | developer workflows, folders, queue and stop, `/cmd` commands, background jobs, chat history, project review |
 | [Phone access](docs/PHONE.md) | relay and web app setup, pairing, security model |
+| [Architecture](docs/ARCHITECTURE.md) | this project drawn by its own `/diagram` feature |
 | [Testing](docs/TESTING.md) | the test suites and CI |
 
 ## Safety
