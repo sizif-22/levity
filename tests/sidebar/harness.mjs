@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const page = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'wwwroot', 'index.html');
 
 /** Loads the sidebar like WebView2 would. `posted` collects what the UI sends to the PC. */
-export async function open() {
+export async function open(options = {}) {
   const posted = [];
   const handlers = [];
   const errors = [];
@@ -30,6 +30,8 @@ export async function open() {
       window.HTMLElement.prototype.scrollTo = function () {};
       window.HTMLElement.prototype.scrollIntoView = function () {};
       window.ResizeObserver = class { observe() {} unobserve() {} disconnect() {} };
+      if (options.mermaid) window.mermaid = options.mermaid;
+      if (options.clipboard) Object.defineProperty(window.navigator, 'clipboard', { value: options.clipboard, configurable: true });
       window.matchMedia ??= () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
     },
   });

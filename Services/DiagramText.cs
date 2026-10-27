@@ -66,18 +66,35 @@ namespace AntigravitySidebar.Services
             return p;
         }
 
+        private static readonly Regex EntityStart = new(@"^[A-Za-z0-9]+;", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+
         /// <summary>
-        /// Text that is safe inside a double-quoted Mermaid label. Every character Mermaid or HTML could treat
-        /// as syntax becomes a numeric entity, so model text can only ever be displayed, never interpreted.
+        /// Text that is safe inside a double-quoted Mermaid label. The few characters that could act as syntax are swapped for
+        /// look-alikes (no entity codes: Mermaid's entity decoder garbles adjacent ones), and everything else is left as written:
+        /// a quote would end the label, a backtick would start a markdown string, angle brackets would be read as HTML,
+        /// "#word;" would be read as an entity, and "%%" starts a directive that Mermaid looks for anywhere in the source.
         /// </summary>
         public static string EscapeMermaidLabel(string? value)
         {
             string s = Normalize(value);
-            var sb = new StringBuilder(s.Length + 8);
-            foreach (char c in s)
+            var sb = new StringBuilder(s.Length + 4);
+            for (int i = 0; i < s.Length; i++)
             {
-                if ("\"#&<>\\|[](){}`;%:*~_^".IndexOf(c) >= 0) sb.Append('#').Append((int)c).Append(';');
-                else sb.Append(c);
+                char c = s[i];
+                switch (c)
+                {
+                    case '"': sb.Append((char)0x201D); break;                    // right double quotation mark
+                    case '`': sb.Append('\''); break;
+                    case '<': sb.Append((char)0x2039); break;                    // single left-pointing angle quotation mark
+                    case '>': sb.Append((char)0x203A); break;                    // single right-pointing angle quotation mark
+                    case '#':
+                        sb.Append(i + 1 < s.Length && EntityStart.IsMatch(s.Substring(i + 1)) ? (char)0xFF03 : '#'); // fullwidth number sign
+                        break;
+                    case '%':
+                        sb.Append(i + 1 < s.Length && s[i + 1] == '%' ? (char)0xFF05 : '%');                           // fullwidth percent sign
+                        break;
+                    default: sb.Append(c); break;
+                }
             }
             return sb.ToString();
         }

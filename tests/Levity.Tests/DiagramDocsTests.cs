@@ -39,9 +39,16 @@ public class DiagramDocsTests
         Assert.DoesNotContain("<script>", s);
         Assert.DoesNotContain("<img", s);
         Assert.DoesNotContain("<b>", s);
-        Assert.DoesNotMatch(@"\]\(javascript", s);
-        Assert.Contains("&lt;script&gt;", s);
-        Assert.Contains("\\[click\\]\\(javascript", s);
+        // Outside the code block (the parts a Markdown viewer renders) there is no live link or HTML.
+        string rendered = Regex.Replace(s, "```mermaid[\\s\\S]*?\n```", "");
+        Assert.DoesNotMatch(@"\]\(javascript", rendered);
+        Assert.Contains("&lt;script&gt;", rendered);
+        Assert.Contains("\\[click\\]\\(javascript", rendered);
+
+        // Inside it the text is inert, and nothing in it can close the fence early.
+        string block = Regex.Match(s, "```mermaid[\\s\\S]*?\n```").Value;
+        Assert.Equal(2, Regex.Matches(block, "```").Count);   // exactly the opening and the closing fence
+        Assert.DoesNotContain("<script>", block);
     }
 
     [Fact]

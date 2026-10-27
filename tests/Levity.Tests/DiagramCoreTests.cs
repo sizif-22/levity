@@ -83,19 +83,40 @@ public class DiagramTextTests
     }
 
     [Fact]
-    public void Mermaid_labels_have_no_syntax_characters_left()
+    public void Mermaid_labels_lose_only_the_characters_that_could_act_as_syntax()
     {
-        string escaped = DiagramText.EscapeMermaidLabel("a\"b]c(d)e{f}g|h<i>j&k#l\\m;n%o`p");
-        foreach (char c in "\"]()[{}|<>\\%`")   // ";" and "#" remain only as part of the entities themselves
-            Assert.DoesNotContain(c, escaped);
-        Assert.Contains("#34;", escaped);   // the quote became an entity
-        Assert.Equal("plain text 123", DiagramText.EscapeMermaidLabel("plain text 123"));
+        string escaped = DiagramText.EscapeMermaidLabel("say \"hi\" `x` <b>y</b> 100%% done #35; #quot; C# 50% off");
+        Assert.DoesNotContain('"', escaped);
+        Assert.DoesNotContain('`', escaped);
+        Assert.DoesNotContain('<', escaped);
+        Assert.DoesNotContain('>', escaped);
+        Assert.DoesNotContain("%%", escaped);
+        Assert.DoesNotMatch("#[A-Za-z0-9]+;", escaped);   // nothing that Mermaid could read as an entity
+        Assert.Contains("C# 50% off", escaped);            // ordinary uses of # and % survive
+    }
+
+    [Theory]
+    [InlineData("plain text 123")]
+    [InlineData("Hello (world) [x] {y} a|b c:d; e*f_g ~h ^i & j \\ k")]
+    [InlineData("List of items - first, second. Third!")]
+    [InlineData("C# and F# hosts")]
+    public void Ordinary_text_and_punctuation_is_left_exactly_as_written(string text)
+    {
+        Assert.Equal(text, DiagramText.EscapeMermaidLabel(text));
     }
 
     [Fact]
     public void Mermaid_labels_cannot_contain_a_line_break()
     {
         Assert.DoesNotContain('\n', DiagramText.EscapeMermaidLabel("one\ntwo\r\nthree"));
+    }
+
+    [Fact]
+    public void A_directive_hidden_in_a_label_is_defused()
+    {
+        string escaped = DiagramText.EscapeMermaidLabel("x %%{init: {\"securityLevel\":\"loose\"}}%% y");
+        Assert.DoesNotContain("%%", escaped);
+        Assert.DoesNotContain("\"", escaped);
     }
 }
 

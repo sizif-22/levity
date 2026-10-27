@@ -80,6 +80,9 @@ function handleHostMessage(msg) {
       }
       break;
     case 'fast_learner': renderFastLearner(msg); break;
+    case 'diagram': case 'diagram_none': case 'diagram_prepared': case 'diagram_state':
+      if (typeof diagramOnMessage === 'function') diagramOnMessage(msg);
+      break;
     case 'sessions': renderSessions(msg); break;
     case 'queue': renderQueue(msg); break;
     case 'jobs': renderJobs(msg); break;
@@ -352,6 +355,13 @@ function sendPrompt(text) {
 function sendCurrentPrompt() {
   const text = promptInput.value;
   if (!text.trim()) return;
+  if (text.trim().toLowerCase() === '/diagram') {   // a view, not a message to the assistant
+    promptInput.value = '';
+    promptInput.style.height = 'auto';
+    syncPromptHl();
+    openDiagram(currentCwd);
+    return;
+  }
   sendPrompt(text);
   promptInput.value = '';
   promptInput.style.height = 'auto';
@@ -391,6 +401,7 @@ document.querySelectorAll('.chip[data-prompt]').forEach(chip => {
   chip.addEventListener('click', () => sendPrompt(chip.dataset.prompt));
 });
 document.querySelectorAll('.cmd-chip').forEach(cmd => {
+  if (cmd.dataset.cmd === '/diagram') return; // opens the diagram view (diagram.js)
   cmd.addEventListener('click', () => {
     const c = cmd.dataset.cmd;
     promptInput.value = c.endsWith('}') ? c : c + ' ';
@@ -673,11 +684,13 @@ function projectRow(p, checked) {
         ${dot(p.hasReadme, 'README')}${dot(p.hasAgentsDoc, 'AGENTS')}${dot(p.hasSkills, 'Skills')}
         <span>${escapeHtml(meta)}</span></div>
     </div>
+    <button class="pin-btn diag-btn" title="Architecture diagram">${DIAG_SVG_ICON}</button>
     <button class="pin-btn ide-btn" title="Open in Antigravity IDE">${IDE_SVG}</button>
     <button class="pin-btn ${p.pinned ? 'on' : ''}" title="${p.pinned ? 'Unpin' : 'Pin to top'}">${PIN_SVG}</button>
     <button class="open-btn">Open</button>`;
   li.querySelector('.proj-main').addEventListener('click', () => { const cb = li.querySelector('.cb'); cb.checked = !cb.checked; updateSyncButton(); });
   li.querySelector('.cb').addEventListener('change', updateSyncButton);
+  li.querySelector('.diag-btn').addEventListener('click', () => { closeSheet('projectsSheet'); openDiagram(p.path); });
   li.querySelector('.ide-btn').addEventListener('click', () => postToHost({ type: 'open_ide', path: p.path }));
   li.querySelector('.pin-btn').addEventListener('click', () => postToHost({ type: 'pin_project', path: p.path, pinned: !p.pinned }));
   li.querySelector('.open-btn').addEventListener('click', () => {

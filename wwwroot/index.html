@@ -115,6 +115,7 @@
         <span class="cmd-chip" data-cmd="/boost">/boost</span>
         <span class="cmd-chip" data-cmd="/compact">/compact</span>
         <span class="cmd-chip" data-cmd="/help">/help</span>
+        <span class="cmd-chip" data-cmd="/diagram" title="Draw this project's architecture">/diagram</span>
         <span class="cmd-chip" data-cmd="/cmd{$}" title="Run a CLI command directly (no AI), e.g. /cmd{$git status}. Add -b to run it in the background. Without $ the agent runs it.">/cmd</span>
       </div>
       <div class="composer">
@@ -191,6 +192,77 @@
         </button>
       </div>
       <div class="sheet-body"><ul class="sess-list" id="sessList"></ul></div>
+    </section>
+
+    <!-- Architecture diagram sheet -->
+    <section class="sheet" id="diagramSheet" aria-hidden="true">
+      <div class="sheet-head">
+        <div>
+          <h3 id="diagTitle">Architecture diagram</h3>
+          <p class="sheet-sub" id="diagSub"></p>
+        </div>
+        <button class="icon-btn" data-close-sheet="diagramSheet" title="Close">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="sheet-body diag-body">
+        <div class="diag-panel" id="diagEmpty">
+          <p><strong>No diagram for this project yet.</strong></p>
+          <p>Levity reads the project's files, asks your assistant to draw its architecture, then checks every relationship against the code. Components link to their files.</p>
+          <button class="btn primary" id="diagMakeBtn">Make a diagram</button>
+        </div>
+
+        <div class="diag-panel" id="diagConfirm" hidden>
+          <div id="diagConfirmText"></div>
+          <div class="diag-actions">
+            <button class="btn primary" id="diagSendBtn">Generate</button>
+            <button class="btn ghost" id="diagConfirmCancel">Cancel</button>
+          </div>
+        </div>
+
+        <div class="diag-panel" id="diagProgress" hidden>
+          <p><span class="spinner"></span> <span id="diagProgressText">Working...</span></p>
+          <button class="btn danger" id="diagStopBtn">Stop</button>
+        </div>
+
+        <div class="diag-panel" id="diagError" hidden>
+          <p><strong>The diagram could not be made.</strong></p>
+          <p id="diagErrorText"></p>
+          <div class="diag-actions">
+            <button class="btn primary" id="diagRetryBtn">Try again</button>
+            <button class="btn ghost" id="diagErrorBack">Back</button>
+          </div>
+        </div>
+
+        <div id="diagView" hidden>
+          <div class="diag-stale" id="diagStale" hidden>The project has changed since this diagram was made. <button class="btn ghost" id="diagStaleBtn">Regenerate</button></div>
+          <p class="diag-overview" id="diagOverview"></p>
+          <div class="diag-toolbar">
+            <button class="icon-btn" id="diagZoomOut" title="Zoom out"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            <button class="icon-btn" id="diagFit" title="Fit to window"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+            <button class="icon-btn" id="diagZoomIn" title="Zoom in"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+          </div>
+          <div class="diag-canvas" id="diagCanvas" tabindex="0" aria-label="Architecture diagram. Drag to move, scroll to zoom, double-click to fit.">
+            <div class="diag-stage" id="diagStage"></div>
+          </div>
+          <p class="diag-legend"><span class="diag-solid"></span> backed by the code <span class="diag-dashed"></span> inferred (not found in the code that was read)</p>
+          <div class="diag-fallback" id="diagFallback" hidden><span id="diagFallbackText"></span></div>
+          <details id="diagList">
+            <summary>Components and relationships</summary>
+            <ul class="diag-nodes" id="diagNodes"></ul>
+            <ul class="diag-edges" id="diagEdges"></ul>
+          </details>
+          <p class="diag-meta" id="diagMeta"></p>
+          <p class="diag-meta" id="diagNotes" hidden></p>
+          <div class="diag-actions">
+            <button class="btn ghost" id="diagRegenBtn">Regenerate</button>
+            <button class="btn ghost" id="diagCopyBtn">Copy Mermaid</button>
+            <button class="btn ghost" id="diagSaveBtn">Save to docs/ARCHITECTURE.md</button>
+            <button class="btn ghost" id="diagDeleteBtn">Delete</button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Background jobs sheet -->
@@ -295,5 +367,6 @@
   <script src="marked.min.js"></script>
   <script src="highlight.min.js"></script>
   <script src="app.js"></script>
+  <script src="diagram.js"></script>
 </body>
 </html>
