@@ -171,6 +171,8 @@ async function drawDiagram(d) {
   try {
     const mermaid = await loadMermaid();
     const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    await loadDiagramFont();                           // diagram-theme.js
+    if (myRender !== diag.renderId) return;
     mermaid.initialize(diagramMermaidConfig(dark));   // diagram-theme.js
 
     let svg = null, flat = false, firstError = null;

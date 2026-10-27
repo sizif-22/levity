@@ -1,6 +1,14 @@
 // Mermaid settings for the architecture diagram. This is a copy of wwwroot/diagram-theme.js (the desktop sidebar uses that one);
 // a test compares the two so the picture looks the same on the PC and on the phone.
 
+/** Waits (at most 2.5 s) for the diagram font, so labels are measured with the real glyphs and the boxes fit their text. */
+export async function loadDiagramFont(): Promise<void> {
+  try {
+    if (!document.fonts?.load) return;
+    await Promise.race([document.fonts.load('400 14px "Plus Jakarta Sans"'), new Promise((r) => setTimeout(r, 2500))]);
+  } catch { /* the fallback fonts are fine */ }
+}
+
 export function diagramMermaidConfig(dark: boolean): Record<string, unknown> {
   const c = dark
     ? { text: '#e5e5e5', line: '#a3a3a3', clusterFill: '#363636', clusterBorder: '#5a5a5a', labelFill: '#2b2b2b' }
@@ -12,9 +20,9 @@ export function diagramMermaidConfig(dark: boolean): Record<string, unknown> {
     secure: ['secure', 'securityLevel', 'startOnLoad', 'maxTextSize', 'htmlLabels', 'flowchart'],
     theme: 'base',
     htmlLabels: false,
-    // A system font, not the web font the pages use: Mermaid measures every label once while drawing, and a web font that
-    // arrives later (or a different weight) makes the text wider than the boxes it was measured for.
-    fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+    // Mermaid measures every label once while drawing, so the font must already be loaded then (see loadDiagramFont) and the
+    // weight must not change afterwards. The system fonts are only the fallback if it cannot be loaded.
+    fontFamily: '"Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
     flowchart: { htmlLabels: false, curve: 'basis', useMaxWidth: false, padding: 12, nodeSpacing: 40, rankSpacing: 48, wrappingWidth: 180 },
     themeVariables: {
       background: 'transparent',

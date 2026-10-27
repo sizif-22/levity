@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SUPPORT_TEXT, toneClass, type DiagramMsg, type DiagramPrepared, type DiagramState } from '../lib/diagram';
 import { sanitizeSvg, svgSize } from '../lib/svg';
-import { diagramMermaidConfig } from '../lib/diagramTheme';
+import { diagramMermaidConfig, loadDiagramFont } from '../lib/diagramTheme';
 
 /** The part of Mermaid this view uses. Injected in tests; loaded on demand in the app so it never slows down startup. */
 export interface MermaidApi {
@@ -130,6 +130,8 @@ export function DiagramSheet({ path, data, prepared, state, send, onClearPrepare
       try {
         const mermaid = await loadMermaid();
         const dark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+        await loadDiagramFont();
+        if (mine !== draw.current) return;
         mermaid.initialize(diagramMermaidConfig(dark));
 
         // Mermaid's layout can fail on boxed groups with many crossing relationships; the flat version (groups by colour) always lays out.
