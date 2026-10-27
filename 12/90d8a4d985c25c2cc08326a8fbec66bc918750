@@ -1,0 +1,132 @@
+tests/Levity.Tests/DiagramFlatTests.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 3
+tests/Levity.Tests/StoreAndScannerTests.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 1
+Services/CommandShortcut.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 3
+Services/ProjectSyncService.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 9
+THIRD-PARTY-NOTICES.md
+  s_d7448d4eb56c88::t_2c75e9e2a36282 50
+tests/Levity.Tests/DataFolderTests.cs
+  s_d7448d4eb56c88::t_b4f8b0ec79382c 1-113
+Services/DiagramValidator.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 8
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 11,14
+  s_d7448d4eb56c88::t_25e95d9d21368a 134
+tests/Levity.Tests/DiagramDocsTests.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 4
+Services/AgyProcessManager.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 9
+Run-Tests.ps1
+  s_d7448d4eb56c88::t_2c75e9e2a36282 58
+Services/DotEnv.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 4
+  s_d7448d4eb56c88::t_997f17a22aa1d6 15-16,22-23
+Services/SessionStore.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 7,23
+.github/workflows/ci.yml
+  s_d7448d4eb56c88::t_2c75e9e2a36282 105,111
+Services/FastLearnerDetector.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 5
+Services/DiagramPrompt.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 5
+Services/DiagramIngest.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 11
+Services/DirectShell.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 4
+tests/Levity.Tests/DiagramCoreTests.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 2
+tests/Levity.Tests/FolderAccessTests.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 1
+Services/AppSettings.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 6
+  s_d7448d4eb56c88::t_e10bf0f29eba10 62-88,90-91,155
+Levity.csproj
+  s_d7448d4eb56c88::t_2c75e9e2a36282 1-42
+Services/JobManager.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 11
+tests/Levity.Tests/CryptoTests.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 5
+tests/Levity.Tests/JobManagerTests.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 2
+tests/Levity.Tests/MermaidContractTests.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 5
+Services/DiagramService.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 11
+Services/RelayNet.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 10
+Services/FolderAccess.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 6
+.env.example
+  s_d7448d4eb56c88::t_2c75e9e2a36282 6,39
+Services/DiagramModel.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 3
+Services/DiagramText.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 6
+App.xaml
+  s_d7448d4eb56c88::t_2c75e9e2a36282 1,4
+README.md
+  s_d7448d4eb56c88::t_2c75e9e2a36282 72,93
+Services/HotkeyManager.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 4
+MainWindow.xaml
+  s_d7448d4eb56c88::t_2c75e9e2a36282 1
+Services/DiagramCompiler.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 5
+Services/DiagramDocs.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 6
+Services/DiagramContext.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 5
+Services/MobileHub.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 13
+Services/ProjectScanner.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 6
+Services/RelayCrypto.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 6
+Services/TrayIconManager.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 6
+tests/Levity.Tests/CommandTests.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 1
+docs/RUNNING.md
+  s_d7448d4eb56c88::t_2c75e9e2a36282 63,104,125
+tests/Levity.Tests/DiagramIngestTests.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 2
+tests/Levity.Tests/DiagramPipelineTests.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 3
+tests/Levity.Tests/FastLearnerTests.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 2
+Services/NativeMethods.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 4
+tests/Levity.Tests/SettingsTests.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 1
+docs/USING.md
+  s_d7448d4eb56c88::t_13f55ce27a7666 52
+  s_d7448d4eb56c88::t_2c75e9e2a36282 65
+Services/RelayClient.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 9
+App.xaml.cs
+  s_d7448d4eb56c88::t_2c75e9e2a36282 6,12-13,17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1290d8a4d985c25c2cc08326a8fbec66bc918750",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
