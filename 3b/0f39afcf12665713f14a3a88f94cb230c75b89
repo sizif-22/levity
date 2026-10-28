@@ -1,0 +1,53 @@
+Services/NativeMethods.cs
+  s_d7448d4eb56c88::t_198b547b92a174 40-48
+Services/MemoryPolicy.cs
+  s_d7448d4eb56c88::t_451647ed79067f 1-49
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_198b547b92a174 93-96,209,279,338-340,828,952,1491,1567,1616-1704,1709
+tests/Levity.Tests/MemoryTests.cs
+  s_d7448d4eb56c88::t_6e8e09847bf37f 186-187
+  s_d7448d4eb56c88::t_8e67c4685a30cd 209-210
+  s_d7448d4eb56c88::t_eb756aab646b58 147-185,188-208,211-270
+  s_d7448d4eb56c88::t_042fd4eff27e47 1-146
+docs/RUNNING.md
+  s_d7448d4eb56c88::t_2ea1a65aef542e 63-64
+.env.example
+  s_d7448d4eb56c88::t_2ea1a65aef542e 39-43
+tests/Levity.Tests/Levity.Tests.csproj
+  s_d7448d4eb56c88::t_2ea1a65aef542e 23-24
+tests/perf/Measure-Memory.ps1
+  s_d7448d4eb56c88::t_fe2cff4ff5b352 1-33,36-43,48-52,56,58,73-94,97-201
+  s_d7448d4eb56c88::t_c39c0118c98ae8 53-55,57,59-72,95-96
+  s_d7448d4eb56c88::t_46737b3d65627b 34-35,44-47
+tests/perf/budget.json
+  s_d7448d4eb56c88::t_478b2bb03ca209 1,3,8-9
+  s_d7448d4eb56c88::t_8e67c4685a30cd 2,4-7
+Services/AgyProcessManager.cs
+  s_d7448d4eb56c88::t_198b547b92a174 29-31,148-163,173-174,204-205,210,250
+  s_d7448d4eb56c88::t_dc91c94cbcb5ea 180-185,188,190,192
+docs/PERFORMANCE.md
+  s_d7448d4eb56c88::t_f7b9f59d85e7e3 34-51
+docs/ROADMAP.md
+  s_d7448d4eb56c88::t_8c3c7448b2b0f7 45-47,55-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3b0f39afcf12665713f14a3a88f94cb230c75b89",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
