@@ -46,7 +46,7 @@ namespace Levity.Services
         /// </summary>
         public const string EfficiencyHint =
             "[Work efficiently: read several files in one step, prefer one command that does the whole job, use rg or git grep to search " +
-            "(not recursive Get-ChildItem), and do not re-verify work that already succeeded.]\n\n";
+            "(not recursive Get-ChildItem), do not re-verify work that already succeeded, and if a program fails to start or show a window after two tries, stop and tell me what you saw instead of trying more ways.]\n\n";
 
         public static string WithHint(string prompt, bool firstOfConversation, string? pcFacts = null)
         {
