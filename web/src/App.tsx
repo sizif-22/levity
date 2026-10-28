@@ -14,6 +14,7 @@ import { DiagramSheet } from './components/DiagramSheet';
 import { GitSheet, RunSheet } from './components/ActionSheets';
 import { WindowsSheet, type JournalEntryMsg, type ToolsState } from './components/WindowsSheet';
 import { SpeedSheet, type SpeedMsg } from './components/SpeedSheet';
+import { recognizerCtor, appendDictation, finalText, type Recognizer } from './lib/voice';
 import { DoctorSheet, type DoctorMsg, type DoctorResultMsg } from './components/DoctorSheet';
 import { CheckpointBar, type CheckpointMsg } from './components/CheckpointBar';
 import type { ActionsMsg, GitStateMsg } from './lib/actions';
@@ -96,6 +97,9 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const [sync, setSync] = useState<SyncState | null>(null);
   const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs' | 'history' | 'diagram' | 'run' | 'git' | 'windows' | 'speed' | 'doctor'>('none');
   const [speed, setSpeed] = useState<SpeedMsg | null>(null);
+  const [listening, setListening] = useState(false);
+  const recog = useRef<Recognizer | null>(null);
+  const canDictate = recognizerCtor() !== null;
   const [doctor, setDoctor] = useState<DoctorMsg | null>(null);
   const [doctorResult, setDoctorResult] = useState<DoctorResultMsg | null>(null);
   const [checkpoint, setCheckpoint] = useState<CheckpointMsg | null>(null);
@@ -228,6 +232,22 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
     setSheet('diagram');
     send({ type: 'diagram_get', path });
   }, [send]);
+
+  const toggleDictation = () => {
+    if (recog.current) { recog.current.stop(); return; }
+    const Ctor = recognizerCtor();
+    if (!Ctor) return;
+    const r = new Ctor();
+    r.lang = navigator.language || 'en-US';
+    r.continuous = true;
+    r.interimResults = true;
+    r.onresult = (e) => { const t = finalText(e); if (t) setDraft((d) => appendDictation(d, t)); };
+    r.onerror = (e) => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') toast('Allow the microphone for this site to dictate.'); };
+    r.onend = () => { recog.current = null; setListening(false); };
+    recog.current = r;
+    setListening(true);
+    try { r.start(); } catch { recog.current = null; setListening(false); }
+  };
 
   const submit = () => {
     const text = draft.trim();
@@ -418,6 +438,12 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
             onChange={(e) => { setDraft(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 180) + 'px'; }}
           />
           </div>
+          {canDictate && !generating && (
+            <button className={`send-btn mic-btn ${listening ? 'listening' : ''}`} aria-pressed={listening} disabled={!online}
+              title={listening ? 'Stop dictating' : 'Dictate (your phone browser turns speech into text; you check it before sending)'} onClick={toggleDictation}>
+              <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0" /><line x1="12" y1="18" x2="12" y2="22" /></svg>
+            </button>
+          )}
           {generating && (
             <button className="send-btn stop-btn" onClick={() => send({ type: 'stop_response' })} title="Stop the response">
               <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" /></svg>

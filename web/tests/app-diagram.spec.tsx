@@ -209,3 +209,31 @@ describe('phone App: Plan / Work', () => {
     expect(chip().textContent).toBe('Plan');
   });
 });
+
+describe('phone App: dictation', () => {
+  it('has no mic button where the browser cannot recognise speech', async () => {
+    await openApp();
+    expect(screen.queryByTitle(/^Dictate/)).toBeNull();
+  });
+
+  it('puts what was said into the box for checking, and does not send it', async () => {
+    let inst: { onresult: ((e: unknown) => void) | null; onend: (() => void) | null; started: boolean; stop(): void } | null = null;
+    (window as unknown as Record<string, unknown>).webkitSpeechRecognition = class {
+      lang = ''; continuous = false; interimResults = false; onresult: ((e: unknown) => void) | null = null; onend: (() => void) | null = null; onerror = null; started = false;
+      constructor() { inst = this; }
+      start() { this.started = true; }
+      stop() { this.onend?.(); }
+    };
+    try {
+      const { conn } = await openApp();
+      const sentBefore = conn.sent.length;
+      fireEvent.click(screen.getByTitle(/^Dictate/));
+      expect(inst!.started).toBe(true);
+      await act(async () => { inst!.onresult!({ resultIndex: 0, results: [{ isFinal: true, 0: { transcript: 'check my disk space' } }] }); });
+      expect((screen.getByPlaceholderText(/Ask Levity/) as HTMLTextAreaElement).value).toBe('check my disk space');
+      expect(conn.sent.length).toBe(sentBefore);
+      fireEvent.click(screen.getByTitle('Stop dictating'));
+      expect(screen.getByTitle(/^Dictate/)).toBeTruthy();
+    } finally { delete (window as unknown as Record<string, unknown>).webkitSpeechRecognition; }
+  });
+});
