@@ -1,0 +1,73 @@
+tests/sidebar/sidebar.test.mjs
+  s_d7448d4eb56c88::t_e1c63903f2ab46 330-342
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_6b1a98b0dd83db 513-520,582,1508-1554,1557-1564
+  s_d7448d4eb56c88::t_b0b741492cc8de 1555-1556
+  s_d7448d4eb56c88::t_e1c63903f2ab46 89,219-236,580-581,1771-1772
+  s_d7448d4eb56c88::t_dbfff4165b0576 5
+  s_d7448d4eb56c88::t_83870730c00ad1 583,1565
+web/tests/doctor.spec.tsx
+  s_d7448d4eb56c88::t_2ed2fd91c92d3a 1-44
+web/src/App.tsx
+  s_d7448d4eb56c88::t_cd954658cbb96d 17,97,99-100,170-171,404,447
+  s_d7448d4eb56c88::t_e1c63903f2ab46 106,154,396-399
+docs/ROADMAP.md
+  s_d7448d4eb56c88::t_b7e24fcd712d55 107,111-112
+Services/WindowsTools/MachineProfile.cs
+  s_d7448d4eb56c88::t_6e1e62fa0ec1fd 81-87
+tests/Levity.Tests/DataFolderTests.cs
+  s_d7448d4eb56c88::t_e1c63903f2ab46 160-194
+docs/WINDOWS.md
+  s_d7448d4eb56c88::t_b7e24fcd712d55 33-39
+Services/AgyProcessManager.cs
+  s_d7448d4eb56c88::t_e1c63903f2ab46 28-30,100
+Services/AppSettings.cs
+  s_d7448d4eb56c88::t_e1c63903f2ab46 23-25
+web/src/components/DoctorSheet.tsx
+  s_d7448d4eb56c88::t_cd954658cbb96d 1,14
+  s_d7448d4eb56c88::t_781441f7b0cc0f 2-13,15-51
+wwwroot/actions.js
+  s_d7448d4eb56c88::t_133aabd71a4ee1 28-31,311-357,359-373
+  s_d7448d4eb56c88::t_ecd50e626e6b5e 358
+  s_d7448d4eb56c88::t_559bc903efeae5 374
+wwwroot/app.js
+  s_d7448d4eb56c88::t_e525cb48e16579 449
+  s_d7448d4eb56c88::t_e1c63903f2ab46 86,136-146
+  s_d7448d4eb56c88::t_d771f2d41829d1 101
+tests/sidebar/doctor.test.mjs
+  s_d7448d4eb56c88::t_2ed2fd91c92d3a 1-71
+Services/AgentLaunch.cs
+  s_d7448d4eb56c88::t_e1c63903f2ab46 20-26,29
+tests/Levity.Tests/PcDoctorTests.cs
+  s_d7448d4eb56c88::t_db1a3f9550417b 1-166
+Services/WindowsTools/PcDoctor.cs
+  s_d7448d4eb56c88::t_d242833f8ea1d5 1-156,158-246
+  s_d7448d4eb56c88::t_6e1e62fa0ec1fd 157
+wwwroot/index.html
+  s_d7448d4eb56c88::t_e1c63903f2ab46 55
+  s_d7448d4eb56c88::t_133aabd71a4ee1 130,313-329
+  s_d7448d4eb56c88::t_612bb43a47c70b 330-331
+web/tests/app-diagram.spec.tsx
+  s_d7448d4eb56c88::t_e1c63903f2ab46 198-211
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "be2a6808a2327f08ff7e8a0939e645db58268a95",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
