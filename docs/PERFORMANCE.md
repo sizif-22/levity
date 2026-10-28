@@ -47,5 +47,22 @@ Measured with `tests/perf/Measure-Memory.ps1` (working set of Levity, every web 
 | Hidden for 5 seconds | 630 MB | 401 MB |
 | Hidden for 45 seconds | **629 MB** | **36 MB** |
 | Opened again | 645 MB | 132 to 151 MB |
+| Hidden for 30 minutes (page thrown away completely) | 629 MB | **21 MB** |
 
 These are working-set numbers, the same method as Task Manager's memory column. Pages Windows takes out of the working set are not lost: they return on demand, which is why the page is quick to wake. Run the script before a release; `tests/perf/budget.json` holds the limits and the script fails if one is exceeded. `-Attach` takes one reading of the Levity that is already running.
+
+- **After 30 hidden minutes the page is thrown away completely** (`LEVITY_WEBVIEW_RELEASE_MINUTES`, `0` = never). Opening the sidebar rebuilds it from your conversation in under a second; opening from this state costs about as much as the first open after starting Levity, then it settles again.
+- **Long days stay light:** the stored conversation merges the assistant's streaming fragments (they were about 80% of its size) and drops the oldest turns above about 3 MB; the page keeps the latest 300 rows (the phone too); only the last 20 finished jobs are kept; `startup.log` and `debug.log` rotate at 1 MB and the conversation traffic is only logged with `LEVITY_DEBUG_LOG=1`.
+
+### What was measured and not kept
+
+Measured with the same script, clean runs, sidebar pinned:
+
+| Option | Visible | Hidden for 45 s | Decision |
+|---|---|---|---|
+| nothing (current) | 467 MB | 37 MB | |
+| WebView2 `--in-process-gpu` | 429 MB | 37 MB | **not on by default**: about 40 MB less while visible, nothing when hidden, and it is an unsupported Chromium flag; to try it set the environment variable `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--in-process-gpu` before starting Levity |
+| WebView2 `--disable-gpu` | 445 MB | 48 MB | no: smaller gain and it adds a process |
+| .NET `GCConserveMemory`, non-concurrent GC, no PGO | 466 MB | same | no effect |
+| ReadyToRun (precompiled) build | 473 MB | 36 MB | no effect on memory (and a bigger file) |
+| Removing WinForms (tray icon, folder picker) | not built | not built | the host is only 11 MB when hidden and WinForms is mostly mapped, not resident; the saving while visible would be a few MB at the price of rewriting the tray, so it is not worth the risk |

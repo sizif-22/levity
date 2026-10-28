@@ -21,6 +21,7 @@
 .PARAMETER Budget       JSON file with the limits (default: budget.json next to this script)
 .PARAMETER SettleSeconds  How long to wait in the hidden state before the long reading (default 45)
 .PARAMETER AgentIdleSeconds  Passed to the app as LEVITY_AGENT_IDLE_SECONDS so the idle stop can be seen quickly (default: app default)
+.PARAMETER ReleaseSeconds  Passed to the app as LEVITY_WEBVIEW_RELEASE_SECONDS; with it the script also takes a "released" reading after that long hidden (default: skip)
 .PARAMETER Attach       Do not start anything: take one reading of the Levity that is already running
 .PARAMETER Json         Also write the readings to this JSON file
 .PARAMETER NoBudget     Print the table only, do not fail on the budget
@@ -35,6 +36,7 @@ param(
   [string]$Budget,
   [int]$SettleSeconds = 45,
   [int]$AgentIdleSeconds = 0,
+  [int]$ReleaseSeconds = 0,
   [switch]$Attach,
   [string]$Json,
   [switch]$NoBudget
@@ -149,8 +151,11 @@ if ($Attach) {
   $exePath = (Resolve-Path $Exe).Path
   $settings = Join-Path ([IO.Path]::GetTempPath()) ('levity-perf-' + [guid]::NewGuid().ToString('N'))
   New-Item -ItemType Directory -Path $settings | Out-Null
+  # Pinned, so the sidebar does not hide by itself when the script's own windows take the focus.
+  Set-Content -Path (Join-Path $settings 'settings.json') -Value '{"IsPinned": true}' -Encoding UTF8
   $env:LEVITY_SETTINGS_DIR = $settings
   if ($AgentIdleSeconds -gt 0) { $env:LEVITY_AGENT_IDLE_SECONDS = "$AgentIdleSeconds" }
+  if ($ReleaseSeconds -gt 0) { $env:LEVITY_WEBVIEW_RELEASE_SECONDS = "$ReleaseSeconds" }
   try {
     $proc = Start-Process -FilePath $exePath -PassThru -WorkingDirectory (Split-Path $exePath)
     $script:rootPid = $proc.Id
@@ -168,6 +173,11 @@ if ($Attach) {
     Start-Sleep -Seconds $SettleSeconds
     $readings.Add((Read-State 'hidden-long' $script:rootPid))
 
+    if ($ReleaseSeconds -gt 0) {
+      Start-Sleep -Seconds ([math]::Max(0, $ReleaseSeconds + 12 - $SettleSeconds - 5))
+      $readings.Add((Read-State 'hidden-released' $script:rootPid))
+    }
+
     Set-Visible $true
     Start-Sleep -Seconds 4
     $readings.Add((Read-State 'visible-again' $script:rootPid))
@@ -179,6 +189,7 @@ if ($Attach) {
     Remove-Item -Recurse -Force $settings -ErrorAction SilentlyContinue
     Remove-Item Env:LEVITY_SETTINGS_DIR -ErrorAction SilentlyContinue
     Remove-Item Env:LEVITY_AGENT_IDLE_SECONDS -ErrorAction SilentlyContinue
+    Remove-Item Env:LEVITY_WEBVIEW_RELEASE_SECONDS -ErrorAction SilentlyContinue
   }
 }
 

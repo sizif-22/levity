@@ -434,3 +434,42 @@ public class FinishedJobCapTests
         Assert.DoesNotContain(started[0], kept);
     }
 }
+
+public class WebViewReleaseTests
+{
+    [Theory]
+    [InlineData(30, 0, 1800)]
+    [InlineData(5, 0, 300)]
+    [InlineData(30, 12, 12)]
+    public void The_release_limit_comes_from_the_settings(double minutes, double seconds, double expected)
+    {
+        Assert.Equal(TimeSpan.FromSeconds(expected), MemoryPolicy.WebViewReleaseLimit(minutes, seconds));
+    }
+
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(-1, 0)]
+    public void Zero_means_never_release_the_page(double minutes, double seconds)
+    {
+        Assert.Null(MemoryPolicy.WebViewReleaseLimit(minutes, seconds));
+    }
+
+    [Fact]
+    public void The_page_is_released_only_after_a_long_hide_with_nothing_going_on()
+    {
+        var limit = TimeSpan.FromMinutes(30);
+        Assert.True(MemoryPolicy.ShouldReleaseWebView(false, false, false, limit, limit));
+        Assert.False(MemoryPolicy.ShouldReleaseWebView(false, false, false, limit - TimeSpan.FromSeconds(1), limit));
+        Assert.False(MemoryPolicy.ShouldReleaseWebView(true, false, false, TimeSpan.FromHours(5), limit), "visible");
+        Assert.False(MemoryPolicy.ShouldReleaseWebView(false, true, false, TimeSpan.FromHours(5), limit), "animating");
+        Assert.False(MemoryPolicy.ShouldReleaseWebView(false, false, true, TimeSpan.FromHours(5), limit), "an answer or command is running");
+        Assert.False(MemoryPolicy.ShouldReleaseWebView(false, false, false, TimeSpan.FromHours(5), null), "never");
+    }
+
+    [Fact]
+    public void The_default_is_thirty_minutes_and_comes_after_sleeping_and_trimming()
+    {
+        Assert.Equal(30, MemoryPolicy.DefaultWebViewReleaseMinutes);
+        Assert.True(TimeSpan.FromMinutes(MemoryPolicy.DefaultWebViewReleaseMinutes) > MemoryPolicy.HiddenTrimDelay);
+    }
+}

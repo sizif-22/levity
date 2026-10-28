@@ -4,6 +4,7 @@
     "visible":       { "totalMB": 560 },
     "hidden-5s":     { "totalMB": 480 },
     "hidden-long":   { "totalMB": 80 },
+    "hidden-released": { "totalMB": 40 },
     "visible-again": { "totalMB": 260 }
   }
 }

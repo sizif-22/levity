@@ -276,7 +276,8 @@ namespace Levity
 
             _isAnimating = true;
 
-            WakeWebView();   // before the window is shown, so the page is live when it appears
+            EnsureWebView();   // a page thrown away after a long hide is created again (the host replays the conversation into it)
+            WakeWebView();     // before the window is shown, so the page is live when it appears
             PositionWindow(offscreen: true);
             this.Topmost = true;
             this.Show();
@@ -380,6 +381,7 @@ namespace Levity
                 {
                     case "ready":
                         SendSnapshot(clientId);
+                        if (clientId == null && _isSidebarVisible) PostJsonToWeb(new { type = "focus_input" });   // a rebuilt page has no focus yet
                         break;
 
                     case "send_prompt":
@@ -1622,6 +1624,7 @@ namespace Levity
         private bool _missedWhileSuspended;
         private bool _trimmedThisHide;
         private bool _suspending;
+        private bool _webReleased;
 
         private void StartHousekeeping()
         {
@@ -1649,6 +1652,10 @@ namespace Levity
                     _ = SuspendWebViewAsync();
                 else if (_webSuspended && AnythingNeedsThePage) WakeWebView();   // an answer or command started while hidden (from the phone, say)
 
+                // 2b. a long hide: throw the page away completely
+                if (!_webReleased && MemoryPolicy.ShouldReleaseWebView(_isSidebarVisible, _isAnimating, AnythingNeedsThePage, hiddenFor, MemoryPolicy.WebViewReleaseLimitFromEnvironment()))
+                    ReleaseWebView();
+
                 // 3. the host itself
                 if (MemoryPolicy.ShouldTrimHost(_isSidebarVisible, hiddenFor, _trimmedThisHide))
                 {
@@ -1659,6 +1666,34 @@ namespace Levity
                 }
             }
             catch { /* housekeeping must never take the app down */ }
+        }
+
+        /// <summary>Disposes the web view: its browser, renderer and GPU processes exit and the memory goes back to Windows.</summary>
+        private void ReleaseWebView()
+        {
+            try
+            {
+                _webReleased = true;
+                _webSuspended = false;
+                _missedWhileSuspended = false;
+                var old = webView;
+                RootBorder.Child = null;
+                try { old.Dispose(); } catch { }
+                GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true);
+                NativeMethods.TrimWorkingSet();
+            }
+            catch { }
+        }
+
+        /// <summary>Creates the page again if it was released. The new page asks for the conversation when it loads, like at start-up.</summary>
+        private void EnsureWebView()
+        {
+            if (!_webReleased) return;
+            _webReleased = false;
+            _missedWhileSuspended = false;
+            webView = new Microsoft.Web.WebView2.Wpf.WebView2 { DefaultBackgroundColor = System.Drawing.Color.FromArgb(0x09, 0x09, 0x0b) };
+            RootBorder.Child = webView;
+            InitializeWebViewAsync();
         }
 
         private async Task SuspendWebViewAsync()
@@ -1707,7 +1742,7 @@ namespace Levity
 
         private void PostRawToWeb(string json)
         {
-            if (_webSuspended) { _missedWhileSuspended = true; return; }   // nobody is looking; the page is rebuilt from the host when it wakes
+            if (_webSuspended || _webReleased) { _missedWhileSuspended = true; return; }   // nobody is looking; the page is rebuilt from the host when it wakes
             try
             {
                 if (webView.CoreWebView2 != null)

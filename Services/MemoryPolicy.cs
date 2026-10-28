@@ -17,6 +17,23 @@ namespace Levity.Services
 
         public const double DefaultAgentIdleMinutes = 10;
 
+        /// <summary>Hidden this long, the page is thrown away completely (its processes exit) and rebuilt from the host when the sidebar is opened.</summary>
+        public const double DefaultWebViewReleaseMinutes = 30;
+
+        /// <summary>LEVITY_WEBVIEW_RELEASE_SECONDS (a testing aid) wins over LEVITY_WEBVIEW_RELEASE_MINUTES; zero or less means never release it.</summary>
+        public static TimeSpan? WebViewReleaseLimit(double minutes, double seconds)
+        {
+            if (seconds > 0) return TimeSpan.FromSeconds(seconds);
+            if (minutes > 0) return TimeSpan.FromMinutes(minutes);
+            return null;
+        }
+
+        public static TimeSpan? WebViewReleaseLimitFromEnvironment() =>
+            WebViewReleaseLimit(DotEnv.GetDouble("LEVITY_WEBVIEW_RELEASE_MINUTES", DefaultWebViewReleaseMinutes), DotEnv.GetDouble("LEVITY_WEBVIEW_RELEASE_SECONDS", 0));
+
+        public static bool ShouldReleaseWebView(bool sidebarVisible, bool animating, bool pageNeeded, TimeSpan hiddenFor, TimeSpan? limit) =>
+            limit != null && !sidebarVisible && !animating && !pageNeeded && hiddenFor >= limit.Value;
+
         /// <summary>
         /// How long the assistant may sit unused before it is stopped. LEVITY_AGENT_IDLE_SECONDS (a testing aid) wins over
         /// LEVITY_AGENT_IDLE_MINUTES; zero or less means "never stop it" (the "keep the assistant ready" choice).

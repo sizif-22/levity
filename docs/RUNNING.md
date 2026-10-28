@@ -62,6 +62,8 @@ Copy `.env.example` to `.env`. All values are optional.
 | `LEVITY_SIDEBAR_WIDTH` | Sidebar width in px | `460` |
 | `LEVITY_AGENT_IDLE_MINUTES` | Minutes without a message before the assistant process is stopped to free memory (the next message resumes the conversation); `0` keeps it running | `10` |
 | `LEVITY_AGENT_IDLE_SECONDS` | Same in seconds, for testing; wins over the minutes setting | not set |
+| `LEVITY_WEBVIEW_RELEASE_MINUTES` | Minutes hidden before the sidebar's web view is thrown away completely (rebuilt when you open it); `0` never | `30` |
+| `LEVITY_WEBVIEW_RELEASE_SECONDS` | Same in seconds, for testing | not set |
 | `LEVITY_DEBUG_LOG` | `1` writes every assistant message and event to `debug.log` (contains your conversations; logs rotate at 1 MB) | off |
 | `LEVITY_SETTINGS_DIR` | Settings, chat history and WebView cache | `%APPDATA%\Levity` |
 | `LEVITY_SKILLS_DIR` | Target for `Install-Skills.ps1` | `%USERPROFILE%\.gemini\config\skills` |
