@@ -1,0 +1,42 @@
+tests/perf/Measure-Memory.ps1
+  s_d7448d4eb56c88::t_61f501fcca736d 24,39,158,176-180,192
+  s_d7448d4eb56c88::t_4aedb332f05014 154-155
+docs/RUNNING.md
+  s_d7448d4eb56c88::t_61f501fcca736d 65-66
+Services/MemoryPolicy.cs
+  s_d7448d4eb56c88::t_61f501fcca736d 20-36
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_0bd1bab3a8a7f7 384
+  s_d7448d4eb56c88::t_61f501fcca736d 279-280,1627,1655-1658,1671-1698,1745
+docs/PERFORMANCE.md
+  s_d7448d4eb56c88::t_7181a465c84106 50,53-68
+docs/ROADMAP.md
+  s_d7448d4eb56c88::t_7181a465c84106 48-51,55
+tests/perf/budget.json
+  s_d7448d4eb56c88::t_7181a465c84106 7
+.env.example
+  s_d7448d4eb56c88::t_61f501fcca736d 44-48
+tests/Levity.Tests/MemoryTests.cs
+  s_d7448d4eb56c88::t_61f501fcca736d 437-475
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "baa03deaba601d2e670964a1da13f270d9750888",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
