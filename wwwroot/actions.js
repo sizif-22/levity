@@ -21,6 +21,8 @@ function actionsOnMessage(msg) {
   } else if (msg.type === 'journal') {
     win.journal = msg.entries || [];
     renderJournal();
+  } else if (msg.type === 'speed') {
+    renderSpeed(msg);
   } else if (msg.type === 'machine') {
     $('winMachine').textContent = msg.summary || 'No details available.';
   } else if (msg.type === 'jobs_open') {
@@ -170,6 +172,8 @@ function gitRun(action, extra) {
 
 function renderWindowsState() {
   const s = win.state;
+  $('settingsWindowsState').textContent = !s ? 'Let the assistant look at and change Windows, safely'
+    : s.enabled ? `On: ${s.count} tools for the assistant` : 'Off: the assistant cannot see or change Windows settings';
   const btn = $('winToggle');
   if (!s) { btn.disabled = true; return; }
   btn.disabled = false;
@@ -211,7 +215,7 @@ function renderJournal() {
 }
 
 (function wireWindows() {
-  $('windowsChip').addEventListener('click', () => {
+  $('settingsWindows').addEventListener('click', () => {
     openSheet('windowsSheet');
     postToHost({ type: 'tools_get' });
     postToHost({ type: 'journal_list' });
@@ -223,4 +227,39 @@ function renderJournal() {
     postToHost({ type: 'tools_set', on: !win.state.enabled });
   });
   $('winMachineRefresh').addEventListener('click', () => { $('winMachine').textContent = 'Reading...'; postToHost({ type: 'machine_get', refresh: true }); });
+})();
+
+// ---- /speed ----
+
+const fmtSecs = (s) => s >= 90 ? `${Math.floor(s / 60)} min ${Math.round(s % 60)} s` : `${Math.round(s)} s`;
+const fmtTokens = (n) => n >= 1000 ? `${(n / 1000).toFixed(n >= 100000 ? 0 : 1)}k` : String(n);
+
+function fillList(id, wrapId, items) {
+  const ul = $(id);
+  ul.textContent = '';
+  items.forEach(t => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); });
+  if (wrapId) $(wrapId).hidden = items.length === 0;
+}
+
+function renderSpeed(m) {
+  const c = m.current || {};
+  $('speedSummary').textContent = c.turns
+    ? `${c.turns} answer${c.turns === 1 ? '' : 's'} · ${fmtSecs(c.seconds)} · ${fmtTokens(c.inputTokens)} tokens in, ${fmtTokens(c.outputTokens)} out (${fmtTokens(c.thinkingTokens)} thinking)`
+    : 'Nothing to measure yet in this conversation.';
+  fillList('speedFindings', 'speedFindingsWrap', c.findings || []);
+  fillList('speedSlow', 'speedSlowWrap', (c.slow || []).map(s => `${Math.round(s.seconds)} s · ${s.tool}${s.what ? ' · ' + s.what : ''}`));
+  fillList('speedTools', 'speedToolsWrap', (c.tools || []).map(t => `${t.name}: ${t.count} call${t.count === 1 ? '' : 's'}, ${fmtSecs(t.seconds)} in total (slowest ${fmtSecs(t.max)})`));
+  fillList('speedRecent', 'speedRecentWrap', (m.recent || []).filter(r => r.turns > 0).map(r => `${r.title || 'Untitled'}: ${r.turns} answer${r.turns === 1 ? '' : 's'}, ${fmtSecs(r.seconds)}, ${fmtTokens(r.inputTokens)} tokens in`));
+  const f = m.footprint || {};
+  $('speedFootprint').textContent = f.files ? `${Math.round(f.totalMb)} MB in ${f.files.toLocaleString()} files${f.truncated ? ' (stopped early: very large)' : ''}. Only what the assistant loads costs tokens; this is a read-only look.` : 'No assistant folder found.';
+  fillList('speedFolders', null, (f.folders || []).map(x => `${x.name}: ${Math.round(x.mb)} MB, ${x.files.toLocaleString()} files`));
+  fillList('speedNotes', null, f.notes || []);
+}
+
+(function wireSpeed() {
+  $('speedChip').addEventListener('click', () => {
+    $('speedSummary').textContent = 'Working it out...';
+    openSheet('speedSheet');
+    postToHost({ type: 'speed_get' });
+  });
 })();

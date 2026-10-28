@@ -13,6 +13,7 @@ import { FastLearnerCard } from './components/FastLearnerCard';
 import { DiagramSheet } from './components/DiagramSheet';
 import { GitSheet, RunSheet } from './components/ActionSheets';
 import { WindowsSheet, type JournalEntryMsg, type ToolsState } from './components/WindowsSheet';
+import { SpeedSheet, type SpeedMsg } from './components/SpeedSheet';
 import type { ActionsMsg, GitStateMsg } from './lib/actions';
 import { onboardingChips } from './lib/onboarding';
 import { sameFolder, type DiagramMsg, type DiagramPrepared, type DiagramState } from './lib/diagram';
@@ -91,7 +92,8 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const [projects, setProjects] = useState<ProjectsMsg | null>(null);
   const [scanning, setScanning] = useState(false);
   const [sync, setSync] = useState<SyncState | null>(null);
-  const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs' | 'history' | 'diagram' | 'run' | 'git' | 'windows'>('none');
+  const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs' | 'history' | 'diagram' | 'run' | 'git' | 'windows' | 'speed'>('none');
+  const [speed, setSpeed] = useState<SpeedMsg | null>(null);
   const [toolsState, setToolsState] = useState<ToolsState | null>(null);
   const [journal, setJournal] = useState<JournalEntryMsg[]>([]);
   const [machine, setMachine] = useState<string | null>(null);
@@ -156,6 +158,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         if (type === 'fast_learner') { toast(String(msg.text ?? '')); dispatch(msg); return; }
         if (type === 'queue') { setQueue((msg.items as { id: number; text: string }[]) ?? []); return; }
         if (type === 'jobs') { setJobs((msg.jobs as Job[]) ?? []); return; }
+        if (type === 'speed') { setSpeed(msg as unknown as SpeedMsg); return; }
         if (type === 'tools_state') { setToolsState(msg as unknown as ToolsState); return; }
         if (type === 'journal') { setJournal((msg.entries as JournalEntryMsg[]) ?? []); return; }
         if (type === 'machine') { setMachine(String(msg.summary ?? '')); return; }
@@ -383,7 +386,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
             title="Fast: quick answers. Deep: thinks harder, slower." onClick={() => send({ type: 'set_effort', value: effort === 'low' ? 'high' : 'low' })}>
             {effort === 'low' ? 'Fast' : 'Deep'}
           </button>
-          <span className="cmd-chip" title="Windows tools for the assistant, and the changes it made to this PC" onClick={() => setSheet('windows')}>/windows</span>
+          <span className="cmd-chip" title="Where the time and tokens of this conversation went" onClick={() => { setSpeed(null); setSheet('speed'); }}>/speed</span>
           {!!chat.cwd && <span className="cmd-chip" title="Open this folder in the Antigravity IDE on your PC" onClick={() => send({ type: 'open_ide', path: chat.cwd })}>/open-ide</span>}
           {!!actions?.scripts.length && <span className="cmd-chip" title="Run a script from this folder's package.json" onClick={() => setSheet('run')}>/run</span>}
           {!!actions?.git.repo && <span className="cmd-chip" title="Common git steps: add, commit, push..." onClick={() => { setGitState(null); setSheet('git'); }}>/git</span>}
@@ -425,13 +428,14 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         <DiagramSheet path={diagPath} data={diagram} prepared={diagPrepared} state={diagState} send={send}
           onClearPrepared={() => setDiagPrepared(null)} onClose={() => { setSheet('none'); setDiagPrepared(null); }} />
       )}
+      {sheet === 'speed' && <SpeedSheet data={speed} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'windows' && <WindowsSheet state={toolsState} journal={journal} machine={machine} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'run' && <RunSheet actions={actions} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'git' && <GitSheet state={gitState} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'history' && <SessionsSheet data={sessions} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'jobs' && <JobsSheet jobs={jobs} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'settings' && (
-        <SettingsSheet device={device} onClose={() => setSheet('none')} onUnpair={onUnpair} confirm={confirm} toast={toast} />
+        <SettingsSheet device={device} onClose={() => setSheet('none')} onUnpair={onUnpair} confirm={confirm} toast={toast} onOpenWindows={() => setSheet('windows')} />
       )}
 
       {dialog && <ConfirmDialog {...dialog} onResult={(v) => { dialog.resolve(v); setDialog(null); }} />}

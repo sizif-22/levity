@@ -97,7 +97,7 @@ function handleHostMessage(msg) {
       }
       break;
     case 'fast_learner': renderFastLearner(msg); break;
-    case 'actions': case 'git_state': case 'jobs_open': case 'tools_state': case 'journal': case 'machine':
+    case 'actions': case 'git_state': case 'jobs_open': case 'tools_state': case 'journal': case 'machine': case 'speed':
       if (typeof actionsOnMessage === 'function') actionsOnMessage(msg);
       break;
     case 'diagram': case 'diagram_none': case 'diagram_prepared': case 'diagram_state': case 'diagram_collapsed':
@@ -434,7 +434,7 @@ document.querySelectorAll('.chip[data-prompt]').forEach(chip => {
   chip.addEventListener('click', () => sendPrompt(chip.dataset.prompt));
 });
 document.querySelectorAll('.cmd-chip').forEach(cmd => {
-  if (['/diagram', '/run', '/git', '/open-ide', '/windows'].includes(cmd.dataset.cmd)) return; // these open their own views (diagram.js, actions.js)
+  if (['/diagram', '/run', '/git', '/open-ide', '/windows', '/speed'].includes(cmd.dataset.cmd)) return; // these open their own views (diagram.js, actions.js)
   cmd.addEventListener('click', () => {
     const c = cmd.dataset.cmd;
     promptInput.value = c.endsWith('}') || c.endsWith('$') ? c : c + ' ';
@@ -640,7 +640,8 @@ $('pickFolderBtn').addEventListener('click', () => { closeSheet('projectsSheet')
 $('noProjectBtn').addEventListener('click', () => { postToHost({ type: 'no_project' }); closeSheet('projectsSheet'); });
 $('chipReviewAll').addEventListener('click', () => openSheet('projectsSheet'));
 $('ideChip').addEventListener('click', () => { if (currentCwd) postToHost({ type: 'open_ide', path: currentCwd }); });
-$('mobileBtn').addEventListener('click', () => openSheet('mobileSheet'));
+$('settingsBtn').addEventListener('click', () => { openSheet('settingsSheet'); postToHost({ type: 'tools_get' }); });
+$('settingsPhone').addEventListener('click', () => openSheet('mobileSheet'));
 
 // ---------------------------------------------------------------------------
 // Projects & review
@@ -927,7 +928,7 @@ function renderRemote(info) {
   $('mobileState').textContent = !info.configured ? 'Needs setup'
     : info.enabled ? `On · ${(info.devices || []).length} paired · ${phones} online` : 'Off · nothing is connected';
 
-  const badge = $('mobileBadge');
+  const badge = { set hidden(v) { $('settingsBadge').hidden = v; $('settingsPhoneBadge').hidden = v; }, set textContent(v) { $('settingsBadge').textContent = v; $('settingsPhoneBadge').textContent = v; } };   // on the gear and on its row
   const online = (info.devices || []).reduce((n, d) => n + (d.phones || 0), 0);
   badge.hidden = !online;
   badge.textContent = online;

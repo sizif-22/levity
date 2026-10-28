@@ -22,6 +22,7 @@
   <ItemGroup>
     <Compile Include="..\..\Services\AgentLaunch.cs" Link="Services\AgentLaunch.cs" />
     <Compile Include="..\..\Services\MemoryPolicy.cs" Link="Services\MemoryPolicy.cs" />
+    <Compile Include="..\..\Services\SessionStats.cs" Link="Services\SessionStats.cs" />
     <Compile Include="..\..\Services\WindowsTools\*.cs" Link="Services\WindowsTools\%(Filename)%(Extension)" />
     <Compile Include="..\..\Services\HistoryCompactor.cs" Link="Services\HistoryCompactor.cs" />
     <Compile Include="..\..\Services\RollingLog.cs" Link="Services\RollingLog.cs" />

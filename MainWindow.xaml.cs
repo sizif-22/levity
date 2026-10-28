@@ -462,6 +462,10 @@ namespace Levity
                         PublishJobs();
                         break;
 
+                    case "speed_get":
+                        _ = PublishSpeedAsync(clientId);
+                        break;
+
                     case "tools_get":
                         PublishToolsState(clientId);
                         break;
@@ -1297,6 +1301,44 @@ namespace Levity
                 _inlineShell = false;
                 Dispatcher.BeginInvoke(new Action(DrainQueue), System.Windows.Threading.DispatcherPriority.Background);
             }
+        }
+
+        // ---- Speed and cost --------------------------------------------------------------------------
+
+        private async Task PublishSpeedAsync(string? clientId)
+        {
+            try
+            {
+                var live = _history.ToArray();
+                var msg = await Task.Run(() =>
+                {
+                    object Shape(SessionStatsResult s) => new
+                    {
+                        turns = s.Turns, seconds = s.TotalSeconds, inputTokens = s.InputTokens, outputTokens = s.OutputTokens, thinkingTokens = s.ThinkingTokens,
+                        perTurn = s.PerTurn.Select(t => new { seconds = t.Seconds, inputTokens = t.InputTokens, outputTokens = t.OutputTokens }),
+                        tools = s.Tools.Take(8).Select(t => new { name = t.Name, count = t.Count, seconds = t.TotalSeconds, max = t.MaxSeconds }),
+                        slow = s.SlowSteps.Select(t => new { tool = t.Tool, seconds = t.Seconds, what = t.What }),
+                        findings = s.Findings,
+                    };
+                    var current = SessionStats.Compute(live);
+                    var recent = _sessions.List().Take(6).Select(m =>
+                    {
+                        var full = _sessions.Load(m.Id);
+                        var st = full == null ? null : SessionStats.Compute(full.History);
+                        return new { title = m.Title, updated = m.Updated, turns = st?.Turns ?? 0, seconds = st?.TotalSeconds ?? 0, inputTokens = st?.InputTokens ?? 0 };
+                    }).ToList();
+                    var foot = GeminiFootprint.Scan();
+                    return new
+                    {
+                        type = "speed",
+                        current = Shape(current),
+                        recent,
+                        footprint = new { totalMb = foot.TotalMegabytes, files = foot.TotalFiles, truncated = foot.Truncated, folders = foot.Folders.Take(8).Select(f => new { name = f.Name, mb = f.Megabytes, files = f.Files }), notes = foot.Notes }
+                    };
+                });
+                Dispatcher.Invoke(() => Reply(clientId, msg));
+            }
+            catch { Dispatcher.Invoke(() => Reply(clientId, new { type = "toast", text = "Could not work out the speed report." })); }
         }
 
         // ---- Windows tools -------------------------------------------------------------------------

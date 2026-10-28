@@ -147,9 +147,10 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
   );
 }
 
-export function SettingsSheet({ device, onClose, onUnpair, confirm, toast }: {
+export function SettingsSheet({ device, onClose, onUnpair, confirm, toast, onOpenWindows }: {
   device: DeviceRecord;
   onClose: () => void;
+  onOpenWindows?: () => void;
   onUnpair: () => void;
   confirm: (title: string, text: string, ok: string) => Promise<boolean>;
   toast: (t: string) => void;
@@ -169,7 +170,17 @@ export function SettingsSheet({ device, onClose, onUnpair, confirm, toast }: {
         </button>
       </div>
       <div className="sheet-body">
-        <div className="grp-title" style={{ marginTop: 0 }}>Install</div>
+        {onOpenWindows && (
+          <>
+            <div className="grp-title" style={{ marginTop: 0 }}>This PC</div>
+            <button className="settings-row" onClick={onOpenWindows}>
+              <span className="settings-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg></span>
+              <span className="settings-text"><strong>Windows tools</strong><small>What the assistant may do on your PC, and the changes it made (with Revert)</small></span>
+              <svg className="settings-chev" viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18" /></svg>
+            </button>
+          </>
+        )}
+        <div className="grp-title" style={{ marginTop: onOpenWindows ? 24 : 0 }}>Install</div>
         {installed ? (
           <p className="empty" style={{ paddingTop: 0 }}>Running as an installed app.</p>
         ) : canPromptInstall() ? (

@@ -3,7 +3,7 @@
 Without this, the assistant works on Windows by writing PowerShell every time: slow (a shell start costs about 8 seconds) and different on every
 run. With it, the assistant calls **typed tools** instead: one call, a checked result, and every change written to a list you can undo from.
 
-It is **off until you turn it on**. Open **/windows** in the sidebar and press **Turn on**.
+It is **off until you turn it on**. Press the **gear** in the top bar, choose **Windows tools**, and press **Turn on**. (The same Settings page also has **Connect your phone**.)
 
 ## What turning it on does
 
@@ -16,7 +16,7 @@ It is **off until you turn it on**. Open **/windows** in the sidebar and press *
 ## What keeps it safe
 
 - **Typed, not free text.** No tool takes a command line. Names, paths, ports and package ids are checked against strict patterns; an unknown argument is refused.
-- **Nothing is changed without a record.** Before every change Levity writes the old value (a registry value, a file, a service state) to the **change journal**. **/windows** lists the changes with a **Revert** button. Entries are kept for 30 days. Changes that cannot be undone (ending a program, running a task, clearing a print queue) are recorded and labelled as such.
+- **Nothing is changed without a record.** Before every change Levity writes the old value (a registry value, a file, a service state) to the **change journal**. **Settings > Windows tools** lists the changes with a **Revert** button. Entries are kept for 30 days. Changes that cannot be undone (ending a program, running a task, clearing a print queue) are recorded and labelled as such.
 - **Preview first.** Every changing tool accepts `dry_run`: it says exactly what would change and changes nothing, however the tool is called.
 - **Core things are protected.** Essential Windows processes and services, the Windows folder and whole drives are refused. The firewall tool only removes rules Levity added; there is no free-form registry write tool at all.
 - **Only this PC, only you.** Requests need the token; anything that looks like it came from a web page (an `Origin` header) or has a foreign `Host` header is refused; sizes and time are capped.

@@ -38,9 +38,9 @@
         <button class="icon-btn" id="projectsBtn" title="Projects &amp; review">
           <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
         </button>
-        <button class="icon-btn desktop-only" id="mobileBtn" title="Connect your phone">
-          <svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-          <span class="badge" id="mobileBadge" hidden>0</span>
+        <button class="icon-btn" id="settingsBtn" title="Settings: Windows tools, connect your phone">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+          <span class="badge" id="settingsBadge" hidden>0</span>
         </button>
         <button class="icon-btn" id="sessionsBtn" title="Chat history">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
@@ -115,7 +115,7 @@
       <div class="queue" id="queueList" hidden></div>
       <div class="quick-commands">
         <span class="cmd-chip" id="diagramChip" data-cmd="/diagram" title="Draw this project's architecture (git projects)" hidden>/diagram</span>
-        <span class="cmd-chip" id="windowsChip" data-cmd="/windows" title="Windows tools for the assistant, and the changes it made to this PC">/windows</span>
+        <span class="cmd-chip" id="speedChip" data-cmd="/speed" title="Where the time and tokens of this conversation went, and how to make it faster">/speed</span>
         <span class="cmd-chip" id="ideChip" data-cmd="/open-ide" title="Open this folder in the Antigravity IDE" hidden>/open-ide</span>
         <span class="cmd-chip" id="runChip" data-cmd="/run" title="Run a script from this folder's package.json" hidden>/run</span>
         <span class="cmd-chip" id="gitChip" data-cmd="/git" title="Common git steps: add, commit, push..." hidden>/git</span>
@@ -268,6 +268,53 @@
             <button class="btn ghost" id="diagDeleteBtn">Delete</button>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- Settings: one place for Windows tools and the phone connection -->
+    <section class="sheet" id="settingsSheet" aria-hidden="true">
+      <div class="sheet-head">
+        <div>
+          <h3>Settings</h3>
+          <p class="sheet-sub">Windows tools and your phone</p>
+        </div>
+        <button class="icon-btn" data-close-sheet="settingsSheet" title="Close">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="sheet-body win-body">
+        <button class="settings-row" id="settingsWindows">
+          <span class="settings-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+          <span class="settings-text"><strong>Windows tools</strong><small id="settingsWindowsState">Let the assistant look at and change Windows, safely</small></span>
+          <svg class="settings-chev" viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+        <button class="settings-row" id="settingsPhone">
+          <span class="settings-ico"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><line x1="11" y1="18" x2="13" y2="18"/></svg></span>
+          <span class="settings-text"><strong>Connect your phone</strong><small id="settingsPhoneState">Control Levity from your phone, end-to-end encrypted</small></span>
+          <span class="badge inline" id="settingsPhoneBadge" hidden>0</span>
+          <svg class="settings-chev" viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- /speed: where the time and tokens went -->
+    <section class="sheet" id="speedSheet" aria-hidden="true">
+      <div class="sheet-head">
+        <div>
+          <h3>Speed and cost</h3>
+          <p class="sheet-sub" id="speedSub">Where the time and tokens went</p>
+        </div>
+        <button class="icon-btn" data-close-sheet="speedSheet" title="Close">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="sheet-body win-body">
+        <div class="win-card"><strong>This conversation</strong><p id="speedSummary" class="win-muted">Working it out...</p></div>
+        <div id="speedFindingsWrap" hidden><strong>What would make it faster</strong><ul class="speed-list" id="speedFindings"></ul></div>
+        <div id="speedSlowWrap" hidden><strong>Slowest steps</strong><ul class="speed-list" id="speedSlow"></ul></div>
+        <div id="speedToolsWrap" hidden><strong>Time by tool</strong><ul class="speed-list" id="speedTools"></ul></div>
+        <div id="speedRecentWrap" hidden><strong>Recent conversations</strong><ul class="speed-list" id="speedRecent"></ul></div>
+        <div class="win-card"><strong>The assistant's folder (~/.gemini)</strong><p id="speedFootprint" class="win-muted">Measuring...</p><ul class="speed-list" id="speedFolders"></ul><ul class="speed-list" id="speedNotes"></ul></div>
       </div>
     </section>
 

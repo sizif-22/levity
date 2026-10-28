@@ -52,3 +52,16 @@ describe('WindowsSheet', () => {
     expect(container.querySelector('.action-text b, .action-text script')).toBeNull();
   });
 });
+
+describe('phone: Windows tools in Settings', () => {
+  it('Settings has a Windows tools row that opens the sheet, and it is optional', async () => {
+    const { SettingsSheet } = await import('../src/components/Screens');
+    const device = { deviceId: 'abcd', name: 'My phone', relay: 'wss://r' } as never;
+    const open = vi.fn();
+    const { rerender } = render(<SettingsSheet device={device} onClose={() => {}} onUnpair={() => {}} confirm={async () => true} toast={() => {}} onOpenWindows={open} />);
+    fireEvent.click(screen.getByText('Windows tools').closest('button')!);
+    expect(open).toHaveBeenCalledTimes(1);
+    rerender(<SettingsSheet device={device} onClose={() => {}} onUnpair={() => {}} confirm={async () => true} toast={() => {}} />);
+    expect(screen.queryByText('Windows tools')).toBeNull();
+  });
+});
