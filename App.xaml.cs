@@ -1,4 +1,5 @@
 using System;
+using Levity.Services;
 using System.IO;
 using System.Threading;
 using System.Windows;
@@ -16,7 +17,7 @@ namespace Levity
         {
             Levity.Services.DotEnv.Load(); // before anything reads configuration
             string logFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup.log");
-            try { File.AppendAllText(logFile, $"[{DateTime.Now:HH:mm:ss}] OnStartup entered\n"); } catch { }
+            try { RollingLog.AppendTo(logFile, $"[{DateTime.Now:HH:mm:ss}] OnStartup entered\n"); } catch { }
 
             AppDomain.CurrentDomain.UnhandledException += (s, ev) =>
             {
@@ -28,18 +29,18 @@ namespace Levity
             };
 
             _mutex = new Mutex(true, MutexName, out bool isNewInstance);
-            try { File.AppendAllText(logFile, $"[{DateTime.Now:HH:mm:ss}] isNewInstance={isNewInstance}\n"); } catch { }
+            try { RollingLog.AppendTo(logFile, $"[{DateTime.Now:HH:mm:ss}] isNewInstance={isNewInstance}\n"); } catch { }
             if (!isNewInstance)
             {
                 try
                 {
                     using var existingEvent = EventWaitHandle.OpenExisting(EventName);
                     existingEvent.Set();
-                    try { File.AppendAllText(logFile, $"[{DateTime.Now:HH:mm:ss}] Signaled existing instance wakeup event\n"); } catch { }
+                    try { RollingLog.AppendTo(logFile, $"[{DateTime.Now:HH:mm:ss}] Signaled existing instance wakeup event\n"); } catch { }
                 }
                 catch (Exception ex)
                 {
-                    try { File.AppendAllText(logFile, $"[{DateTime.Now:HH:mm:ss}] Failed to signal event: {ex.Message}\n"); } catch { }
+                    try { RollingLog.AppendTo(logFile, $"[{DateTime.Now:HH:mm:ss}] Failed to signal event: {ex.Message}\n"); } catch { }
                     System.Windows.MessageBox.Show("Levity is already running in your Taskbar System Tray.\nPress Win+Alt+A to open it.",
                                     "Levity", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
@@ -58,9 +59,9 @@ namespace Levity
             try
             {
                 var mainWindow = new MainWindow();
-                try { File.AppendAllText(logFile, $"[{DateTime.Now:HH:mm:ss}] MainWindow constructed\n"); } catch { }
+                try { RollingLog.AppendTo(logFile, $"[{DateTime.Now:HH:mm:ss}] MainWindow constructed\n"); } catch { }
                 mainWindow.InitializeSidebar();
-                try { File.AppendAllText(logFile, $"[{DateTime.Now:HH:mm:ss}] InitializeSidebar finished\n"); } catch { }
+                try { RollingLog.AppendTo(logFile, $"[{DateTime.Now:HH:mm:ss}] InitializeSidebar finished\n"); } catch { }
 
                 if (_wakeupEvent != null)
                 {
@@ -88,7 +89,7 @@ namespace Levity
 
         protected override void OnExit(ExitEventArgs e)
         {
-            try { File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup.log"), $"[{DateTime.Now:HH:mm:ss}] App.OnExit called! ExitCode={e.ApplicationExitCode}\n"); } catch { }
+            try { RollingLog.Append("startup.log", $"[{DateTime.Now:HH:mm:ss}] App.OnExit called! ExitCode={e.ApplicationExitCode}\n"); } catch { }
             _wakeupEvent?.Dispose();
             _wakeupEvent = null;
 

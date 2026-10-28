@@ -129,7 +129,15 @@ function agyEvent(s: ChatState, ev: Json): ChatState {
   return s;
 }
 
+/** Only the latest rows stay in the phone's memory; the PC keeps the whole conversation. */
+export const MAX_ROWS = 300;
+
 export function applyHostMessage(s: ChatState, msg: Json): ChatState {
+  const next = applyHost(s, msg);
+  return next.msgs.length > MAX_ROWS ? { ...next, msgs: next.msgs.slice(next.msgs.length - MAX_ROWS) } : next;
+}
+
+function applyHost(s: ChatState, msg: Json): ChatState {
   switch (msg.type) {
     case 'batch':
       return (msg.items as Json[]).reduce<ChatState>((acc, item) => applyHostMessage(acc, item), s);

@@ -25,6 +25,13 @@ function openDiagram(path) {
   postToHost({ type: 'diagram_get', path });
 }
 
+// The drawing is the heavy part of a diagram; drop it when the sheet closes (reopening draws it again from the saved diagram).
+function diagramOnClose() {
+  diag.renderId++;
+  $('diagStage').textContent = '';
+  setDiagExpanded(false);
+}
+
 function diagShow(panel) {
   for (const name of ['empty', 'confirm', 'progress', 'error', 'view']) $('diag' + name[0].toUpperCase() + name.slice(1)).hidden = name !== panel;
 }

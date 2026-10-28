@@ -319,3 +319,31 @@ test('the user bubble for the short form is a command bubble with the wrapper di
   assert.deepEqual(Array.from(bubble.querySelectorAll('.cmd-pre')).map((e) => e.textContent), ['/cmd$']);
   assert.equal(bubble.textContent, '/cmd$git status');
 });
+
+// ---- staying light on long days ----
+
+test('only the latest 300 rows stay in the page, with one note about the rest', async () => {
+  const ui = await open();
+  for (let i = 0; i < 330; i++) ui.deliver({ type: 'user_message', text: 'message ' + i, source: 'desktop' });
+  await new Promise((r) => setTimeout(r, 30));
+  const rows = ui.qa('#messagesList > .message-row');
+  assert.equal(rows.length, 300);
+  assert.match(rows[0].textContent, /message 30/);
+  assert.match(rows[299].textContent, /message 329/);
+  assert.equal(ui.qa('#messagesList > .earlier-note').length, 1);
+});
+
+test('closing the diagram frees its drawing and a reopened one is drawn again', async () => {
+  const mermaid = {
+    initialize() {},
+    render: async () => ({ svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><g class="node" id="flowchart-n1-0"><rect width="10" height="10"/><text>A</text></g></svg>' }),
+  };
+  const ui = await open({ mermaid });
+  ui.window.openDiagram('C:\\Work\\app');
+  ui.deliver({ type: 'diagram', path: 'C:\\Work\\app', overview: '', groups: [], nodes: [{ i: 1, label: 'A', group: null, path: null, shape: 'box' }], edges: [],
+    mermaid: 'flowchart TD\n n1["A"]\n', mermaidFlat: 'flowchart TD\n n1["A"]\n', generatedUtc: '2026-10-28T12:00:00Z', stale: false, notes: [], tokens: 0 });
+  await new Promise((r) => setTimeout(r, 40));
+  assert.ok(ui.q('#diagStage svg'), 'drawn');
+  ui.window.closeSheet('diagramSheet');
+  assert.equal(ui.$('diagStage').children.length, 0, 'the drawing is released');
+});

@@ -268,3 +268,169 @@ while (($line = [Console]::In.ReadLine()) -ne $null) { [Console]::Out.WriteLine(
         }
     }
 }
+
+public class HistoryCompactorTests
+{
+    private static string Fragment(int step, string text, string state = "ACTIVE", string type = "agent_response") =>
+        "{\"type\":\"agy_event\",\"payload\":{\"event\":\"step_update\",\"step_update\":{\"step_type\":\"" + type + "\",\"state\":\"" + state + "\",\"step_index\":" + step + ",\"text_delta\":" + System.Text.Json.JsonSerializer.Serialize(text) + "}}}";
+
+    private static string Text(string line) => System.Text.Json.Nodes.JsonNode.Parse(line)!["payload"]!["step_update"]!["text_delta"]!.GetValue<string>();
+
+    [Fact]
+    public void Neighbouring_fragments_of_one_answer_become_one_line_with_the_same_text()
+    {
+        var history = new List<string> { "{\"type\":\"user_message\",\"text\":\"hi\"}" };
+        string[] parts = { "### ", "1. Where should this", " feature live?\n\n", "caf\u00e9 \"quoted\" \\ back", " end" };
+        foreach (string p in parts) HistoryCompactor.Add(history, Fragment(15, p));
+
+        Assert.Equal(2, history.Count);
+        Assert.Equal(string.Concat(parts), Text(history[1]));
+    }
+
+    [Fact]
+    public void A_different_step_state_or_kind_starts_a_new_line()
+    {
+        var history = new List<string>();
+        HistoryCompactor.Add(history, Fragment(1, "a"));
+        HistoryCompactor.Add(history, Fragment(2, "b"));                       // another step
+        HistoryCompactor.Add(history, Fragment(2, "c", state: "DONE"));        // the finished marker is kept as it is
+        HistoryCompactor.Add(history, Fragment(3, "d", type: "tool"));         // a tool step
+        HistoryCompactor.Add(history, Fragment(3, "e", type: "tool"));
+        Assert.Equal(5, history.Count);
+    }
+
+    [Fact]
+    public void Fragments_that_carry_other_information_are_never_merged_into_losing_it()
+    {
+        string a = "{\"type\":\"agy_event\",\"payload\":{\"event\":\"step_update\",\"step_update\":{\"step_type\":\"agent_response\",\"state\":\"ACTIVE\",\"step_index\":1,\"text_delta\":\"x\",\"usage\":{\"total_tokens\":5}}}}";
+        string b = "{\"type\":\"agy_event\",\"payload\":{\"event\":\"step_update\",\"step_update\":{\"step_type\":\"agent_response\",\"state\":\"ACTIVE\",\"step_index\":1,\"text_delta\":\"y\",\"usage\":{\"total_tokens\":9}}}}";
+        var history = new List<string>();
+        HistoryCompactor.Add(history, a);
+        HistoryCompactor.Add(history, b);
+        Assert.Equal(2, history.Count);
+    }
+
+    [Fact]
+    public void Other_kinds_of_lines_and_garbage_are_left_alone()
+    {
+        var history = new List<string>();
+        HistoryCompactor.Add(history, "{\"type\":\"user_message\",\"text\":\"a\"}");
+        HistoryCompactor.Add(history, "{\"type\":\"user_message\",\"text\":\"b\"}");
+        HistoryCompactor.Add(history, "not json at all");
+        HistoryCompactor.Add(history, "not json at all");
+        HistoryCompactor.Add(history, "{\"type\":\"agy_event\",\"payload\":{\"event\":\"result\"}}");
+        Assert.Equal(5, history.Count);
+    }
+
+    [Fact]
+    public void A_merged_line_stops_growing_at_the_limit()
+    {
+        var history = new List<string>();
+        for (int i = 0; i < 40; i++) HistoryCompactor.Add(history, Fragment(7, new string('x', 500)));
+        Assert.True(history.Count >= 3);
+        Assert.All(history, l => Assert.True(Text(l).Length <= HistoryCompactor.MaxMergedChars));
+        Assert.Equal(40 * 500, history.Sum(l => Text(l).Length));
+    }
+
+    [Fact]
+    public void A_stored_long_answer_shrinks_a_lot_and_loses_nothing()
+    {
+        var history = new List<string>();
+        var all = new System.Text.StringBuilder();
+        for (int i = 0; i < 200; i++) { string p = $"word{i} "; all.Append(p); HistoryCompactor.Add(history, Fragment(15, p)); }
+        Assert.Single(history);
+        Assert.Equal(all.ToString(), Text(history[0]));
+    }
+
+    [Fact]
+    public void The_size_budget_drops_the_oldest_turns_and_always_keeps_the_latest()
+    {
+        string user(int n) => "{\"type\":\"user_message\",\"text\":\"turn " + n + "\"}";
+        var history = new List<string>();
+        for (int turn = 0; turn < 10; turn++)
+        {
+            history.Add(user(turn));
+            history.Add(Fragment(turn, new string('y', 1000), "DONE"));
+        }
+        int dropped = HistoryCompactor.TrimToBudget(history, 5000);
+
+        Assert.True(dropped > 0);
+        Assert.StartsWith("{\"type\":\"user_message\"", history[0]);   // a replay never starts in the middle of an answer
+        Assert.Contains("turn 9", history[^2]);
+        Assert.True(history.Sum(l => l.Length) <= 5000 + 1100);
+    }
+
+    [Fact]
+    public void One_huge_turn_is_kept_whole_rather_than_cut()
+    {
+        var history = new List<string> { "{\"type\":\"user_message\",\"text\":\"only\"}", Fragment(1, new string('z', 4000), "DONE") };
+        Assert.Equal(0, HistoryCompactor.TrimToBudget(history, 100));
+        Assert.Equal(2, history.Count);
+    }
+}
+
+public class RollingLogTests
+{
+    [Fact]
+    public void A_log_that_passes_the_limit_starts_fresh_and_keeps_the_old_one_once()
+    {
+        string dir = TestEnvironment.NewTempDir("logs");
+        string path = Path.Combine(dir, "x.log");
+        RollingLog.AppendTo(path, new string('a', 300), 500);
+        RollingLog.AppendTo(path, new string('b', 300), 500);   // now 600 bytes: over the limit
+        RollingLog.AppendTo(path, "fresh\n", 500);
+
+        Assert.Equal("fresh\n", File.ReadAllText(path));
+        Assert.Equal(new string('a', 300) + new string('b', 300), File.ReadAllText(path + ".1"));
+
+        RollingLog.AppendTo(path, new string('c', 600), 500);
+        RollingLog.AppendTo(path, "again\n", 500);
+        Assert.Equal("again\n", File.ReadAllText(path));
+        Assert.StartsWith("fresh", File.ReadAllText(path + ".1"));   // only one old file is ever kept
+    }
+
+    [Fact]
+    public void Writing_to_a_place_that_cannot_be_written_never_throws()
+    {
+        RollingLog.AppendTo(Path.Combine(TestEnvironment.Root, "no-such-folder", "deep", "x.log"), "text");
+    }
+
+    [Fact]
+    public void Conversation_traffic_is_not_logged_unless_asked_for()
+    {
+        string? previous = Environment.GetEnvironmentVariable("LEVITY_DEBUG_LOG");
+        try
+        {
+            Environment.SetEnvironmentVariable("LEVITY_DEBUG_LOG", null);
+            Assert.False(RollingLog.Verbose);
+            Environment.SetEnvironmentVariable("LEVITY_DEBUG_LOG", "1");
+            Assert.True(RollingLog.Verbose);
+        }
+        finally { Environment.SetEnvironmentVariable("LEVITY_DEBUG_LOG", previous); }
+    }
+}
+
+public class FinishedJobCapTests
+{
+    [Fact]
+    public async Task Only_the_latest_finished_background_jobs_are_kept()
+    {
+        using var jobs = new JobManager();
+        string dir = TestEnvironment.NewTempDir("jobs");
+        var started = new List<ShellJob>();
+        for (int i = 0; i < JobManager.MaxFinishedJobs + 6; i++)
+        {
+            var j = jobs.Start("Write-Output " + i, dir);
+            j.Background = true;
+            started.Add(j);
+            Assert.True(await j.WaitAsync(TimeSpan.FromSeconds(60)));
+            await Task.Delay(30);
+        }
+        await Task.Delay(500);
+
+        var kept = jobs.Background.Where(j => j.State != JobState.Running).ToList();
+        Assert.True(kept.Count <= JobManager.MaxFinishedJobs, $"kept {kept.Count}");
+        Assert.Contains(started[^1], kept);
+        Assert.DoesNotContain(started[0], kept);
+    }
+}

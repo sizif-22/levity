@@ -45,11 +45,11 @@ namespace Levity
         public void InitializeSidebar()
         {
             string log = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup.log");
-            try { File.AppendAllText(log, "[TRACE 1] In InitializeSidebar\n"); } catch { }
+            try { RollingLog.AppendTo(log, "[TRACE 1] In InitializeSidebar\n"); } catch { }
 
             string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "app.ico");
             _trayManager = new TrayIconManager(iconPath, _settings.IsPinned, _settings.LaunchOnStartup);
-            try { File.AppendAllText(log, "[TRACE 2] TrayManager created\n"); } catch { }
+            try { RollingLog.AppendTo(log, "[TRACE 2] TrayManager created\n"); } catch { }
 
             _trayManager.OnToggleRequested += ToggleVisibility;
             _trayManager.OnNewConversationRequested += () => Dispatcher.Invoke(HandleNewConversation);
@@ -93,20 +93,20 @@ namespace Levity
             // The assistant is started by the first message, not at launch, and stopped again after a quiet spell (see Housekeeping).
             _lastStatusJson = JsonSerializer.Serialize(new { type = "status", text = "Ready", state = "online" });
             StartHousekeeping();
-            try { File.AppendAllText(log, "[TRACE 3] AgyManager prepared (starts on the first message)\n"); } catch { }
+            try { RollingLog.AppendTo(log, "[TRACE 3] AgyManager prepared (starts on the first message)\n"); } catch { }
 
             if (_settings.RemoteEnabled) _hub.Start();
 
             // Setup WebView2
             InitializeWebViewAsync();
-            try { File.AppendAllText(log, "[TRACE 4] InitializeWebViewAsync triggered\n"); } catch { }
+            try { RollingLog.AppendTo(log, "[TRACE 4] InitializeWebViewAsync triggered\n"); } catch { }
 
             // Auto slide in on startup so the sidebar is immediately visible to the user!
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 SlideIn();
             }), System.Windows.Threading.DispatcherPriority.Loaded);
-            try { File.AppendAllText(log, "[TRACE 5] SlideIn dispatched\n"); } catch { }
+            try { RollingLog.AppendTo(log, "[TRACE 5] SlideIn dispatched\n"); } catch { }
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -345,7 +345,7 @@ namespace Levity
 
         private void MainWindow_Deactivated(object? sender, EventArgs e)
         {
-            try { File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup.log"), $"[{DateTime.Now:HH:mm:ss}] Deactivated: IsPinned={_settings.IsPinned}, IsVisible={_isSidebarVisible}, IsAnimating={_isAnimating}\n"); } catch { }
+            try { RollingLog.Append("startup.log", $"[{DateTime.Now:HH:mm:ss}] Deactivated: IsPinned={_settings.IsPinned}, IsVisible={_isSidebarVisible}, IsAnimating={_isAnimating}\n"); } catch { }
             if (!_settings.IsPinned && _isSidebarVisible && !_isAnimating)
             {
                 SlideOut();
@@ -1592,8 +1592,9 @@ namespace Levity
             string json = JsonSerializer.Serialize(obj);
             if (json.StartsWith("{\"type\":\"agy_event\"") || json.StartsWith("{\"type\":\"user_message\"") || json.StartsWith("{\"type\":\"fast_learner\""))
             {
-                _history.Add(json);
+                HistoryCompactor.Add(_history, json);   // neighbouring streaming fragments become one line
                 if (_history.Count > MaxHistory) _history.RemoveRange(0, _history.Count - MaxHistory);
+                if (_history.Count % 64 == 0) HistoryCompactor.TrimToBudget(_history);   // and the oldest turns go when the size budget is passed
                 ScheduleSessionSave();
             }
             RawPublish(json);
@@ -1719,7 +1720,7 @@ namespace Levity
 
         private void ShutdownApplication()
         {
-            try { File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup.log"), $"[{DateTime.Now:HH:mm:ss}] ShutdownApplication called! Stack:\n{Environment.StackTrace}\n"); } catch { }
+            try { RollingLog.Append("startup.log", $"[{DateTime.Now:HH:mm:ss}] ShutdownApplication called! Stack:\n{Environment.StackTrace}\n"); } catch { }
             _sync.Cancel();
             _agyManager?.Stop();
             try { _hub.Dispose(); } catch { }
@@ -1732,7 +1733,7 @@ namespace Levity
 
         protected override void OnClosed(EventArgs e)
         {
-            try { File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup.log"), $"[{DateTime.Now:HH:mm:ss}] OnClosed called!\n"); } catch { }
+            try { RollingLog.Append("startup.log", $"[{DateTime.Now:HH:mm:ss}] OnClosed called!\n"); } catch { }
             ShutdownApplication();
             base.OnClosed(e);
         }

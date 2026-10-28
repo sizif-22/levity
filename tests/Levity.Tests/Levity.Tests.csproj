@@ -21,6 +21,8 @@
   <ItemGroup>
     <Compile Include="..\..\Services\AgentLaunch.cs" Link="Services\AgentLaunch.cs" />
     <Compile Include="..\..\Services\MemoryPolicy.cs" Link="Services\MemoryPolicy.cs" />
+    <Compile Include="..\..\Services\HistoryCompactor.cs" Link="Services\HistoryCompactor.cs" />
+    <Compile Include="..\..\Services\RollingLog.cs" Link="Services\RollingLog.cs" />
     <Compile Include="..\..\Services\AgyProcessManager.cs" Link="Services\AgyProcessManager.cs" />
     <Compile Include="..\..\Services\VtScreen.cs" Link="Services\VtScreen.cs" />
     <Compile Include="..\..\Services\PtyProcess.cs" Link="Services\PtyProcess.cs" />

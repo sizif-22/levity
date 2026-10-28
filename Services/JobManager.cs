@@ -223,8 +223,21 @@ namespace Levity.Services
             job.State = job.StopRequested ? JobState.Stopped : exitCode == 0 ? JobState.Done : JobState.Failed;
             job.Complete();
             job.Win?.Dispose();
+            TrimFinished();
             Changed?.Invoke();
             if (job.Background) BackgroundFinished?.Invoke(job);
+        }
+
+        /// <summary>Finished background jobs keep their output for looking at; only the latest ones, so a long day does not pile them up.</summary>
+        public const int MaxFinishedJobs = 20;
+
+        private void TrimFinished()
+        {
+            lock (_gate)
+            {
+                var finished = _jobs.Where(j => j.Background && j.State != JobState.Running).OrderBy(j => j.EndedUtc ?? DateTime.MaxValue).ToList();
+                for (int i = 0; i < finished.Count - MaxFinishedJobs; i++) _jobs.Remove(finished[i]);
+            }
         }
 
         private static int SafeExitCode(Process p) { try { return p.ExitCode; } catch { return -1; } }

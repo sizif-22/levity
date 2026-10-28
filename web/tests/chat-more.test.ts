@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyHostMessage, initialChat, isGenerating, type ChatState } from '../src/lib/chat.ts';
+import { applyHostMessage, initialChat, isGenerating, MAX_ROWS, type ChatState } from '../src/lib/chat.ts';
 
 type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 const apply = (s: ChatState, ...msgs: Json[]) => msgs.reduce(applyHostMessage, s);
@@ -65,4 +65,20 @@ test('isGenerating follows the status text and state', () => {
 
 test('unknown host messages are ignored', () => {
   assert.equal(apply(initialChat, { type: 'something_new' }), initialChat);
+});
+
+test('long conversations keep only the latest rows in the phone memory', () => {
+  let s = initialChat;
+  for (let i = 0; i < MAX_ROWS + 40; i++) s = applyHostMessage(s, { type: 'user_message', text: 'm' + i, source: 'desktop' });
+  assert.equal(s.msgs.length, MAX_ROWS);                       // a user row and its reply row each count
+  assert.ok(!s.msgs.some((m) => m.text === 'm0'), 'the oldest rows are gone');
+  assert.ok(s.msgs.some((m) => m.text === 'm' + (MAX_ROWS + 39)), 'the latest message is kept');
+});
+
+test('a replayed batch is capped the same way', () => {
+  const items = Array.from({ length: MAX_ROWS + 25 }, (_, i) => ({ type: 'user_message', text: 'b' + i, source: 'desktop' }));
+  const s = applyHostMessage(initialChat, { type: 'batch', items });
+  assert.equal(s.msgs.length, MAX_ROWS);
+  assert.ok(!s.msgs.some((m) => m.text === 'b0'));
+  assert.ok(s.msgs.some((m) => m.text === 'b' + (MAX_ROWS + 24)));
 });

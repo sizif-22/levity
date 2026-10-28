@@ -77,7 +77,7 @@ namespace Levity.Services
 
                 string? agyPath = LocateAgyExecutable();
                 string logFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "debug.log");
-                try { File.AppendAllText(logFile, $"[{DateTime.Now:HH:mm:ss}] Start called. agyPath={agyPath}, cwd={CurrentWorkingDirectory}\n"); } catch { }
+                try { RollingLog.AppendTo(logFile, $"[{DateTime.Now:HH:mm:ss}] Start called. agyPath={agyPath}, cwd={CurrentWorkingDirectory}\n"); } catch { }
 
                 if (string.IsNullOrEmpty(agyPath))
                 {
@@ -111,18 +111,18 @@ namespace Levity.Services
                     {
                         if (!ReferenceEquals(s, _process)) return; // a deliberate stop/restart, not a crash
                         IsBusy = false;
-                        try { File.AppendAllText(logFile, $"[{DateTime.Now:HH:mm:ss}] agy.exe process exited. ExitCode={_process?.ExitCode}\n"); } catch { }
+                        try { RollingLog.AppendTo(logFile, $"[{DateTime.Now:HH:mm:ss}] agy.exe process exited. ExitCode={_process?.ExitCode}\n"); } catch { }
                         OnStatusChanged?.Invoke("Process Stopped");
                     };
 
                     if (!_process.Start())
                     {
-                        try { File.AppendAllText(logFile, $"[{DateTime.Now:HH:mm:ss}] _process.Start() returned false\n"); } catch { }
+                        try { RollingLog.AppendTo(logFile, $"[{DateTime.Now:HH:mm:ss}] _process.Start() returned false\n"); } catch { }
                         OnStatusChanged?.Invoke("Failed to start agy.exe");
                         return false;
                     }
 
-                    try { File.AppendAllText(logFile, $"[{DateTime.Now:HH:mm:ss}] agy.exe started successfully with PID {_process.Id}\n"); } catch { }
+                    try { RollingLog.AppendTo(logFile, $"[{DateTime.Now:HH:mm:ss}] agy.exe started successfully with PID {_process.Id}\n"); } catch { }
 
                     _process.StandardInput.AutoFlush = true;
                     _stdin = _process.StandardInput;
@@ -137,7 +137,7 @@ namespace Levity.Services
                 }
                 catch (Exception ex)
                 {
-                    try { File.AppendAllText(logFile, $"[{DateTime.Now:HH:mm:ss}] Exception starting agy: {ex}\n"); } catch { }
+                    try { RollingLog.AppendTo(logFile, $"[{DateTime.Now:HH:mm:ss}] Exception starting agy: {ex}\n"); } catch { }
                     OnErrorReceived?.Invoke($"Failed to launch agy: {ex.Message}");
                     OnStatusChanged?.Invoke("Launch Error");
                     return false;
@@ -224,7 +224,7 @@ namespace Levity.Services
                     };
 
                     string json = JsonSerializer.Serialize(payload);
-                    try { File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "debug.log"), $"[{DateTime.Now:HH:mm:ss}] [STDIN WRITE] {json}\n"); } catch { }
+                    if (RollingLog.Verbose) RollingLog.Append("debug.log", $"[{DateTime.Now:HH:mm:ss}] [STDIN WRITE] {json}\n");
                     _stdin!.WriteLine(json);
                     _stdin!.Flush();
                     return true;
@@ -284,12 +284,12 @@ namespace Levity.Services
                     catch { }
 
                     OnEventReceived?.Invoke(line);
-                    try { File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "debug.log"), $"[{DateTime.Now:HH:mm:ss}] [STDOUT] {line}\n"); } catch { }
+                    if (RollingLog.Verbose) RollingLog.Append("debug.log", $"[{DateTime.Now:HH:mm:ss}] [STDOUT] {line}\n");
                 }
             }
             catch (Exception ex)
             {
-                try { File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "debug.log"), $"[{DateTime.Now:HH:mm:ss}] [STDOUT ERR] {ex}\n"); } catch { }
+                try { RollingLog.Append("debug.log", $"[{DateTime.Now:HH:mm:ss}] [STDOUT ERR] {ex}\n"); } catch { }
                 OnErrorReceived?.Invoke($"Stdout read error: {ex.Message}");
             }
         }
@@ -303,7 +303,7 @@ namespace Levity.Services
                 {
                     if (!string.IsNullOrWhiteSpace(line))
                     {
-                        try { File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "debug.log"), $"[{DateTime.Now:HH:mm:ss}] [STDERR] {line}\n"); } catch { }
+                        if (RollingLog.Verbose) RollingLog.Append("debug.log", $"[{DateTime.Now:HH:mm:ss}] [STDERR] {line}\n");
                         OnErrorReceived?.Invoke(line);
                     }
                 }

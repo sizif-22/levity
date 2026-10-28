@@ -15,6 +15,21 @@ const toolPills = new Map();             // step_index -> pill element, so ACTIV
 const $ = (id) => document.getElementById(id);
 const chatViewport = $('chatViewport');
 const messagesList = $('messagesList');
+
+// Keep the page light on long days: only the latest rows stay in the page (the full conversation is kept by the PC).
+const MAX_ROWS = 300;
+new MutationObserver(() => {
+  const rows = messagesList.querySelectorAll(':scope > .message-row');
+  if (rows.length <= MAX_ROWS) return;
+  for (let i = 0; i < rows.length - MAX_ROWS; i++) rows[i].remove();
+  let note = messagesList.querySelector(':scope > .earlier-note');
+  if (!note) {
+    note = document.createElement('div');
+    note.className = 'earlier-note';
+    note.textContent = 'Earlier messages are kept on your PC and not shown here.';
+    messagesList.prepend(note);
+  }
+}).observe(messagesList, { childList: true });
 const welcomeScreen = $('welcomeScreen');
 const promptInput = $('promptInput');
 const sendBtn = $('sendBtn');
@@ -612,7 +627,7 @@ function closeSheet(id) {
   sheet.classList.remove('open');
   sheet.setAttribute('aria-hidden', 'true');
   if (id === 'projectsSheet') updateSyncBanner();
-  if (id === 'diagramSheet') postToHost({ type: 'diagram_pin', on: false });
+  if (id === 'diagramSheet') { postToHost({ type: 'diagram_pin', on: false }); if (typeof diagramOnClose === 'function') diagramOnClose(); }
 }
 document.querySelectorAll('[data-close-sheet]').forEach(b => b.addEventListener('click', () => closeSheet(b.dataset.closeSheet)));
 document.addEventListener('keydown', (e) => {

@@ -703,3 +703,5 @@ body.remote .job-input, body.remote .git-form textarea, body.remote .git-form in
 /* Fast / Deep switch, first chip in the row */
 .effort-chip { font-family: inherit; font-weight: 500; flex-shrink: 0; }
 .effort-chip.deep { color: var(--foreground); border-color: var(--foreground); }
+
+.earlier-note { text-align: center; color: var(--muted-foreground); font-size: 12px; padding: 6px 0 10px; }
