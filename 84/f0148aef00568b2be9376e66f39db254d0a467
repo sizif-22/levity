@@ -1,0 +1,74 @@
+docs/WINDOWS.md
+  s_d7448d4eb56c88::t_e2255f323efa56 1-72
+web/src/components/WindowsSheet.tsx
+  s_d7448d4eb56c88::t_20467321589810 1-56
+App.xaml.cs
+  s_d7448d4eb56c88::t_ed11b70a88ac32 18-26
+Services/AppSettings.cs
+  s_d7448d4eb56c88::t_9fa2175dc7c2f5 15-19
+tests/Levity.Tests/ToolboxElevationTests.cs
+  s_d7448d4eb56c88::t_cae27947acc402 1-347
+  s_d7448d4eb56c88::t_5d67d2902560dc 348-381
+tests/sidebar/windows.test.mjs
+  s_d7448d4eb56c88::t_8f306a1345af30 1-101
+wwwroot/app.js
+  s_d7448d4eb56c88::t_20467321589810 100,437
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_ed11b70a88ac32 94-97,465-489,1302-1364,1562,1858
+  s_d7448d4eb56c88::t_a9f3f528693ae6 12
+Services/AgyProcessManager.cs
+  s_d7448d4eb56c88::t_ed11b70a88ac32 30-32,216-218
+web/src/App.tsx
+  s_d7448d4eb56c88::t_20467321589810 15,94-97,159-161,386,428
+Services/AgentLaunch.cs
+  s_d7448d4eb56c88::t_ed11b70a88ac32 44-49
+wwwroot/index.html
+  s_d7448d4eb56c88::t_20467321589810 118,274-305
+  s_d7448d4eb56c88::t_ad9580450ebb75 306-307
+wwwroot/style.css
+  s_d7448d4eb56c88::t_20467321589810 685-691
+Services/WindowsTools/ToolHost.cs
+  s_d7448d4eb56c88::t_344f241e703eb2 1-110
+web/src/styles.css
+  s_d7448d4eb56c88::t_20467321589810 667-714
+web/tsconfig.tsbuildinfo
+  s_d7448d4eb56c88::t_20467321589810 1
+web/tests/windows.spec.tsx
+  s_d7448d4eb56c88::t_8ed04a2d522045 1-54
+Services/WindowsTools/Toolbox.cs
+  s_d7448d4eb56c88::t_9fa2175dc7c2f5 20,60
+  s_d7448d4eb56c88::t_90f9804207ed78 61
+README.md
+  s_d7448d4eb56c88::t_5d67d2902560dc 56
+wwwroot/actions.js
+  s_d7448d4eb56c88::t_20467321589810 7,18-25,168-225
+  s_d7448d4eb56c88::t_a6f5f28f56afe7 226
+Services/WindowsTools/ElevatedRun.cs
+  s_d7448d4eb56c88::t_f450aab9e5a864 140-142,176
+  s_d7448d4eb56c88::t_9fa2175dc7c2f5 2
+  s_d7448d4eb56c88::t_195c5926299196 1,3-109,123-139,143-175,177-231
+  s_d7448d4eb56c88::t_ed11b70a88ac32 110-122
+docs/ROADMAP.md
+  s_d7448d4eb56c88::t_7251edbc3a409f 63,69,72,101,127,130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "84f0148aef00568b2be9376e66f39db254d0a467",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
