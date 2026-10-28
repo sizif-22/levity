@@ -78,6 +78,13 @@ namespace Levity.Services.WindowsTools
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern bool GlobalMemoryStatusEx(ref MemoryStatus status);
 
+        /// <summary>Total and free physical memory in GB, or null when Windows will not say.</summary>
+        internal static (double TotalGb, double FreeGb)? Memory()
+        {
+            var m = new MemoryStatus { Length = (uint)Marshal.SizeOf<MemoryStatus>() };
+            return GlobalMemoryStatusEx(ref m) ? (Math.Round(m.TotalPhys / 1073741824.0, 1), Math.Round(m.AvailPhys / 1073741824.0, 1)) : null;
+        }
+
         private static readonly (string Name, string[] Files, string[] VersionArgs)[] DevTools =
         {
             ("git", new[] { "git" }, new[] { "--version" }),

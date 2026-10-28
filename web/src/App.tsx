@@ -14,6 +14,7 @@ import { DiagramSheet } from './components/DiagramSheet';
 import { GitSheet, RunSheet } from './components/ActionSheets';
 import { WindowsSheet, type JournalEntryMsg, type ToolsState } from './components/WindowsSheet';
 import { SpeedSheet, type SpeedMsg } from './components/SpeedSheet';
+import { DoctorSheet, type DoctorMsg, type DoctorResultMsg } from './components/DoctorSheet';
 import { CheckpointBar, type CheckpointMsg } from './components/CheckpointBar';
 import type { ActionsMsg, GitStateMsg } from './lib/actions';
 import { onboardingChips } from './lib/onboarding';
@@ -93,13 +94,16 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const [projects, setProjects] = useState<ProjectsMsg | null>(null);
   const [scanning, setScanning] = useState(false);
   const [sync, setSync] = useState<SyncState | null>(null);
-  const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs' | 'history' | 'diagram' | 'run' | 'git' | 'windows' | 'speed'>('none');
+  const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs' | 'history' | 'diagram' | 'run' | 'git' | 'windows' | 'speed' | 'doctor'>('none');
   const [speed, setSpeed] = useState<SpeedMsg | null>(null);
+  const [doctor, setDoctor] = useState<DoctorMsg | null>(null);
+  const [doctorResult, setDoctorResult] = useState<DoctorResultMsg | null>(null);
   const [checkpoint, setCheckpoint] = useState<CheckpointMsg | null>(null);
   const [toolsState, setToolsState] = useState<ToolsState | null>(null);
   const [journal, setJournal] = useState<JournalEntryMsg[]>([]);
   const [machine, setMachine] = useState<string | null>(null);
   const [actions, setActions] = useState<ActionsMsg | null>(null);
+  const [mode, setMode] = useState<'auto' | 'plan'>('auto');   // Plan: the assistant only plans and proposes
   const [effort, setEffort] = useState<'low' | 'medium' | 'high'>('low');   // Fast (low) or Deep (medium/high), set on the PC
   const [gitState, setGitState] = useState<GitStateMsg | null>(null);
   const [diagPath, setDiagPath] = useState('');
@@ -147,6 +151,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
       },
       onMessage: (msg) => {
         const type = msg.type as string;
+        if (type === 'config' && msg.mode !== undefined) setMode(msg.mode === 'plan' ? 'plan' : 'auto');
         if (type === 'config' && msg.effort !== undefined) setEffort(msg.effort === 'high' || msg.effort === 'medium' ? msg.effort : 'low');
         if (type === 'sessions') { setSessions(msg as unknown as SessionsMsg); return; }
         if (type === 'diagram' || type === 'diagram_none' || type === 'diagram_prepared' || type === 'diagram_state') {
@@ -162,6 +167,8 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         if (type === 'jobs') { setJobs((msg.jobs as Job[]) ?? []); return; }
         if (type === 'checkpoint') { setCheckpoint(msg as unknown as CheckpointMsg); return; }
         if (type === 'speed') { setSpeed(msg as unknown as SpeedMsg); return; }
+        if (type === 'doctor') { setDoctor(msg as unknown as DoctorMsg); setDoctorResult(null); return; }
+        if (type === 'doctor_result') { setDoctorResult(msg as unknown as DoctorResultMsg); return; }
         if (type === 'tools_state') { setToolsState(msg as unknown as ToolsState); return; }
         if (type === 'journal') { setJournal((msg.entries as JournalEntryMsg[]) ?? []); return; }
         if (type === 'machine') { setMachine(String(msg.summary ?? '')); return; }
@@ -386,10 +393,15 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         <CheckpointBar data={checkpoint} send={send} onDismiss={() => setCheckpoint(null)} />
         <div className="quick-commands">
           {!!actions?.git.repo && <span className="cmd-chip" title="Draw this project's architecture" onClick={() => openDiagram(chat.cwd)}>/diagram</span>}
+          <button className={`cmd-chip effort-chip ${mode === 'plan' ? 'deep' : ''}`} aria-pressed={mode === 'plan'}
+            title="Plan: the assistant only plans and proposes, it changes nothing. Work: it does the task." onClick={() => send({ type: 'set_mode', value: mode === 'plan' ? 'auto' : 'plan' })}>
+            {mode === 'plan' ? 'Plan' : 'Work'}
+          </button>
           <button className={`cmd-chip effort-chip ${effort !== 'low' ? 'deep' : ''}`} aria-pressed={effort !== 'low'}
             title="Fast: quick answers. Deep: thinks harder, slower." onClick={() => send({ type: 'set_effort', value: effort === 'low' ? 'high' : 'low' })}>
             {effort === 'low' ? 'Fast' : 'Deep'}
           </button>
+          <span className="cmd-chip" title="Scan this PC for problems: disk, memory, restarts, network, event log" onClick={() => { setDoctor(null); setDoctorResult(null); setSheet('doctor'); }}>/doctor</span>
           <span className="cmd-chip" title="Where the time and tokens of this conversation went" onClick={() => { setSpeed(null); setSheet('speed'); }}>/speed</span>
           {!!chat.cwd && <span className="cmd-chip" title="Open this folder in the Antigravity IDE on your PC" onClick={() => send({ type: 'open_ide', path: chat.cwd })}>/open-ide</span>}
           {!!actions?.scripts.length && <span className="cmd-chip" title="Run a script from this folder's package.json" onClick={() => setSheet('run')}>/run</span>}
@@ -432,6 +444,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         <DiagramSheet path={diagPath} data={diagram} prepared={diagPrepared} state={diagState} send={send}
           onClearPrepared={() => setDiagPrepared(null)} onClose={() => { setSheet('none'); setDiagPrepared(null); }} />
       )}
+      {sheet === 'doctor' && <DoctorSheet data={doctor} result={doctorResult} send={send} onClose={() => setSheet('none')} onScan={() => { setDoctor(null); setDoctorResult(null); }} />}
       {sheet === 'speed' && <SpeedSheet data={speed} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'windows' && <WindowsSheet state={toolsState} journal={journal} machine={machine} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'run' && <RunSheet actions={actions} send={send} onClose={() => setSheet('none')} />}

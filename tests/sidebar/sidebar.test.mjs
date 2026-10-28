@@ -327,3 +327,16 @@ test('slow tool steps show how long they took, quick ones do not', async () => {
   const times = ui.qa('.tool-pill .tool-time').map((e) => e.textContent.trim());
   assert.deepEqual(times, ['8s']);
 });
+
+test('the Plan/Work switch shows the mode the PC reports and asks the PC to change it', async () => {
+  const ui = await open();
+  assert.equal(ui.$('modeBtn').textContent, 'Work');
+  ui.deliver({ type: 'config', mode: 'plan' });
+  assert.equal(ui.$('modeBtn').textContent, 'Plan');
+  assert.ok(ui.$('modeBtn').classList.contains('deep'));
+  ui.click(ui.$('modeBtn'));
+  assert.deepEqual(ui.sent('set_mode'), [{ type: 'set_mode', value: 'auto' }]);
+  ui.deliver({ type: 'config', mode: 'auto' });
+  ui.click(ui.$('modeBtn'));
+  assert.deepEqual(ui.sent('set_mode').at(-1), { type: 'set_mode', value: 'plan' });
+});

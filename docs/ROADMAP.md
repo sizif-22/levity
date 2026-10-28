@@ -104,11 +104,12 @@ Every tool is typed (named parameters, no command strings), says whether it only
 - **Design:** before any change, the host records the previous value (registry export of the key, setting value, file copy, service start type) and the exact undo. A "Windows changes" list on the PC and phone shows what changed, when, and a **Revert** button. Journal entries are plain JSON files, kept for 30 days.
 - **Exit test:** change, then revert, for each toolbox tool, in a test that checks the original value is restored exactly.
 
-### B4. PC Doctor (1 week)
+### B4. PC Doctor (1 week) — DONE (scan, rules, fixes, sheets on PC and phone)
 
 - **Why:** finds problems before you ask, with no tokens.
 - **Design:** native scan (disk space, pending and failed updates, failed services, startup load, event-log errors in the last 24 hours grouped by source, driver problems, DNS and network) producing ranked findings. Each finding has a **Fix** button that hands the assistant a precise, small task or runs a toolbox tool directly.
-- **Exit test:** scan under 10 s with no assistant call; each check has a test with a captured sample.
+- **Built:** `/doctor` chip on the PC and the phone. Checks: disk space, memory, pending restart, uptime, start-up load, System event log (unexpected shutdown, blue screen, disk and hardware errors, repeating service failures), DNS and gateway, PATH, temp folder size, Defender real-time, Windows Update service. Fixes are a read-only tool, a Settings page, or a precise task for the assistant ("do not change anything yet"). A fix that changes Windows (clean PATH) only runs from the PC after a second press, and is journaled and revertible.
+- **Exit test:** a real scan of this PC takes about 6 s with no assistant call (tested); each rule has a test with made-up facts.
 
 ### B5. Runbooks (about 1 day each, ongoing)
 

@@ -17,9 +17,16 @@ namespace Levity.Services
             _ => Fast,
         };
 
-        public static string Arguments(string? resumeConversationId, string? effort)
+        public const string Auto = "auto";
+        public const string Plan = "plan";
+
+        /// <summary>"plan" makes the assistant think and propose without changing anything; anything else is the normal working mode.</summary>
+        public static string NormalizeMode(string? value) => string.Equals((value ?? "").Trim(), Plan, StringComparison.OrdinalIgnoreCase) ? Plan : Auto;
+
+        public static string Arguments(string? resumeConversationId, string? effort, string? mode = null)
         {
             string args = "--dangerously-skip-permissions --input-format=stream-json --output-format=stream-json --print=\"\" --effort " + NormalizeEffort(effort);
+            if (NormalizeMode(mode) == Plan) args += " --mode plan";
             // The id comes from the assistant itself, but it ends up on a command line, so only plain id characters are let through.
             if (!string.IsNullOrWhiteSpace(resumeConversationId) && IsPlainId(resumeConversationId))
                 args += " --conversation " + resumeConversationId;

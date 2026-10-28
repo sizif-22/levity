@@ -20,6 +20,9 @@ namespace Levity.Services
         /// <summary>How hard the assistant thinks: low (fast, the default), medium or high (deep). Fast is plenty for most tasks and much quicker.</summary>
         public string Effort { get; set; } = AgentLaunch.Fast;
 
+        /// <summary>"auto" (the assistant works normally) or "plan" (it only plans and proposes, changing nothing).</summary>
+        public string Mode { get; set; } = AgentLaunch.Auto;
+
         // Mobile access through the relay (off until the user turns it on)
         public bool RemoteEnabled { get; set; } = false;
         public string? RelayUrl { get; set; } = DotEnv.Get("LEVITY_RELAY_URL"); // wss://levity-relay.<account>.workers.dev

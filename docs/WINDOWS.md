@@ -30,6 +30,13 @@ tool, and **Windows shows its approval prompt on the PC**. Nothing happens unles
 This is only offered when Levity is installed in **Program Files**, because an elevated program in a folder other programs can write to could be replaced.
 (For development you can set `LEVITY_ALLOW_ELEVATION_ANYWHERE=1`.)
 
+## PC Doctor
+
+The `/doctor` chip scans this PC in a few seconds with no assistant and no tokens, and lists problems from most to least serious.
+Each one has buttons: look closer (a read-only tool), open the right Settings page, or hand the assistant a precise task that says not to change anything yet.
+A fix that changes Windows (cleaning PATH) is only available on the PC, needs a second press, and is written to the change list so it can be reverted.
+Checks that cannot be read are named, never hidden.
+
 ## The tools
 
 | Tool | Reads or changes | What it does |

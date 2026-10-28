@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -85,7 +86,7 @@ namespace Levity
                 RawPublish(JsonSerializer.Serialize(new { type = "toast", text = $"Job #{j.Id} {(j.State == JobState.Stopped ? "stopped" : j.ExitCode == 0 ? "finished" : $"failed (exit {j.ExitCode})")}" }))));
 
             // Agy Process Manager
-            _agyManager = new AgyProcessManager(_settings.WorkingDirectory!) { Effort = AgentLaunch.NormalizeEffort(_settings.Effort) };
+            _agyManager = new AgyProcessManager(_settings.WorkingDirectory!) { Effort = AgentLaunch.NormalizeEffort(_settings.Effort), Mode = AgentLaunch.NormalizeMode(_settings.Mode) };
             _agyManager.OnEventReceived += HandleAgyEvent;
             _agyManager.OnStatusChanged += HandleAgyStatus;
             _agyManager.OnConversationInitialized += id => Dispatcher.BeginInvoke(new Action(() => _sessionConvId = id));
@@ -213,6 +214,24 @@ namespace Levity
             _agyManager.Effort = effort;
             _agyManager.Prepare(null, _agyManager.CurrentConversationId);   // same conversation, starts with the new level on the next message
             Publish(new { type = "config", effort });
+        }
+
+        /// <summary>Plan (the assistant only proposes, changing nothing) or normal. Same rules as the speed switch.</summary>
+        private void SetMode(string value, string? clientId)
+        {
+            string mode = AgentLaunch.NormalizeMode(value);
+            if (mode == AgentLaunch.NormalizeMode(_settings.Mode)) { Reply(clientId, new { type = "config", mode }); return; }
+            if (TurnBusy)
+            {
+                Reply(clientId, new { type = "toast", text = "Switch after the current answer finishes." });
+                Reply(clientId, new { type = "config", mode = AgentLaunch.NormalizeMode(_settings.Mode) });
+                return;
+            }
+            _settings.Mode = mode;
+            _settings.Save();
+            _agyManager.Mode = mode;
+            _agyManager.Prepare(null, _agyManager.CurrentConversationId);
+            Publish(new { type = "config", mode });
         }
 
         private bool _diagramExpanded;
@@ -491,6 +510,14 @@ namespace Levity
                         break;
                     }
 
+                    case "doctor_scan":
+                        _ = RunDoctorAsync(clientId);
+                        break;
+
+                    case "doctor_fix":
+                        _ = RunDoctorFixAsync(clientId, GetString(root, "id"), root.TryGetProperty("index", out var dfi) && dfi.TryGetInt32(out int fixIndex) ? fixIndex : -1);
+                        break;
+
                     case "machine_get":
                         _ = PublishMachineAsync(clientId, root.TryGetProperty("refresh", out var mr) && mr.ValueKind == JsonValueKind.True);
                         break;
@@ -548,6 +575,10 @@ namespace Levity
 
                     case "set_effort":
                         SetEffort(GetString(root, "value"), clientId);
+                        break;
+
+                    case "set_mode":
+                        SetMode(GetString(root, "value"), clientId);
                         break;
 
                     case "toggle_pin" when !remote:
@@ -1474,6 +1505,64 @@ namespace Levity
             if (clientId == null) RawPublish(JsonSerializer.Serialize(msg)); else Reply(clientId, msg);
         }
 
+        // ---- PC Doctor ---------------------------------------------------------------------
+
+        private IReadOnlyList<Finding> _doctorFindings = Array.Empty<Finding>();
+        private int _doctorBusy;
+
+        /// <summary>Scans the PC (no assistant, no tokens) and sends ranked findings to whoever asked.</summary>
+        private async Task RunDoctorAsync(string? clientId)
+        {
+            if (Interlocked.Exchange(ref _doctorBusy, 1) == 1) { Reply(clientId, new { type = "toast", text = "A scan is already running." }); return; }
+            try
+            {
+                var tb = _toolHost.Toolbox;
+                var facts = await Task.Run(() => PcDoctor.CollectAsync(tb.Registry, tb.Journal));
+                _doctorFindings = PcDoctor.Evaluate(facts);
+                var json = PcDoctor.ToJson(_doctorFindings, facts);
+                json["type"] = "doctor";
+                json["time"] = DateTime.UtcNow.ToString("o");
+                string raw = json.ToJsonString();
+                Dispatcher.Invoke(() => { if (clientId == null) RawPublish(raw); else Reply(clientId, JsonSerializer.Deserialize<JsonElement>(raw)); });
+            }
+            catch { Dispatcher.Invoke(() => Reply(clientId, new { type = "toast", text = "The scan failed." })); }
+            finally { Interlocked.Exchange(ref _doctorBusy, 0); }
+        }
+
+        /// <summary>Runs one fix button: a read-only tool shows its answer, a change is only allowed from the PC, a prompt goes to the assistant.</summary>
+        private async Task RunDoctorFixAsync(string? clientId, string id, int index)
+        {
+            var finding = _doctorFindings.FirstOrDefault(f => f.Id == id);
+            if (finding == null || index < 0 || index >= finding.Fixes.Count) { Dispatcher.Invoke(() => Reply(clientId, new { type = "toast", text = "Scan again first." })); return; }
+            var fix = finding.Fixes[index];
+            try
+            {
+                switch (fix.Kind)
+                {
+                    case "prompt":
+                        Dispatcher.Invoke(() => { if (TurnBusy) Reply(clientId, new { type = "toast", text = "Wait for the current answer to finish." }); else StartAiTurn(fix.Prompt ?? ""); });
+                        break;
+                    case "settings":
+                    {
+                        var r = await _toolHost.Toolbox.Registry.CallAsync("open_settings", new JsonObject { ["page"] = fix.Page }, new ToolContext { Journal = _toolHost.Toolbox.Journal });
+                        Dispatcher.Invoke(() => Reply(clientId, new { type = "toast", text = r.Ok ? "Opened." : r.Text }));
+                        break;
+                    }
+                    case "tool":
+                    {
+                        if (fix.Changes && clientId != null) { Dispatcher.Invoke(() => Reply(clientId, new { type = "toast", text = "Do this one from the PC." })); break; }
+                        var r = await _toolHost.Toolbox.Registry.CallAsync(fix.Tool!, fix.Args ?? new JsonObject(), new ToolContext { Journal = _toolHost.Toolbox.Journal });
+                        string text = r.Text + (r.Data != null ? "\n" + r.Data.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) : "");
+                        if (text.Length > 6000) text = text[..6000] + "\n...";
+                        Dispatcher.Invoke(() => Reply(clientId, new { type = "doctor_result", id, index, ok = r.Ok, text }));
+                        if (fix.Changes) Dispatcher.Invoke(() => PublishJournal(null));
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex) { Dispatcher.Invoke(() => Reply(clientId, new { type = "toast", text = "That did not work: " + ex.Message })); }
+        }
+
         private async Task PublishMachineAsync(string? clientId, bool refresh)
         {
             try
@@ -1679,7 +1768,8 @@ namespace Levity
                 type = "config",
                 cwd = _agyManager.CurrentWorkingDirectory,
                 isPinned = _settings.IsPinned,
-                effort = AgentLaunch.NormalizeEffort(_settings.Effort)
+                effort = AgentLaunch.NormalizeEffort(_settings.Effort),
+                mode = AgentLaunch.NormalizeMode(_settings.Mode)
             });
             PublishActions(clientId);
             PublishToolsState(clientId);

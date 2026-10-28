@@ -195,3 +195,17 @@ describe('phone App: Fast / Deep', () => {
     expect(screen.getByTitle(/Fast: quick answers/).textContent).toBe('Deep');
   });
 });
+
+describe('phone App: Plan / Work', () => {
+  it('shows the mode the PC reports, asks to switch, and keeps it across a folder change', async () => {
+    const { conn, deliver } = await openApp();
+    const chip = () => screen.getByTitle(/Plan: the assistant only plans/);
+    expect(chip().textContent).toBe('Work');
+    await deliver({ type: 'config', mode: 'plan' });
+    expect(chip().textContent).toBe('Plan');
+    fireEvent.click(chip());
+    expect(conn.sent.at(-1)).toEqual({ type: 'set_mode', value: 'auto' });
+    await deliver({ type: 'config', cwd: 'D:\\Other', isPinned: false });
+    expect(chip().textContent).toBe('Plan');
+  });
+});

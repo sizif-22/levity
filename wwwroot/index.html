@@ -52,6 +52,7 @@
         <button class="icon-btn" id="newChatBtn" title="New conversation">
           <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
+        <button class="effort-btn" id="modeBtn" title="Plan: the assistant only plans and proposes, it changes nothing. Work: it does the task." aria-pressed="false">Work</button>
         <button class="effort-btn" id="effortBtn" title="Fast: quick answers. Deep: thinks harder, slower." aria-pressed="false">Fast</button>
         <button class="icon-btn desktop-only" id="pinBtn" title="Pin (always on top)">
           <svg viewBox="0 0 24 24"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-2l-2-2V5a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v8l-2 2v2z"/></svg>
@@ -126,6 +127,7 @@
       <div class="queue" id="queueList" hidden></div>
       <div class="quick-commands">
         <span class="cmd-chip" id="diagramChip" data-cmd="/diagram" title="Draw this project's architecture (git projects)" hidden>/diagram</span>
+        <span class="cmd-chip" id="doctorChip" data-cmd="/doctor" title="Scan this PC for problems: disk, memory, restarts, network, event log">/doctor</span>
         <span class="cmd-chip" id="speedChip" data-cmd="/speed" title="Where the time and tokens of this conversation went, and how to make it faster">/speed</span>
         <span class="cmd-chip" id="ideChip" data-cmd="/open-ide" title="Open this folder in the Antigravity IDE" hidden>/open-ide</span>
         <span class="cmd-chip" id="runChip" data-cmd="/run" title="Run a script from this folder's package.json" hidden>/run</span>
@@ -305,6 +307,25 @@
           <span class="badge inline" id="settingsPhoneBadge" hidden>0</span>
           <svg class="settings-chev" viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
         </button>
+      </div>
+    </section>
+
+    <!-- /doctor: scan this PC, then fix -->
+    <section class="sheet" id="doctorSheet" aria-hidden="true">
+      <div class="sheet-head">
+        <div>
+          <h3>PC Doctor</h3>
+          <p class="sheet-sub">Checks this PC in seconds, with no assistant and no tokens</p>
+        </div>
+        <button class="icon-btn" data-close-sheet="doctorSheet" title="Close">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="sheet-body win-body">
+        <div class="diag-actions"><button class="btn primary" id="doctorScan">Scan</button></div>
+        <p id="doctorStatus" class="win-muted">Not scanned yet.</p>
+        <div id="doctorList" class="win-body"></div>
+        <p id="doctorSkipped" class="win-muted" hidden></p>
       </div>
     </section>
 

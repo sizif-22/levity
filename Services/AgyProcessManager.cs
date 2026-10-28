@@ -25,6 +25,9 @@ namespace Levity.Services
         /// <summary>Thinking effort for new turns (low, medium or high). Takes effect the next time the assistant is started.</summary>
         public string Effort { get; set; } = AgentLaunch.Fast;
 
+        /// <summary>"auto" or "plan". Takes effect the next time the assistant is started.</summary>
+        public string Mode { get; set; } = AgentLaunch.Auto;
+
         private bool _hinted;   // the efficiency hint goes out once per assistant process
 
         /// <summary>Short facts about this PC to send with the first message (set when the Windows tools are on). Must be quick: it never waits for anything.</summary>
@@ -94,7 +97,7 @@ namespace Levity.Services
                     var psi = new ProcessStartInfo
                     {
                         FileName = agyPath,
-                        Arguments = AgentLaunch.Arguments(resumeConversationId, Effort),
+                        Arguments = AgentLaunch.Arguments(resumeConversationId, Effort, Mode),
                         WorkingDirectory = CurrentWorkingDirectory,
                         UseShellExecute = false,
                         RedirectStandardInput = true,

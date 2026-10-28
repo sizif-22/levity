@@ -83,6 +83,7 @@ function handleHostMessage(msg) {
       if (msg.cwd) setCwd(msg.cwd);
       if (msg.isPinned !== undefined) updatePinState(msg.isPinned);
       if (msg.effort !== undefined) updateEffort(msg.effort);
+      if (msg.mode !== undefined) updateMode(msg.mode);
       break;
     case 'clear_chat': resetChatUI(); break;
     case 'focus_input':
@@ -97,7 +98,7 @@ function handleHostMessage(msg) {
       }
       break;
     case 'fast_learner': renderFastLearner(msg); break;
-    case 'actions': case 'git_state': case 'jobs_open': case 'tools_state': case 'journal': case 'machine': case 'speed': case 'checkpoint':
+    case 'actions': case 'git_state': case 'jobs_open': case 'tools_state': case 'journal': case 'machine': case 'speed': case 'doctor': case 'doctor_result': case 'checkpoint':
       if (typeof actionsOnMessage === 'function') actionsOnMessage(msg);
       break;
     case 'diagram': case 'diagram_none': case 'diagram_prepared': case 'diagram_state': case 'diagram_collapsed':
@@ -132,6 +133,17 @@ function updateEffort(level) {
   btn.classList.toggle('deep', deep);
   btn.setAttribute('aria-pressed', String(deep));
 }
+// Plan: the assistant only plans and proposes. Work: it does the task.
+let modeLevel = 'auto';
+function updateMode(mode) {
+  modeLevel = mode === 'plan' ? 'plan' : 'auto';
+  const btn = $('modeBtn');
+  btn.textContent = modeLevel === 'plan' ? 'Plan' : 'Work';
+  btn.classList.toggle('deep', modeLevel === 'plan');
+  btn.setAttribute('aria-pressed', String(modeLevel === 'plan'));
+}
+$('modeBtn').addEventListener('click', () => postToHost({ type: 'set_mode', value: modeLevel === 'plan' ? 'auto' : 'plan' }));
+
 $('effortBtn').addEventListener('click', () => postToHost({ type: 'set_effort', value: effortLevel === 'low' ? 'high' : 'low' }));
 
 function updatePinState(pinned) {
@@ -434,7 +446,7 @@ document.querySelectorAll('.chip[data-prompt]').forEach(chip => {
   chip.addEventListener('click', () => sendPrompt(chip.dataset.prompt));
 });
 document.querySelectorAll('.cmd-chip').forEach(cmd => {
-  if (['/diagram', '/run', '/git', '/open-ide', '/windows', '/speed'].includes(cmd.dataset.cmd)) return; // these open their own views (diagram.js, actions.js)
+  if (['/diagram', '/run', '/git', '/open-ide', '/windows', '/speed', '/doctor'].includes(cmd.dataset.cmd)) return; // these open their own views (diagram.js, actions.js)
   cmd.addEventListener('click', () => {
     const c = cmd.dataset.cmd;
     promptInput.value = c.endsWith('}') || c.endsWith('$') ? c : c + ' ';

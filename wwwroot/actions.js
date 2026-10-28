@@ -25,6 +25,10 @@ function actionsOnMessage(msg) {
     renderCheckpoint(msg);
   } else if (msg.type === 'speed') {
     renderSpeed(msg);
+  } else if (msg.type === 'doctor') {
+    renderDoctor(msg);
+  } else if (msg.type === 'doctor_result') {
+    renderDoctorResult(msg);
   } else if (msg.type === 'machine') {
     $('winMachine').textContent = msg.summary || 'No details available.';
   } else if (msg.type === 'jobs_open') {
@@ -303,4 +307,68 @@ function renderCheckpoint(m) {
     btn.classList.add('danger');
     ckpt.armed = setTimeout(() => { ckpt.armed = 0; btn.textContent = 'Undo'; btn.classList.remove('danger'); }, 3000);
   });
+})();
+
+// ---- /doctor ----
+const DOCTOR_LABEL = { critical: 'Fix now', warning: 'Worth fixing', info: 'For your information', ok: 'All good' };
+const doctor = { armed: null };
+
+function renderDoctor(m) {
+  doctor.armed = null;
+  const list = $('doctorList');
+  list.textContent = '';
+  $('doctorScan').disabled = false;
+  $('doctorScan').textContent = 'Scan again';
+  $('doctorStatus').textContent = m.time ? 'Scanned ' + new Date(m.time).toLocaleTimeString() + '.' : '';
+  (m.findings || []).forEach(f => {
+    const card = document.createElement('div');
+    card.className = 'win-card doctor-' + f.severity;
+    card.dataset.id = f.id;
+    const sev = document.createElement('span'); sev.className = 'win-muted'; sev.textContent = DOCTOR_LABEL[f.severity] || f.severity;
+    const title = document.createElement('strong'); title.textContent = f.title;
+    const detail = document.createElement('p'); detail.className = 'win-muted'; detail.textContent = f.detail;
+    card.append(sev, title, detail);
+    if (f.fixes && f.fixes.length) {
+      const row = document.createElement('div'); row.className = 'diag-actions';
+      f.fixes.forEach(fx => {
+        const b = document.createElement('button');
+        b.className = 'btn ghost';
+        b.textContent = fx.label;
+        b.addEventListener('click', () => {
+          if (fx.changes) {
+            // A change to Windows needs a second press, like Undo.
+            const key = f.id + ':' + fx.index;
+            if (doctor.armed !== key) { doctor.armed = key; b.textContent = 'Sure?'; return; }
+            doctor.armed = null; b.textContent = fx.label;
+          }
+          postToHost({ type: 'doctor_fix', id: f.id, index: fx.index });
+        });
+        row.appendChild(b);
+      });
+      card.appendChild(row);
+    }
+    list.appendChild(card);
+  });
+  const sk = $('doctorSkipped');
+  sk.hidden = !(m.skipped && m.skipped.length);
+  sk.textContent = sk.hidden ? '' : 'Could not check: ' + m.skipped.join(', ') + '.';
+}
+
+function renderDoctorResult(r) {
+  const card = Array.from(document.querySelectorAll('#doctorList .win-card')).find(c => c.dataset.id === r.id);
+  if (!card) return;
+  let pre = card.querySelector('pre');
+  if (!pre) { pre = document.createElement('pre'); pre.className = 'win-muted'; pre.style.cssText = 'white-space:pre-wrap;max-height:220px;overflow:auto;margin:0'; card.appendChild(pre); }
+  pre.textContent = r.text;
+}
+
+(function wireDoctor() {
+  const scan = () => {
+    $('doctorScan').disabled = true;
+    $('doctorScan').textContent = 'Scanning...';
+    $('doctorStatus').textContent = 'Looking at disk space, memory, restarts, start-up, the network, the event log and PATH...';
+    postToHost({ type: 'doctor_scan' });
+  };
+  $('doctorChip').addEventListener('click', () => { openSheet('doctorSheet'); scan(); });
+  $('doctorScan').addEventListener('click', scan);
 })();

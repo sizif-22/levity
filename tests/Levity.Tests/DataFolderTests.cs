@@ -157,3 +157,38 @@ public class AgentLaunchTests
         Assert.Equal("LEVITY_AGENT", AgentLaunch.EnvMarker);
     }
 }
+
+public class AgentModeTests
+{
+    [Theory]
+    [InlineData("plan", "plan")]
+    [InlineData("PLAN", "plan")]
+    [InlineData(" Plan ", "plan")]
+    [InlineData("auto", "auto")]
+    [InlineData("accept-edits", "auto")]
+    [InlineData("", "auto")]
+    [InlineData(null, "auto")]
+    [InlineData("plan; calc", "auto")]
+    public void Only_the_exact_word_plan_selects_plan_mode(string? input, string expected)
+    {
+        Assert.Equal(expected, AgentLaunch.NormalizeMode(input));
+    }
+
+    [Fact]
+    public void Plan_mode_adds_the_flag_and_work_mode_changes_nothing()
+    {
+        Assert.Contains("--mode plan", AgentLaunch.Arguments(null, "low", "plan"));
+        Assert.DoesNotContain("--mode", AgentLaunch.Arguments(null, "low", "auto"));
+        Assert.DoesNotContain("--mode", AgentLaunch.Arguments(null, "low", null));
+        Assert.DoesNotContain("--mode", AgentLaunch.Arguments(null, "low"));
+    }
+
+    [Fact]
+    public void The_other_flags_and_a_resumed_conversation_survive_plan_mode()
+    {
+        string args = AgentLaunch.Arguments("conv-1", "high", "plan");
+        Assert.Contains("--effort high", args);
+        Assert.Contains("--conversation conv-1", args);
+        Assert.Contains("--output-format=stream-json", args);
+    }
+}
