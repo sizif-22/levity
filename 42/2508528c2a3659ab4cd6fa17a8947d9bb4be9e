@@ -1,0 +1,72 @@
+web/tests/checkpoint.spec.tsx
+  s_d7448d4eb56c88::t_dc5ffcf5cf49f6 1-28,30,33-34,36-53,55-65
+  s_d7448d4eb56c88::t_a0e4c33ef6bff5 29,31-32,35,54
+wwwroot/style.css
+  s_d7448d4eb56c88::t_cc655d26568e8c 706-712
+wwwroot/actions.js
+  s_d7448d4eb56c88::t_cc655d26568e8c 24-25,268-304
+  s_d7448d4eb56c88::t_68b4c0be98bf2c 305-306
+.env.example
+  s_d7448d4eb56c88::t_cc655d26568e8c 51-52
+docs/RUNNING.md
+  s_d7448d4eb56c88::t_cc655d26568e8c 67
+  s_d7448d4eb56c88::t_f734435f08d4df 90
+web/src/components/CheckpointBar.tsx
+  s_d7448d4eb56c88::t_cc655d26568e8c 1-54
+tests/sidebar/checkpoint.test.mjs
+  s_d7448d4eb56c88::t_86329aa4a79b34 1-74
+Services/MemoryPolicy.cs
+  s_d7448d4eb56c88::t_cc655d26568e8c 20-22
+web/src/App.tsx
+  s_d7448d4eb56c88::t_cc655d26568e8c 17,98,163,386
+web/src/styles.css
+  s_d7448d4eb56c88::t_cc655d26568e8c 728-734
+wwwroot/app.js
+  s_d7448d4eb56c88::t_cc655d26568e8c 100
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_cc655d26568e8c 465-468,1161,1191-1200,1202-1227,1229-1268,1800-1802,1804
+  s_d7448d4eb56c88::t_e0c32939166c25 1201,1228,1799,1803
+tests/Levity.Tests/Levity.Tests.csproj
+  s_d7448d4eb56c88::t_47a704c4784b0c 25
+Services/Checkpoints.cs
+  s_d7448d4eb56c88::t_89e2e5fe240158 30-32
+  s_d7448d4eb56c88::t_9dfbf7889cafc6 1-20,24-29,33-34,36-39,41-55,60-91,95-104,109-177,180,184,196-197,199,205-212
+  s_d7448d4eb56c88::t_c17439a01b2567 21-23,35,40,56-59,92-94,105-108,178-179,181-183,185-195,198,200-204
+tests/Levity.Tests/JobManagerTests.cs
+  s_d7448d4eb56c88::t_a82f5a5ad29d9d 73-75
+web/tsconfig.tsbuildinfo
+  s_d7448d4eb56c88::t_cc655d26568e8c 1
+tests/Levity.Tests/CheckpointsTests.cs
+  s_d7448d4eb56c88::t_cc655d26568e8c 189
+  s_d7448d4eb56c88::t_89580a289223c0 1-148,151-158,162-188,190-244
+  s_d7448d4eb56c88::t_d7f26aae99b4c5 149-150,159-161
+wwwroot/index.html
+  s_d7448d4eb56c88::t_cc655d26568e8c 115-125
+docs/PHONE.md
+  s_d7448d4eb56c88::t_980b37a5e3e87d 22
+docs/ROADMAP.md
+  s_d7448d4eb56c88::t_a31881c9c387f8 137,140
+docs/USING.md
+  s_d7448d4eb56c88::t_7ef5ea4384ef22 123-133
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "422508528c2a3659ab4cd6fa17a8947d9bb4be9e",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
