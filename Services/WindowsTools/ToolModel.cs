@@ -28,6 +28,24 @@ namespace Levity.Services.WindowsTools
         /// <summary>Describe what would change, change nothing and write nothing to the journal.</summary>
         public bool DryRun { get; init; }
         public CancellationToken Cancel { get; init; }
+        /// <summary>Running with administrator rights (the elevated copy of Levity that runs one approved tool).</summary>
+        public bool Elevated { get; init; } = Elevation.IsElevated;
+    }
+
+    public static class Elevation
+    {
+        public static bool IsElevated
+        {
+            get
+            {
+                try
+                {
+                    using var id = System.Security.Principal.WindowsIdentity.GetCurrent();
+                    return new System.Security.Principal.WindowsPrincipal(id).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+                }
+                catch { return false; }
+            }
+        }
     }
 
     /// <summary>
@@ -43,6 +61,8 @@ namespace Levity.Services.WindowsTools
         public virtual ToolAccess Access => ToolAccess.ReadOnly;
         /// <summary>True when a change needs administrator rights; until the elevated helper exists such a change reports what it would do.</summary>
         public virtual bool NeedsAdminToChange => false;
+        /// <summary>How long one call may run before it is cancelled (the default fits quick tools; installs get longer).</summary>
+        public virtual int TimeoutSeconds => 60;
         public abstract Task<ToolResult> RunAsync(JsonObject args, ToolContext ctx);
 
         // ---- helpers for reading arguments ----
@@ -66,6 +86,13 @@ namespace Levity.Services.WindowsTools
             if (!v.TryGetValue(out int n)) { if (v.TryGetValue(out double d)) n = (int)d; else if (int.TryParse(v.ToString(), out int p)) n = p; else throw new ToolInputException($"'{name}' must be a number."); }
             if (n < min || n > max) throw new ToolInputException($"'{name}' must be between {min} and {max}.");
             return n;
+        }
+
+        /// <summary>A number that must be given (no silent default), within the range.</summary>
+        protected static int RequiredInt(JsonObject args, string name, int min, int max)
+        {
+            if (!args.TryGetPropertyValue(name, out var node) || node == null) throw new ToolInputException($"'{name}' is required.");
+            return Int(args, name, min, min, max);
         }
 
         protected static bool Bool(JsonObject args, string name, bool fallback = false)
@@ -141,7 +168,7 @@ namespace Levity.Services.WindowsTools
             if (tool == null) return ToolResult.Failure($"Unknown tool '{name}'.");
             // "dry_run" in the arguments always means a preview, however the tool was reached: a change is never made when it is set.
             if (!ctx.DryRun && args.TryGetPropertyValue("dry_run", out var dry) && dry is JsonValue dv && dv.TryGetValue(out bool wantsDry) && wantsDry)
-                ctx = new ToolContext { Journal = ctx.Journal, DryRun = true, Cancel = ctx.Cancel };
+                ctx = new ToolContext { Journal = ctx.Journal, DryRun = true, Cancel = ctx.Cancel, Elevated = ctx.Elevated };
             try { return await tool.RunAsync(args, ctx); }
             catch (ToolInputException ex) { return ToolResult.Failure(ex.Message); }
             catch (OperationCanceledException) { return ToolResult.Failure("Cancelled."); }

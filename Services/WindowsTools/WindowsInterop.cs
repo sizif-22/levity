@@ -17,7 +17,7 @@ namespace Levity.Services.WindowsTools
     {
         public sealed record Output(int ExitCode, string Text, bool TimedOut);
 
-        public static async Task<Output> RunAsync(string file, IEnumerable<string> args, int timeoutSeconds = 20, CancellationToken ct = default)
+        public static async Task<Output> RunAsync(string file, IEnumerable<string> args, int timeoutSeconds = 20, CancellationToken ct = default, IDictionary<string, string>? environment = null)
         {
             var psi = new ProcessStartInfo(file)
             {
@@ -30,6 +30,7 @@ namespace Levity.Services.WindowsTools
                 StandardErrorEncoding = Encoding.UTF8,
             };
             foreach (string a in args) psi.ArgumentList.Add(a);
+            if (environment != null) foreach (var kv in environment) psi.Environment[kv.Key] = kv.Value;   // how text reaches a script: as data, never spliced into it
             using var p = new Process { StartInfo = psi };
             var sb = new StringBuilder();
             var gate = new object();

@@ -36,10 +36,37 @@ namespace Levity.Services.WindowsTools
             registry.Add(new NetworkInfoTool());
             registry.Add(new ProcessesTool());
             registry.Add(new ProcessEndTool());
+            registry.Add(new ServicesListTool());
+            registry.Add(new ServiceControlTool());
+            registry.Add(new ScheduledTasksListTool());
+            registry.Add(new ScheduledTaskControlTool());
+            registry.Add(new WingetQueryTool());
+            registry.Add(new WingetChangeTool());
+            registry.Add(new PrintersListTool());
+            registry.Add(new PrinterControlTool());
+            registry.Add(new EventLogTool());
+            registry.Add(new HostsFileTool());
+            registry.Add(new FirewallRulesTool());
+            registry.Add(new FirewallChangeTool());
+            registry.Add(new DefenderStatusTool());
+            registry.Add(new DefenderChangeTool());
+            registry.Add(new RegistryReadTool());
+            registry.Add(new CertificatesTool());
+            registry.Add(new DefaultAppsTool());
+            registry.Add(new OpenSettingsTool());
+            registry.Add(new ChangesListTool());
+            registry.Add(new ChangesRevertTool());
 
             SettingsSetTool.RegisterUndo(journal);
             EnvironmentSetTool.RegisterUndo(journal);
             ProcessEndTool.RegisterUndo(journal);
+            ServiceControlTool.RegisterUndo(journal);
+            ScheduledTaskControlTool.RegisterUndo(journal);
+            WingetChangeTool.RegisterUndo(journal);
+            HostsFileTool.RegisterUndo(journal);
+            PrinterControlTool.RegisterUndo(journal);
+            FirewallChangeTool.RegisterUndo(journal);
+            DefenderChangeTool.RegisterUndo(journal);
             return new Toolbox(registry, journal, profile);
         }
     }

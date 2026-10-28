@@ -241,7 +241,7 @@ namespace Levity.Services.WindowsTools
                     var args = msg["params"]?["arguments"] as JsonObject ?? new JsonObject();
                     if (string.IsNullOrWhiteSpace(name)) return ErrorObject(id, -32602, "Missing tool name");
                     using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                    limit.CancelAfter(TimeSpan.FromSeconds(60));
+                    limit.CancelAfter(TimeSpan.FromSeconds(_registry.Find(name)?.TimeoutSeconds ?? 60));
                     var ctx = new ToolContext { Journal = _journal, DryRun = (bool?)args["dry_run"] ?? false, Cancel = limit.Token };
                     var result = await _registry.CallAsync(name, args, ctx);
                     return Result(id, ToCallResult(result));

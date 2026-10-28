@@ -253,7 +253,7 @@ namespace Levity.Services.WindowsTools
 
         public override Task<ToolResult> RunAsync(JsonObject args, ToolContext ctx)
         {
-            int pid = Int(args, "pid", 0, 1, int.MaxValue);
+            int pid = RequiredInt(args, "pid", 1, int.MaxValue);
             string name = RequiredStr(args, "name").Trim();
             Process p;
             try { p = Process.GetProcessById(pid); } catch { return Task.FromResult(ToolResult.Failure("No program with that id is running.")); }

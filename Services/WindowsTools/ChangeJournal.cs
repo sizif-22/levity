@@ -41,6 +41,13 @@ namespace Levity.Services.WindowsTools
             return entry;
         }
 
+        /// <summary>Removes an entry whose change was never made (it failed before anything happened), so the list only shows real changes.</summary>
+        public void Cancel(string id)
+        {
+            if (!IsPlainId(id)) return;
+            try { File.Delete(PathFor(id)); } catch { }
+        }
+
         public IReadOnlyList<JournalEntry> List(int max = 100)
         {
             var list = new List<JournalEntry>();
