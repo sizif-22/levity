@@ -64,6 +64,7 @@ Copy `.env.example` to `.env`. All values are optional.
 | `LEVITY_AGENT_IDLE_SECONDS` | Same in seconds, for testing; wins over the minutes setting | not set |
 | `LEVITY_WEBVIEW_RELEASE_MINUTES` | Minutes hidden before the sidebar's web view is thrown away completely (rebuilt when you open it); `0` never | `30` |
 | `LEVITY_WEBVIEW_RELEASE_SECONDS` | Same in seconds, for testing | not set |
+| `LEVITY_CHECKPOINTS` | `0` stops the snapshot taken before each assistant answer in a git folder (what Undo restores) | on |
 | `LEVITY_DEBUG_LOG` | `1` writes every assistant message and event to `debug.log` (contains your conversations; logs rotate at 1 MB) | off |
 | `LEVITY_SETTINGS_DIR` | Settings, chat history and WebView cache | `%APPDATA%\Levity` |
 | `LEVITY_SKILLS_DIR` | Target for `Install-Skills.ps1` | `%USERPROFILE%\.gemini\config\skills` |
@@ -86,7 +87,7 @@ The phone talks to your PC through a small relay. Nothing listens on your PC; bo
 2. **Phone app**: build and host the `web` folder on any static host.
    - Vercel: import the repo, **Root Directory** `web`, framework **Vite**.
    - Anywhere else: `cd web && npm ci && npm run build`, then upload `web/dist`. The host must serve `web/vercel.json`'s security headers or equivalent, and must use HTTPS (the phone camera and crypto need it).
-3. In Levity open the **phone icon**, paste the relay address and the phone app address (or put them in `.env`), then **Save**.
+3. In Levity open the **gear** (Settings), then **Connect your phone**, and paste the relay address and the phone app address (or put them in `.env`), then **Save**.
 4. **Pair**: *Pair a new phone* shows a QR code. Open the phone app on the phone and scan it from inside the app. Approve the request on the PC after checking both screens show the same 4-digit code.
 
 Revoke a phone from the same panel at any time. After you change the web app, redeploy it so phones get the new version.

@@ -462,6 +462,10 @@ namespace Levity
                         PublishJobs();
                         break;
 
+                    case "checkpoint_undo":
+                        _ = UndoCheckpointAsync(GetString(root, "id"), clientId);
+                        break;
+
                     case "speed_get":
                         _ = PublishSpeedAsync(clientId);
                         break;
@@ -1154,7 +1158,7 @@ namespace Levity
         private string? _lastJobsJson;
         private bool _inlineShell;
 
-        private bool TurnBusy => _agyManager.IsBusy || _inlineShell;
+        private bool TurnBusy => _agyManager.IsBusy || _inlineShell || _checkpointing;
 
         /// <summary>Entry point for every typed message: runs it now, or queues it while a turn is in progress.</summary>
         private void HandlePrompt(string prompt, bool remote, string? clientId, string? directCommand = null)
@@ -1184,7 +1188,84 @@ namespace Levity
             }
             _settings.RecordProjectUse(_agyManager.CurrentWorkingDirectory);
             Publish(new { type = "user_message", text = prompt, source = remote ? "mobile" : "desktop" });
-            _agyManager.SendPrompt(CommandShortcut.Expand(prompt, _agyManager.CurrentWorkingDirectory));
+            RawPublish(JsonSerializer.Serialize(new { type = "checkpoint", none = true }));   // the previous answer's undo bar goes away
+            StartAiTurn(CommandShortcut.Expand(prompt, _agyManager.CurrentWorkingDirectory));
+        }
+
+        // ---- Undo for an AI turn ---------------------------------------------------------------------
+
+        private bool _checkpointing;
+        private Checkpoints? _checkpoints;
+        private string? _checkpointId;
+        private bool _summaryDue;
+        private bool _turnSeen;
+
+        /// <summary>Takes a snapshot first (quick; gives up after 15 seconds) and then sends the message. Folders that are not git repositories skip straight to sending.</summary>
+        private void StartAiTurn(string text)
+        {
+            if (!MemoryPolicy.CheckpointsEnabled) { _agyManager.SendPrompt(text); return; }
+            string cwd = _agyManager.CurrentWorkingDirectory;
+            if (ProjectActions.FindGitDir(cwd) == null) { _agyManager.SendPrompt(text); return; }
+            _checkpointing = true;
+            RawPublish(JsonSerializer.Serialize(new { type = "status", text = "Saving a checkpoint...", state = "busy" }));
+            _ = Task.Run(async () =>
+            {
+                Checkpoints? c = null;
+                string? id = null;
+                try
+                {
+                    using var limit = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+                    c = await Checkpoints.OpenAsync(cwd, limit.Token);
+                    if (c != null) id = await c.CreateAsync(limit.Token);
+                }
+                catch { /* no checkpoint this time: the turn still runs */ }
+                Dispatcher.Invoke(() =>
+                {
+                    _checkpointing = false;
+                    _checkpoints = c;
+                    _checkpointId = id;
+                    _summaryDue = id != null;
+                    _turnSeen = false;
+                    _agyManager.SendPrompt(text);
+                });
+            });
+        }
+
+        /// <summary>After a turn: what changed in the folder since the snapshot, for the "Undo" bar.</summary>
+        private async Task PublishCheckpointSummaryAsync()
+        {
+            var c = _checkpoints;
+            string? id = _checkpointId;
+            if (c == null || id == null || !_summaryDue) return;
+            _summaryDue = false;
+            try
+            {
+                var diff = await c.DiffAsync(id);
+                if (diff == null || diff.Changes.Count == 0) { Dispatcher.Invoke(() => RawPublish(JsonSerializer.Serialize(new { type = "checkpoint", none = true }))); return; }
+                var msg = new
+                {
+                    type = "checkpoint", none = false, id, root = c.Root, added = diff.Added, modified = diff.Modified, deleted = diff.Deleted,
+                    insertions = diff.Insertions, deletions = diff.Deletions,
+                    changes = diff.Changes.Take(200).Select(x => new { status = x.Status.ToString(), path = x.Path }),
+                    more = Math.Max(0, diff.Changes.Count - 200)
+                };
+                Dispatcher.Invoke(() => RawPublish(JsonSerializer.Serialize(msg)));
+            }
+            catch { }
+        }
+
+        private async Task UndoCheckpointAsync(string id, string? clientId)
+        {
+            var c = _checkpoints;
+            if (c == null || id != _checkpointId) { Reply(clientId, new { type = "toast", text = "That checkpoint is no longer available." }); return; }
+            if (TurnBusy) { Reply(clientId, new { type = "toast", text = "Wait for the current answer to finish, then undo." }); return; }
+            var (restored, removed, error) = await c.RestoreAsync(id);
+            Dispatcher.Invoke(() =>
+            {
+                RawPublish(JsonSerializer.Serialize(new { type = "toast", text = error ?? $"Undone: {restored} file(s) restored, {removed} removed." }));
+                RawPublish(JsonSerializer.Serialize(new { type = "checkpoint", none = true }));
+            });
+            if (error == null) { _summaryDue = false; }
         }
 
         /// <summary>Starts the next queued message once the current turn is over.</summary>
@@ -1715,7 +1796,12 @@ namespace Levity
                 _lastStatusJson = json;
                 RawPublish(json);
                 // After the turn's result event has been shown, start the next queued message.
-                if (statusText == "Ready") Dispatcher.BeginInvoke(new Action(DrainQueue), System.Windows.Threading.DispatcherPriority.Background);
+                if (statusText.Contains("Thinking") || statusText.Contains("Respond")) _turnSeen = true;
+                if (statusText == "Ready")
+                {
+                    Dispatcher.BeginInvoke(new Action(DrainQueue), System.Windows.Threading.DispatcherPriority.Background);
+                    if (_turnSeen) { _turnSeen = false; _ = PublishCheckpointSummaryAsync(); }   // not for the "Ready" the assistant reports when it merely starts
+                }
             });
         }
 

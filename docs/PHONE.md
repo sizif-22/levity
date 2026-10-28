@@ -19,7 +19,7 @@ On the phone you can chat, stop a response, queue messages, run `/cmd$...` comma
    ```
    Note the address it prints, e.g. `wss://levity-relay.<you>.workers.dev` (use `wss://`).
 2. **Phone app** (any static host; Vercel shown): import the repo, set **Root Directory** to `web`, framework **Vite**. Or `cd web && npx vercel --prod`. No environment variables are needed.
-3. In Levity: header phone icon, paste the relay address and the phone app address (or set `LEVITY_RELAY_URL` and `LEVITY_APP_URL` in `.env`), then **Save**.
+3. In Levity: gear button, then Connect your phone: paste the relay address and the phone app address (or set `LEVITY_RELAY_URL` and `LEVITY_APP_URL` in `.env`), then **Save**.
 
 ## Pair a phone
 

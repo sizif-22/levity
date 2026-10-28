@@ -70,6 +70,9 @@ public class JobManagerTests
     {
         using var m = new JobManager();
         var job = await RunToEnd(m, "$x = [Console]::In.ReadLine(); Write-Output \"got:[$x]\"", seconds: 30);
+        // the last line of output can arrive a moment after the process exits when the machine is busy
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (!job.Tail(1000).Contains("got:[]") && sw.Elapsed < TimeSpan.FromSeconds(10)) await Task.Delay(50);
         Assert.Contains("got:[]", job.Tail(1000));
     }
 

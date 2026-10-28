@@ -14,6 +14,7 @@ import { DiagramSheet } from './components/DiagramSheet';
 import { GitSheet, RunSheet } from './components/ActionSheets';
 import { WindowsSheet, type JournalEntryMsg, type ToolsState } from './components/WindowsSheet';
 import { SpeedSheet, type SpeedMsg } from './components/SpeedSheet';
+import { CheckpointBar, type CheckpointMsg } from './components/CheckpointBar';
 import type { ActionsMsg, GitStateMsg } from './lib/actions';
 import { onboardingChips } from './lib/onboarding';
 import { sameFolder, type DiagramMsg, type DiagramPrepared, type DiagramState } from './lib/diagram';
@@ -94,6 +95,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const [sync, setSync] = useState<SyncState | null>(null);
   const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs' | 'history' | 'diagram' | 'run' | 'git' | 'windows' | 'speed'>('none');
   const [speed, setSpeed] = useState<SpeedMsg | null>(null);
+  const [checkpoint, setCheckpoint] = useState<CheckpointMsg | null>(null);
   const [toolsState, setToolsState] = useState<ToolsState | null>(null);
   const [journal, setJournal] = useState<JournalEntryMsg[]>([]);
   const [machine, setMachine] = useState<string | null>(null);
@@ -158,6 +160,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         if (type === 'fast_learner') { toast(String(msg.text ?? '')); dispatch(msg); return; }
         if (type === 'queue') { setQueue((msg.items as { id: number; text: string }[]) ?? []); return; }
         if (type === 'jobs') { setJobs((msg.jobs as Job[]) ?? []); return; }
+        if (type === 'checkpoint') { setCheckpoint(msg as unknown as CheckpointMsg); return; }
         if (type === 'speed') { setSpeed(msg as unknown as SpeedMsg); return; }
         if (type === 'tools_state') { setToolsState(msg as unknown as ToolsState); return; }
         if (type === 'journal') { setJournal((msg.entries as JournalEntryMsg[]) ?? []); return; }
@@ -380,6 +383,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
             ))}
           </div>
         )}
+        <CheckpointBar data={checkpoint} send={send} onDismiss={() => setCheckpoint(null)} />
         <div className="quick-commands">
           {!!actions?.git.repo && <span className="cmd-chip" title="Draw this project's architecture" onClick={() => openDiagram(chat.cwd)}>/diagram</span>}
           <button className={`cmd-chip effort-chip ${effort !== 'low' ? 'deep' : ''}`} aria-pressed={effort !== 'low'}

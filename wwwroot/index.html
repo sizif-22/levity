@@ -112,6 +112,17 @@
 
     <!-- Composer -->
     <footer class="composer-wrap">
+      <div class="checkpoint-bar" id="checkpointBar" hidden>
+        <div class="checkpoint-row">
+          <span id="checkpointText"></span>
+          <span class="checkpoint-actions">
+            <button class="btn ghost" id="checkpointView">View</button>
+            <button class="btn ghost" id="checkpointUndo">Undo</button>
+            <button class="icon-btn" id="checkpointDismiss" title="Dismiss"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </span>
+        </div>
+        <ul class="checkpoint-files" id="checkpointFiles" hidden></ul>
+      </div>
       <div class="queue" id="queueList" hidden></div>
       <div class="quick-commands">
         <span class="cmd-chip" id="diagramChip" data-cmd="/diagram" title="Draw this project's architecture (git projects)" hidden>/diagram</span>

@@ -120,3 +120,14 @@ The command moves to the **Jobs** panel (it opens by itself) where you can:
 
 `-i` is only read at the very start, because `grep -i` and `sed -i` are real options. Colours are dropped; the text of menus and prompts is
 kept as you would see it in a terminal. This needs Windows 10 version 1809 or newer.
+
+## Undo for an answer
+
+In a git folder, Levity takes a quick snapshot of your files **before** the assistant starts each answer. When the answer is done, if it changed files, a bar above the message box says so:
+*"That answer changed 4 files (2 changed, 1 new, 1 deleted; +12 -4)"* with **View** (the list of files), **Undo** (press twice) and a dismiss button. Undo puts changed and deleted files back and removes files the answer created.
+
+- It works on the whole repository, and files you had changed but not committed before the answer are part of the snapshot, so Undo never loses your own earlier work.
+- Ignored files (anything in `.gitignore`) are left alone.
+- Nothing about your branch, your staged changes or your stash is touched, and no branch or tag is created: the snapshot is invisible in `git log` and graph tools. Levity keeps the last 20 snapshots (a small list inside `.git/levity/`).
+- Not a git folder: no snapshot, no bar. Turn it off with `LEVITY_CHECKPOINTS=0` in `.env`.
+- It also works from the phone: the bar appears there too.

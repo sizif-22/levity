@@ -17,6 +17,9 @@ namespace Levity.Services
 
         public const double DefaultAgentIdleMinutes = 10;
 
+        /// <summary>A snapshot before each AI turn in a git folder, so the turn can be undone. On unless LEVITY_CHECKPOINTS=0.</summary>
+        public static bool CheckpointsEnabled => !string.Equals(DotEnv.Get("LEVITY_CHECKPOINTS"), "0", StringComparison.Ordinal);
+
         /// <summary>Hidden this long, the page is thrown away completely (its processes exit) and rebuilt from the host when the sidebar is opened.</summary>
         public const double DefaultWebViewReleaseMinutes = 30;
 

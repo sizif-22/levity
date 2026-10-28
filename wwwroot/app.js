@@ -97,7 +97,7 @@ function handleHostMessage(msg) {
       }
       break;
     case 'fast_learner': renderFastLearner(msg); break;
-    case 'actions': case 'git_state': case 'jobs_open': case 'tools_state': case 'journal': case 'machine': case 'speed':
+    case 'actions': case 'git_state': case 'jobs_open': case 'tools_state': case 'journal': case 'machine': case 'speed': case 'checkpoint':
       if (typeof actionsOnMessage === 'function') actionsOnMessage(msg);
       break;
     case 'diagram': case 'diagram_none': case 'diagram_prepared': case 'diagram_state': case 'diagram_collapsed':

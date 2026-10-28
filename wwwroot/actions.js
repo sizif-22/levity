@@ -21,6 +21,8 @@ function actionsOnMessage(msg) {
   } else if (msg.type === 'journal') {
     win.journal = msg.entries || [];
     renderJournal();
+  } else if (msg.type === 'checkpoint') {
+    renderCheckpoint(msg);
   } else if (msg.type === 'speed') {
     renderSpeed(msg);
   } else if (msg.type === 'machine') {
@@ -261,5 +263,44 @@ function renderSpeed(m) {
     $('speedSummary').textContent = 'Working it out...';
     openSheet('speedSheet');
     postToHost({ type: 'speed_get' });
+  });
+})();
+
+// ---- undo for the last answer ----
+
+const ckpt = { id: null, armed: 0 };
+
+function renderCheckpoint(m) {
+  const bar = $('checkpointBar');
+  clearTimeout(ckpt.armed);
+  $('checkpointUndo').textContent = 'Undo';
+  $('checkpointUndo').classList.remove('danger');
+  if (m.none) { ckpt.id = null; bar.hidden = true; $('checkpointFiles').hidden = true; return; }
+  ckpt.id = m.id;
+  const n = m.added + m.modified + m.deleted;
+  const parts = [];
+  if (m.modified) parts.push(`${m.modified} changed`);
+  if (m.added) parts.push(`${m.added} new`);
+  if (m.deleted) parts.push(`${m.deleted} deleted`);
+  $('checkpointText').textContent = `That answer changed ${n} file${n === 1 ? '' : 's'} (${parts.join(', ')}; +${m.insertions} −${m.deletions})`;
+  const ul = $('checkpointFiles');
+  ul.textContent = '';
+  const label = { A: 'new', M: 'changed', D: 'deleted', T: 'changed' };
+  (m.changes || []).forEach(c => { const li = document.createElement('li'); li.textContent = `${label[c.status] || c.status}  ${c.path}`; ul.appendChild(li); });
+  if (m.more) { const li = document.createElement('li'); li.textContent = `... and ${m.more} more`; ul.appendChild(li); }
+  ul.hidden = true;
+  bar.hidden = false;
+}
+
+(function wireCheckpoint() {
+  $('checkpointView').addEventListener('click', () => { const ul = $('checkpointFiles'); ul.hidden = !ul.hidden; });
+  $('checkpointDismiss').addEventListener('click', () => { $('checkpointBar').hidden = true; });
+  // Undo puts files back, so it takes a second press
+  $('checkpointUndo').addEventListener('click', () => {
+    const btn = $('checkpointUndo');
+    if (ckpt.armed) { clearTimeout(ckpt.armed); ckpt.armed = 0; btn.textContent = 'Undo'; btn.classList.remove('danger'); postToHost({ type: 'checkpoint_undo', id: ckpt.id }); return; }
+    btn.textContent = 'Sure?';
+    btn.classList.add('danger');
+    ckpt.armed = setTimeout(() => { ckpt.armed = 0; btn.textContent = 'Undo'; btn.classList.remove('danger'); }, 3000);
   });
 })();
