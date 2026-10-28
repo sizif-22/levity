@@ -26,6 +26,9 @@ namespace Levity.Services
         public string Effort { get; set; } = AgentLaunch.Fast;
 
         private bool _hinted;   // the efficiency hint goes out once per assistant process
+
+        /// <summary>When the assistant last received a message or printed anything. Used to stop it after a quiet spell.</summary>
+        public DateTime LastActivityUtc { get; private set; } = DateTime.UtcNow;
         public bool IsRunning => _process != null && !_process.HasExited;
         public bool IsBusy { get; private set; } = false;
 
@@ -142,6 +145,22 @@ namespace Levity.Services
             }
         }
 
+        /// <summary>
+        /// Points the assistant at a folder and (optionally) a saved conversation WITHOUT starting it: the process is only started by the
+        /// next message, and resumes that conversation. A null id means a fresh conversation. Keeps an idle PC from carrying an assistant
+        /// process (about 100 MB) nobody is talking to.
+        /// </summary>
+        public void Prepare(string? newWorkingDirectory = null, string? resumeConversationId = null)
+        {
+            lock (_lock)
+            {
+                Stop();
+                if (!string.IsNullOrWhiteSpace(newWorkingDirectory) && Directory.Exists(newWorkingDirectory))
+                    CurrentWorkingDirectory = newWorkingDirectory;
+                CurrentConversationId = string.IsNullOrWhiteSpace(resumeConversationId) ? null : resumeConversationId;
+            }
+        }
+
         public void Restart(string? newWorkingDirectory = null, string? resumeConversationId = null)
         {
             if (!string.IsNullOrWhiteSpace(newWorkingDirectory) && Directory.Exists(newWorkingDirectory))
@@ -151,32 +170,28 @@ namespace Levity.Services
             Start(resumeConversationId);
         }
 
-        /// <summary>Cancels the running turn by restarting agy on the same conversation, so context is kept.</summary>
-        public void Interrupt()
-        {
-            string? id = CurrentConversationId;
-            Start(id);
-        }
+        /// <summary>Cancels the running turn by stopping agy; the next message starts it again on the same conversation, so context is kept.</summary>
+        public void Interrupt() => Stop();
 
         public void Stop()
         {
             lock (_lock)
             {
+                // Forget the process BEFORE ending it: the Exited handler treats "still the current process" as a crash, so ending it
+                // first made a deliberate stop (idle stop, new chat, Stop button) flash "Process Stopped" as an error.
+                var proc = _process;
+                _process = null;
+                _stdin = null;
+                IsBusy = false;
                 try
                 {
-                    if (_process != null && !_process.HasExited)
+                    if (proc != null && !proc.HasExited)
                     {
-                        try { _process.Kill(true); } catch { }
-                        _process.Dispose();
+                        try { proc.Kill(true); } catch { }
                     }
+                    proc?.Dispose();
                 }
                 catch { }
-                finally
-                {
-                    _process = null;
-                    _stdin = null;
-                    IsBusy = false;
-                }
             }
         }
 
@@ -186,11 +201,13 @@ namespace Levity.Services
             {
                 if (!IsRunning || _stdin == null)
                 {
-                    if (!Start()) return false;
+                    OnStatusChanged?.Invoke("Starting the assistant...");
+                    if (!Start(CurrentConversationId)) return false;   // resumes the conversation if it was stopped while idle
                 }
 
                 try
                 {
+                    LastActivityUtc = DateTime.UtcNow;
                     IsBusy = true;
                     OnStatusChanged?.Invoke("Thinking...");
                     promptText = AgentLaunch.WithHint(promptText, !_hinted);
@@ -230,6 +247,7 @@ namespace Levity.Services
                 while ((line = await reader.ReadLineAsync()) != null)
                 {
                     if (string.IsNullOrWhiteSpace(line)) continue;
+                    LastActivityUtc = DateTime.UtcNow;
 
                     try
                     {

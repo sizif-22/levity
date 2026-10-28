@@ -90,8 +90,10 @@ namespace Levity
             _agyManager.OnConversationInitialized += id => Dispatcher.BeginInvoke(new Action(() => _sessionConvId = id));
             _sessionCwd = _agyManager.CurrentWorkingDirectory;
             _agyManager.OnErrorReceived += HandleAgyError;
-            _agyManager.Start();
-            try { File.AppendAllText(log, "[TRACE 3] AgyManager started\n"); } catch { }
+            // The assistant is started by the first message, not at launch, and stopped again after a quiet spell (see Housekeeping).
+            _lastStatusJson = JsonSerializer.Serialize(new { type = "status", text = "Ready", state = "online" });
+            StartHousekeeping();
+            try { File.AppendAllText(log, "[TRACE 3] AgyManager prepared (starts on the first message)\n"); } catch { }
 
             if (_settings.RemoteEnabled) _hub.Start();
 
@@ -204,7 +206,7 @@ namespace Levity
             _settings.Effort = effort;
             _settings.Save();
             _agyManager.Effort = effort;
-            _agyManager.Restart(null, _agyManager.CurrentConversationId);
+            _agyManager.Prepare(null, _agyManager.CurrentConversationId);   // same conversation, starts with the new level on the next message
             Publish(new { type = "config", effort });
         }
 
@@ -274,6 +276,7 @@ namespace Levity
 
             _isAnimating = true;
 
+            WakeWebView();   // before the window is shown, so the page is live when it appears
             PositionWindow(offscreen: true);
             this.Topmost = true;
             this.Show();
@@ -332,6 +335,9 @@ namespace Levity
                 _isAnimating = false;
                 _isSidebarVisible = false;
                 this.Hide();
+                _hiddenSinceUtc = DateTime.UtcNow;
+                _trimmedThisHide = false;
+                try { if (webView.CoreWebView2 != null) webView.CoreWebView2.MemoryUsageTargetLevel = CoreWebView2MemoryUsageTargetLevel.Low; } catch { }
             };
 
             this.BeginAnimation(Window.LeftProperty, anim);
@@ -819,7 +825,7 @@ namespace Levity
             _settings.WorkingDirectory = path;
             _settings.AddRecentFolder(path);
             _settings.RecordProjectUse(path);
-            _agyManager.Restart(path);
+            _agyManager.Prepare(path, null);
             ClearHistory();
             Publish(new { type = "config", cwd = path, isPinned = _settings.IsPinned });
             PublishActions(null);
@@ -943,7 +949,7 @@ namespace Levity
             _settings.Save();
             _queue.Clear();
             PublishQueue();
-            _agyManager.Restart(cwd, s.ConversationId); // same agy conversation, so the AI keeps its context
+            _agyManager.Prepare(cwd, s.ConversationId); // same agy conversation (started by the next message), so the AI keeps its context
 
             _history.Clear();
             _history.AddRange(s.History);
@@ -1482,7 +1488,7 @@ namespace Levity
 
         private void HandleNewConversation(bool showWindow = true)
         {
-            _agyManager.Restart();
+            _agyManager.Prepare(null, null);
             ClearHistory();
             Publish(new { type = "clear_chat" });
             if (showWindow) SlideIn();
@@ -1558,7 +1564,7 @@ namespace Levity
             Dispatcher.Invoke(() =>
             {
                 string state = "online";
-                if (statusText.Contains("Thinking") || statusText.Contains("Respond"))
+                if (statusText.Contains("Thinking") || statusText.Contains("Respond") || statusText.Contains("Starting"))
                 {
                     state = "busy";
                 }
@@ -1607,10 +1613,100 @@ namespace Levity
             else _ = _hub.SendAsync(clientId, json);
         }
 
+        // ---- Giving memory back --------------------------------------------------------------------
+
+        private System.Windows.Threading.DispatcherTimer? _housekeeping;
+        private DateTime _hiddenSinceUtc = DateTime.UtcNow;
+        private bool _webSuspended;
+        private bool _missedWhileSuspended;
+        private bool _trimmedThisHide;
+        private bool _suspending;
+
+        private void StartHousekeeping()
+        {
+            _housekeeping = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+            _housekeeping.Tick += (_, _) => Housekeeping();
+            _housekeeping.Start();
+        }
+
+        private bool AnythingNeedsThePage => TurnBusy || _queue.Count > 0 || _jobs.Background.Any(j => j.State == JobState.Running);
+
+        /// <summary>Every few seconds: stop an assistant nobody is using, sleep the hidden page, trim the host. All of it is undone by the next use.</summary>
+        private void Housekeeping()
+        {
+            try
+            {
+                var now = DateTime.UtcNow;
+
+                // 1. the assistant process
+                if (MemoryPolicy.ShouldStopAgent(_agyManager.IsRunning, _agyManager.IsBusy, TurnBusy || _queue.Count > 0, _agyManager.LastActivityUtc, now, MemoryPolicy.AgentIdleLimitFromEnvironment()))
+                    _agyManager.Stop();   // keeps the conversation id: the next message resumes it
+
+                // 2. the page
+                var hiddenFor = _isSidebarVisible ? TimeSpan.Zero : now - _hiddenSinceUtc;
+                if (!_webSuspended && !_suspending && MemoryPolicy.ShouldSuspendWebView(_isSidebarVisible, _isAnimating, AnythingNeedsThePage, hiddenFor))
+                    _ = SuspendWebViewAsync();
+                else if (_webSuspended && AnythingNeedsThePage) WakeWebView();   // an answer or command started while hidden (from the phone, say)
+
+                // 3. the host itself
+                if (MemoryPolicy.ShouldTrimHost(_isSidebarVisible, hiddenFor, _trimmedThisHide))
+                {
+                    _trimmedThisHide = true;
+                    GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true);
+                    GC.WaitForPendingFinalizers();
+                    NativeMethods.TrimWorkingSet();
+                }
+            }
+            catch { /* housekeeping must never take the app down */ }
+        }
+
+        private async Task SuspendWebViewAsync()
+        {
+            _suspending = true;
+            try
+            {
+                if (webView.CoreWebView2 == null) return;
+                webView.CoreWebView2.MemoryUsageTargetLevel = CoreWebView2MemoryUsageTargetLevel.Low;
+                bool ok = await webView.CoreWebView2.TrySuspendAsync();
+                if (ok && !_isSidebarVisible && !_isAnimating) _webSuspended = true;
+                else if (ok) { webView.CoreWebView2.Resume(); }   // shown again while it was going to sleep
+            }
+            catch { }
+            finally { _suspending = false; }
+        }
+
+        /// <summary>Wakes the page (if it was asleep) and rebuilds it if it missed anything meanwhile.</summary>
+        private void WakeWebView()
+        {
+            if (!_webSuspended)
+            {
+                // not asleep, but it may be running on the low-memory setting from the last hide
+                try { if (webView.CoreWebView2 != null && (_isSidebarVisible || _isAnimating)) webView.CoreWebView2.MemoryUsageTargetLevel = CoreWebView2MemoryUsageTargetLevel.Normal; } catch { }
+                return;
+            }
+            _webSuspended = false;
+            try
+            {
+                if (webView.CoreWebView2 != null)
+                {
+                    webView.CoreWebView2.Resume();
+                    if (_isSidebarVisible || _isAnimating) webView.CoreWebView2.MemoryUsageTargetLevel = CoreWebView2MemoryUsageTargetLevel.Normal;
+                }
+            }
+            catch { }
+            if (_missedWhileSuspended)
+            {
+                _missedWhileSuspended = false;
+                PostJsonToWeb(new { type = "clear_chat" });
+                SendSnapshot(null);   // the same replay a freshly opened page gets
+            }
+        }
+
         private void PostJsonToWeb(object obj) => PostRawToWeb(JsonSerializer.Serialize(obj));
 
         private void PostRawToWeb(string json)
         {
+            if (_webSuspended) { _missedWhileSuspended = true; return; }   // nobody is looking; the page is rebuilt from the host when it wakes
             try
             {
                 if (webView.CoreWebView2 != null)

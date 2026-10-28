@@ -1,0 +1,9 @@
+{
+  "_note": "Limits in MB (working set, see Measure-Memory.ps1). Phase 1 measured: visible 466, hidden-5s 400, hidden-long 37, visible-again 151. Roadmap goal: hidden-long at or below 80 (met).",
+  "steps": {
+    "visible":       { "totalMB": 560 },
+    "hidden-5s":     { "totalMB": 480 },
+    "hidden-long":   { "totalMB": 80 },
+    "visible-again": { "totalMB": 260 }
+  }
+}

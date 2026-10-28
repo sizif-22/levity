@@ -37,6 +37,15 @@ namespace Levity.Services
             DWMWCP_ROUNDSMALL = 3
         }
 
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+        private static extern bool SetProcessWorkingSetSize(IntPtr process, IntPtr minimum, IntPtr maximum);
+
+        /// <summary>Asks Windows to take the pages this process is not using right now out of its working set (they come back if needed).</summary>
+        public static void TrimWorkingSet()
+        {
+            try { SetProcessWorkingSetSize(System.Diagnostics.Process.GetCurrentProcess().Handle, (IntPtr)(-1), (IntPtr)(-1)); } catch { }
+        }
+
         public static void EnableImmersiveDarkMode(IntPtr hwnd)
         {
             int darkMode = 1;

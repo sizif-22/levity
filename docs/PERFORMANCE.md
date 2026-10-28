@@ -31,3 +31,21 @@ Your own terminals are unaffected, because only the assistant's shells have the 
 Everything in the assistant's tool list, skills and global rules is sent with each turn. Remove skills you do not use, keep rules short,
 and archive old folders under `~/.gemini` (large backups and old conversation data do not help). Fewer input tokens means faster turns
 and lower cost.
+
+## Memory
+
+Levity gives memory back when you are not using it:
+
+- **The web view sleeps when the sidebar is hidden** (after 3 seconds, and only if nothing is running that needs it) and wakes when you open it again or a command or answer starts. The host also compacts itself about 10 seconds after hiding.
+- **The assistant starts with your first message, not at launch,** and is stopped after 10 quiet minutes. The next message starts it again and **resumes the same conversation**; only that first message is a little slower (the status shows "Starting the assistant..."). Set `LEVITY_AGENT_IDLE_MINUTES=0` in `.env` to keep it running.
+
+Measured with `tests/perf/Measure-Memory.ps1` (working set of Levity, every web view process and the assistant), before and after:
+
+| State | Before | After |
+|---|---|---|
+| Just opened | 636 MB | 477 MB (the assistant is not running yet) |
+| Hidden for 5 seconds | 630 MB | 401 MB |
+| Hidden for 45 seconds | **629 MB** | **36 MB** |
+| Opened again | 645 MB | 132 to 151 MB |
+
+These are working-set numbers, the same method as Task Manager's memory column. Pages Windows takes out of the working set are not lost: they return on demand, which is why the page is quick to wake. Run the script before a release; `tests/perf/budget.json` holds the limits and the script fails if one is exceeded. `-Attach` takes one reading of the Levity that is already running.
