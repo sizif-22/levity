@@ -1,0 +1,46 @@
+Services/WindowsTools/ChangeJournal.cs
+  s_d7448d4eb56c88::t_490b665f690f56 44-50
+Services/WindowsTools/McpServer.cs
+  s_d7448d4eb56c88::t_490b665f690f56 244
+Levity.csproj
+  s_d7448d4eb56c88::t_e41a55cf687d2b 28
+Services/WindowsTools/ToolModel.cs
+  s_d7448d4eb56c88::t_490b665f690f56 31-48,64-65,171
+  s_d7448d4eb56c88::t_fc5cce0a2a96c6 91-97
+tests/Levity.Tests/ToolboxMoreToolTests.cs
+  s_d7448d4eb56c88::t_ad7cfbb5a84132 1-456
+Services/WindowsTools/DevicesAndSecurityTools.cs
+  s_d7448d4eb56c88::t_366ef907e162f1 1-304,306-424
+  s_d7448d4eb56c88::t_fc5cce0a2a96c6 305
+Services/WindowsTools/WindowsInterop.cs
+  s_d7448d4eb56c88::t_931798488a393f 20,33
+Services/WindowsTools/SystemTools.cs
+  s_d7448d4eb56c88::t_fc5cce0a2a96c6 256
+tests/Levity.Tests/Levity.Tests.csproj
+  s_d7448d4eb56c88::t_e41a55cf687d2b 17
+Services/WindowsTools/SystemManagementTools.cs
+  s_d7448d4eb56c88::t_5f561c3ecf27f1 1-638
+Services/WindowsTools/Toolbox.cs
+  s_d7448d4eb56c88::t_ec8e5891d590ce 39-58,63-69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9fd7f95ffc9c170f91fb4e2b87d07dec6436e23b",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
