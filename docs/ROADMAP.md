@@ -68,9 +68,33 @@ Your assistant already supports extra tools (`mcp_config.json`) and you already 
 
 - **Why:** each tool call replaces a model-written PowerShell script plus a shell start (about 8 s).
 - **Design:** a native-AOT shim (`levity-windows-mcp.exe`, a few MB, starts instantly) is registered in `mcp_config.json`. It speaks MCP over standard input and forwards every call over a named pipe to the host, which does the work in-process (no second .NET runtime, no extra memory). Only a running Levity answers; otherwise tools report "Levity is not running".
-- **First eight tools:** `get_setting` / `set_setting` for wallpaper, theme, power plan and display; `startup_apps` (list, enable, disable); `services` (list, start, stop, set start type); `scheduled_tasks`; `environment` (variables, PATH with duplicate and broken-entry detection); `winget` (search, install, upgrade, list outdated); `disk_usage` (largest folders, safe-to-clear suggestions); `network` (adapters, DNS, ping, port in use and by what).
+- **Tools:** the full list is in the catalogue below, built in three waves, each tool with its own tests.
 - **Safety:** each tool declares whether it reads or changes things. Changes go through the change journal (B3). Parameters are validated; no tool accepts a command string.
 - **Exit test:** the wallpaper task finishes in **under 60 s with 3 steps or fewer**; every tool has a unit test on real Windows and a refusal test for hostile input.
+
+#### B2 tool catalogue
+
+Every tool is typed (named parameters, no command strings), says whether it only reads or also changes, and every change goes through the journal (B3). "Admin" means it needs the elevated helper (B8) until then it reports what it would do and why it cannot.
+
+| Wave | Tool | What it can do | Admin | Notes |
+|---|---|---|---|---|
+| **1** (weeks 2 to 3) | `settings` | wallpaper, light or dark theme, power plan, display scale and brightness | no | the wallpaper task is the benchmark |
+| 1 | `startup_apps` | list, enable, disable (registry run keys, startup folder, startup tasks) | no for your own | shows what each entry is and its start-up cost |
+| 1 | `services` | list, start, stop, set start type | **yes** to change | read-only list works without admin |
+| 1 | `scheduled_tasks` | list, enable, disable, run now | partly | |
+| 1 | `environment` | variables, PATH with duplicate, missing and over-long entries flagged | no for user scope, **yes** for machine scope | |
+| 1 | `winget` | search, install, upgrade, list outdated, uninstall | some installs | |
+| 1 | `disk_usage` | largest folders, caches, safe-to-clear suggestions | no | never deletes without an explicit list and a journal entry |
+| 1 | `network` | adapters, DNS, ping, which program uses a port | no | |
+| **2** (weeks 5 to 7) | `processes` | top CPU and memory users, what owns a window or a port, end a process | no for yours | asks before ending anything it did not start |
+| 2 | `printers` | list, default printer, clear a stuck queue | queue clearing may | |
+| 2 | `event_log` | recent errors by source, search by event ID | no | feeds PC Doctor (B4) |
+| 2 | `hosts_file` | read, add, remove entries | **yes** to change | every change journalled with the original file |
+| 2 | `firewall` | list rules, find what blocks a program or port, add or remove an allow rule | **yes** to change | |
+| 2 | `defender` | scan status, exclusions list, quick scan | **yes** for exclusions | |
+| **3** (later) | `default_apps` | **guided**: opens the exact Settings page and says what to click | no | Windows protects default-app choices with a hash, so silent changes are not reliable and would break on updates; this is a limit of Windows, not of Levity |
+| 3 | `registry` | read a key; change only keys that a runbook or tool names | by key | no free-form registry writes |
+| 3 | `certificates` | list, check expiry, find the one a failing site needs | **yes** to install | |
 
 ### B3. Change journal with undo (4 to 5 days)
 
@@ -148,9 +172,9 @@ Small items that are not features but should not be forgotten:
 | Phase | Weeks | Contents | You can see |
 |---|---|---|---|
 | **1. Small and measured** | 1 | M0, M1, M2, M4 | idle memory table before and after; chat stays fast on long days |
-| **2. Foundation** | 2 to 4 | B1, B2 (first eight tools), B3, T4; then M3, M5 | wallpaper in under 60 s; a "Windows changes" list with Revert; the speed panel |
+| **2. Foundation** | 2 to 4 | B1, B2 (wave 1, eight tools), B3, T4; then M3, M5 | wallpaper in under 60 s; a "Windows changes" list with Revert; the speed panel |
 | **3. Trust and quick wins** | 4 to 5 | T1, T2, T3 (after the spike), L1 voice | undo that turn; notifications; allow or deny on the phone; dictate a task |
-| **4. Proactive** | 6 to 8 | B4, B5 (first ten), T5, L2 attachments, L3 hotkey on selected text, M6 | PC Doctor; scheduled tasks; photo to the assistant; "explain this" anywhere |
+| **4. Proactive** | 6 to 8 | B2 wave 2, B4, B5 (first ten), T5, L2 attachments, L3 hotkey on selected text, M6 | PC Doctor; scheduled tasks; photo to the assistant; "explain this" anywhere |
 | **5. Reach** | 9 to 12 | B6, B7, B8, L4 preview | screen help; new-PC setup; admin fixes; app on your phone |
 | **6. Bigger bets** | 13 to 16 | L5 other backends, L6 parallel tasks | choose the tool per project; two tasks at once |
 
