@@ -1,0 +1,54 @@
+Services/WindowsTools/MachineProfile.cs
+  s_d7448d4eb56c88::t_e0acf06e22e91f 1-205
+Services/WindowsTools/ToolModel.cs
+  s_d7448d4eb56c88::t_44cebcb59cb0ca 142-144
+  s_d7448d4eb56c88::t_9d389a22f05a47 1-141,145-151
+tests/Levity.Tests/ToolboxTests.cs
+  s_d7448d4eb56c88::t_8891c6fc6c8701 1-135,137-144,146-277,279-397
+  s_d7448d4eb56c88::t_51559d982d251e 278
+  s_d7448d4eb56c88::t_3cd5b6b6f28fc0 136,145
+Services/WindowsTools/SystemTools.cs
+  s_d7448d4eb56c88::t_78e24dff3ae790 1-292
+Services/WindowsTools/StartupAndEnvironmentTools.cs
+  s_d7448d4eb56c88::t_44cebcb59cb0ca 119-121
+  s_d7448d4eb56c88::t_627b17126f2dbc 1-118,122-348
+Services/WindowsTools/Toolbox.cs
+  s_d7448d4eb56c88::t_ea4d8f4a64185c 1-46
+Services/WindowsTools/SettingsTools.cs
+  s_d7448d4eb56c88::t_bc669dde4aa143 1-207
+tests/Levity.Tests/Levity.Tests.csproj
+  s_d7448d4eb56c88::t_3cd5b6b6f28fc0 24
+Services/WindowsTools/McpServer.cs
+  s_d7448d4eb56c88::t_e0b6f477c65ca6 4
+  s_d7448d4eb56c88::t_e2918181f39cf6 1-3,5-271
+Services/WindowsTools/ChangeJournal.cs
+  s_d7448d4eb56c88::t_7678b008983a80 1-132
+Services/WindowsTools/WindowsInterop.cs
+  s_d7448d4eb56c88::t_c67b6be6ebc026 1-160,163-176,179-189
+  s_d7448d4eb56c88::t_e0b6f477c65ca6 161-162,177-178
+tests/Levity.Tests/ToolboxToolTests.cs
+  s_d7448d4eb56c88::t_b4f3f1f0f60f69 1-343,347-599,601,604-690,725-726
+  s_d7448d4eb56c88::t_44cebcb59cb0ca 344-346,600,602,691-724
+  s_d7448d4eb56c88::t_cbe46cee9c8bc3 603
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b2051870d6dbc939396884f0588180514688819f",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
