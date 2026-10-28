@@ -1,0 +1,59 @@
+Services/RollingLog.cs
+  s_d7448d4eb56c88::t_3b58f83bfbb839 1-42
+App.xaml.cs
+  s_d7448d4eb56c88::t_c3de2695b795ec 2,20,32,39,43,62,64,92
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_c3de2695b795ec 48,52,96,102,109,348,1595,1597,1723,1736
+tests/sidebar/actions.test.mjs
+  s_d7448d4eb56c88::t_c00f925babc9b8 322-349
+Services/AgyProcessManager.cs
+  s_d7448d4eb56c88::t_c3de2695b795ec 80,114,120,125,140,227,287,292,306
+web/src/styles.css
+  s_d7448d4eb56c88::t_c3de2695b795ec 706-707
+wwwroot/style.css
+  s_d7448d4eb56c88::t_c3de2695b795ec 683-684
+web/src/lib/chat.ts
+  s_d7448d4eb56c88::t_c3de2695b795ec 132-134,136-140
+wwwroot/diagram.js
+  s_d7448d4eb56c88::t_c3de2695b795ec 28-34
+web/tests/chat-more.test.ts
+  s_d7448d4eb56c88::t_c00f925babc9b8 69,84
+  s_d7448d4eb56c88::t_536996f62cbd10 73-75,82-83
+  s_d7448d4eb56c88::t_83b6c0f14a1d13 3,70-72,76-81
+docs/RUNNING.md
+  s_d7448d4eb56c88::t_c00f925babc9b8 65
+wwwroot/app.js
+  s_d7448d4eb56c88::t_c3de2695b795ec 18-32,630
+tests/Levity.Tests/MemoryTests.cs
+  s_d7448d4eb56c88::t_c00f925babc9b8 271-436
+Services/JobManager.cs
+  s_d7448d4eb56c88::t_c3de2695b795ec 226,231-240
+  s_d7448d4eb56c88::t_4242e8cabd38c7 241-242
+.env.example
+  s_d7448d4eb56c88::t_c00f925babc9b8 44-45
+Services/HistoryCompactor.cs
+  s_d7448d4eb56c88::t_b660efe09ab3cc 1-90
+tests/Levity.Tests/Levity.Tests.csproj
+  s_d7448d4eb56c88::t_c00f925babc9b8 24-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "704a6fa102b5bf946200c468e59a627fdafcb6bf",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
