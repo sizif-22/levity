@@ -17,7 +17,7 @@ namespace Levity.Services.WindowsTools
         }
 
         /// <summary>Builds the toolbox with its files under <paramref name="dataDir"/> (journal folder and machine.json).</summary>
-        public static Toolbox Create(string dataDir)
+        public static Toolbox Create(string dataDir, Elevator? elevator = null)
         {
             var journal = new ChangeJournal(Path.Combine(dataDir, "journal"));
             var profile = new MachineProfile(Path.Combine(dataDir, "machine.json"));
@@ -56,6 +56,8 @@ namespace Levity.Services.WindowsTools
             registry.Add(new OpenSettingsTool());
             registry.Add(new ChangesListTool());
             registry.Add(new ChangesRevertTool());
+
+            if (elevator != null) registry.Add(new RunElevatedTool(elevator, registry));   // after the others: it lists the tools that need administrator rights
 
             SettingsSetTool.RegisterUndo(journal);
             EnvironmentSetTool.RegisterUndo(journal);

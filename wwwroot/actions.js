@@ -4,6 +4,7 @@
 // Relies on helpers from app.js: $, postToHost, openSheet, closeSheet, toast.
 
 const act = { data: null, git: null, gitAsked: 0 };
+const win = { state: null, journal: [] };
 
 function actionsOnMessage(msg) {
   if (msg.type === 'actions') {
@@ -14,6 +15,14 @@ function actionsOnMessage(msg) {
   } else if (msg.type === 'git_state') {
     act.git = msg;
     renderGitState();
+  } else if (msg.type === 'tools_state') {
+    win.state = msg;
+    renderWindowsState();
+  } else if (msg.type === 'journal') {
+    win.journal = msg.entries || [];
+    renderJournal();
+  } else if (msg.type === 'machine') {
+    $('winMachine').textContent = msg.summary || 'No details available.';
   } else if (msg.type === 'jobs_open') {
     openSheet('jobsSheet');
     setTimeout(() => {
@@ -155,4 +164,63 @@ function gitRun(action, extra) {
   };
   $('gitBranchBtn').addEventListener('click', branch);
   $('gitBranchName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); branch(); } });
+})();
+
+// ---- /windows ----
+
+function renderWindowsState() {
+  const s = win.state;
+  const btn = $('winToggle');
+  if (!s) { btn.disabled = true; return; }
+  btn.disabled = false;
+  btn.textContent = s.enabled ? 'Turn off' : 'Turn on';
+  btn.classList.toggle('primary', !s.enabled);
+  btn.classList.toggle('ghost', !!s.enabled);
+  $('winStateText').textContent = s.enabled
+    ? (s.running ? `On: ${s.count} tools are available to the assistant (they appear with its next message).` : 'On, but the tools are not running right now.')
+    : 'Off. The assistant cannot see or change Windows settings until you turn this on.';
+  const note = $('winElevateNote');
+  note.hidden = !(s.enabled && s.elevateNote);
+  note.textContent = s.elevateNote || '';
+}
+
+function renderJournal() {
+  const list = $('winChanges');
+  list.textContent = '';
+  $('winChangesEmpty').hidden = win.journal.length > 0;
+  win.journal.forEach(e => {
+    const li = document.createElement('li');
+    li.className = 'action-row' + (e.reverted ? ' reverted' : '');
+    const text = document.createElement('div');
+    text.className = 'action-text';
+    const what = document.createElement('strong');
+    what.textContent = e.summary;
+    const when = document.createElement('code');
+    when.textContent = new Date(e.time).toLocaleString() + (e.reverted ? ' · reverted' : '');
+    text.append(what, when);
+    li.appendChild(text);
+    if (!e.reverted && e.canUndo) {
+      const b = document.createElement('button');
+      b.className = 'btn ghost action-go';
+      b.textContent = 'Revert';
+      b.addEventListener('click', () => postToHost({ type: 'journal_revert', id: e.id }));
+      li.appendChild(b);
+    }
+    list.appendChild(li);
+  });
+}
+
+(function wireWindows() {
+  $('windowsChip').addEventListener('click', () => {
+    openSheet('windowsSheet');
+    postToHost({ type: 'tools_get' });
+    postToHost({ type: 'journal_list' });
+    postToHost({ type: 'machine_get' });
+  });
+  $('winToggle').addEventListener('click', () => {
+    if (!win.state) return;
+    $('winToggle').disabled = true;   // enabled again by the answer
+    postToHost({ type: 'tools_set', on: !win.state.enabled });
+  });
+  $('winMachineRefresh').addEventListener('click', () => { $('winMachine').textContent = 'Reading...'; postToHost({ type: 'machine_get', refresh: true }); });
 })();

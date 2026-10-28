@@ -12,6 +12,11 @@ namespace Levity.Services
         public double SidebarWidth { get; set; } = DotEnv.GetDouble("LEVITY_SIDEBAR_WIDTH", 460);
         public bool LaunchOnStartup { get; set; } = false;
 
+        // Windows tools for the assistant (an MCP server inside Levity, loopback only). Off until the user turns it on.
+        public bool WindowsToolsEnabled { get; set; } = false;
+        public int WindowsToolsPort { get; set; }
+        public string? WindowsToolsToken { get; set; }
+
         /// <summary>How hard the assistant thinks: low (fast, the default), medium or high (deep). Fast is plenty for most tasks and much quicker.</summary>
         public string Effort { get; set; } = AgentLaunch.Fast;
 

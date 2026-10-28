@@ -115,6 +115,7 @@
       <div class="queue" id="queueList" hidden></div>
       <div class="quick-commands">
         <span class="cmd-chip" id="diagramChip" data-cmd="/diagram" title="Draw this project's architecture (git projects)" hidden>/diagram</span>
+        <span class="cmd-chip" id="windowsChip" data-cmd="/windows" title="Windows tools for the assistant, and the changes it made to this PC">/windows</span>
         <span class="cmd-chip" id="ideChip" data-cmd="/open-ide" title="Open this folder in the Antigravity IDE" hidden>/open-ide</span>
         <span class="cmd-chip" id="runChip" data-cmd="/run" title="Run a script from this folder's package.json" hidden>/run</span>
         <span class="cmd-chip" id="gitChip" data-cmd="/git" title="Common git steps: add, commit, push..." hidden>/git</span>
@@ -266,6 +267,40 @@
             <button class="btn ghost" id="diagSaveBtn">Save to docs/ARCHITECTURE.md</button>
             <button class="btn ghost" id="diagDeleteBtn">Delete</button>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- /windows: tools for the assistant, this PC, and what changed -->
+    <section class="sheet" id="windowsSheet" aria-hidden="true">
+      <div class="sheet-head">
+        <div>
+          <h3>Windows tools</h3>
+          <p class="sheet-sub" id="winSub">Let the assistant look at and change Windows, safely</p>
+        </div>
+        <button class="icon-btn" data-close-sheet="windowsSheet" title="Close">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="sheet-body win-body">
+        <div class="win-card">
+          <strong>Let the assistant use Windows tools</strong>
+          <p id="winStateText" class="win-muted">Checking...</p>
+          <p class="win-muted">Typed tools for settings, start-up apps, services, PATH, firewall and more. Every change is written to the list below first, so it can be undone. Changes that need administrator rights only happen after you approve a Windows prompt on this PC.</p>
+          <div class="diag-actions"><button class="btn primary" id="winToggle" disabled>Turn on</button></div>
+          <p id="winElevateNote" class="win-muted" hidden></p>
+        </div>
+
+        <div class="win-card">
+          <strong>This PC</strong>
+          <p id="winMachine" class="win-muted">Not read yet.</p>
+          <div class="diag-actions"><button class="btn ghost" id="winMachineRefresh">Refresh</button></div>
+        </div>
+
+        <div>
+          <strong>Windows changes</strong>
+          <p id="winChangesEmpty" class="win-muted">Nothing has been changed yet.</p>
+          <ul class="action-list" id="winChanges"></ul>
         </div>
       </div>
     </section>

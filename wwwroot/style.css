@@ -682,3 +682,10 @@ body.remote .composer-hl { font-size: 16px; } /* match the textarea (iOS zoom gu
 .open-btn { white-space: nowrap; flex-shrink: 0; }
 
 .earlier-note { text-align: center; color: var(--muted-foreground); font-size: 12px; padding: 6px 0 10px; }
+
+/* /windows */
+.win-body { display: flex; flex-direction: column; gap: 14px; }
+.win-card { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); font-size: 13px; }
+.win-card p, .win-body p { margin: 0; line-height: 1.5; }
+.win-muted { color: var(--muted-foreground); font-size: 12.5px; }
+.action-row.reverted { opacity: 0.55; }

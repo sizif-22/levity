@@ -53,6 +53,7 @@ You need Windows 10 or 11, the [.NET 8 SDK](https://dotnet.microsoft.com/downloa
 | [Phone access](docs/PHONE.md) | relay and web app setup, pairing, security model |
 | [Architecture](docs/ARCHITECTURE.md) | this project drawn by its own `/diagram` feature |
 | [Speed](docs/PERFORMANCE.md) | Fast/Deep switch, why chats feel slow, skipping your shell profile for the assistant |
+| [Windows tools](docs/WINDOWS.md) | let the assistant look at and change Windows safely: tools, change journal with Revert, administrator approval |
 | [Roadmap](docs/ROADMAP.md) | the plan: stay small in memory, understand and change Windows safely, trust features |
 | [Testing](docs/TESTING.md) | the test suites and CI |
 

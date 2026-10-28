@@ -97,7 +97,7 @@ function handleHostMessage(msg) {
       }
       break;
     case 'fast_learner': renderFastLearner(msg); break;
-    case 'actions': case 'git_state': case 'jobs_open':
+    case 'actions': case 'git_state': case 'jobs_open': case 'tools_state': case 'journal': case 'machine':
       if (typeof actionsOnMessage === 'function') actionsOnMessage(msg);
       break;
     case 'diagram': case 'diagram_none': case 'diagram_prepared': case 'diagram_state': case 'diagram_collapsed':
@@ -434,7 +434,7 @@ document.querySelectorAll('.chip[data-prompt]').forEach(chip => {
   chip.addEventListener('click', () => sendPrompt(chip.dataset.prompt));
 });
 document.querySelectorAll('.cmd-chip').forEach(cmd => {
-  if (['/diagram', '/run', '/git', '/open-ide'].includes(cmd.dataset.cmd)) return; // these open their own views (diagram.js, actions.js)
+  if (['/diagram', '/run', '/git', '/open-ide', '/windows'].includes(cmd.dataset.cmd)) return; // these open their own views (diagram.js, actions.js)
   cmd.addEventListener('click', () => {
     const c = cmd.dataset.cmd;
     promptInput.value = c.endsWith('}') || c.endsWith('$') ? c : c + ' ';

@@ -705,3 +705,10 @@ body.remote .job-input, body.remote .git-form textarea, body.remote .git-form in
 .effort-chip.deep { color: var(--foreground); border-color: var(--foreground); }
 
 .earlier-note { text-align: center; color: var(--muted-foreground); font-size: 12px; padding: 6px 0 10px; }
+
+/* /windows */
+.win-body { display: flex; flex-direction: column; gap: 14px; }
+.win-card { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); font-size: 13px; }
+.win-card p, .win-body p { margin: 0; line-height: 1.5; }
+.win-muted { color: var(--muted-foreground); font-size: 12.5px; }
+.action-row.reverted { opacity: 0.55; }

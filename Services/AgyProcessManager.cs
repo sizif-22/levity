@@ -27,6 +27,9 @@ namespace Levity.Services
 
         private bool _hinted;   // the efficiency hint goes out once per assistant process
 
+        /// <summary>Short facts about this PC to send with the first message (set when the Windows tools are on). Must be quick: it never waits for anything.</summary>
+        public Func<string?>? PcFactsProvider { get; set; }
+
         /// <summary>When the assistant last received a message or printed anything. Used to stop it after a quiet spell.</summary>
         public DateTime LastActivityUtc { get; private set; } = DateTime.UtcNow;
         public bool IsRunning => _process != null && !_process.HasExited;
@@ -210,7 +213,9 @@ namespace Levity.Services
                     LastActivityUtc = DateTime.UtcNow;
                     IsBusy = true;
                     OnStatusChanged?.Invoke("Thinking...");
-                    promptText = AgentLaunch.WithHint(promptText, !_hinted);
+                    string? facts = null;
+                    if (!_hinted) { try { facts = PcFactsProvider?.Invoke(); } catch { } }
+                    promptText = AgentLaunch.WithHint(promptText, !_hinted, facts);
                     _hinted = true;
 
                     // NDJSON message format: {"event": "user", "message": {"content": "..."}}

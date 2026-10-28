@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
 using Levity.Services;
+using Levity.Services.WindowsTools;
 using Microsoft.Web.WebView2.Core;
 
 namespace Levity
@@ -90,6 +91,10 @@ namespace Levity
             _agyManager.OnConversationInitialized += id => Dispatcher.BeginInvoke(new Action(() => _sessionConvId = id));
             _sessionCwd = _agyManager.CurrentWorkingDirectory;
             _agyManager.OnErrorReceived += HandleAgyError;
+            // Windows tools for the assistant: off until the user turns the switch on; if it is on, the server comes back on the same port.
+            _toolHost = new ToolHost(_settings, AppSettings.DataDir, Environment.ProcessPath ?? "");
+            _agyManager.PcFactsProvider = () => _settings.WindowsToolsEnabled && _toolHost.Toolbox.Profile.Peek() is { } p ? MachineProfile.Summary(p) : null;
+            _ = ResumeToolsAsync();
             // The assistant is started by the first message, not at launch, and stopped again after a quiet spell (see Housekeeping).
             _lastStatusJson = JsonSerializer.Serialize(new { type = "status", text = "Ready", state = "online" });
             StartHousekeeping();
@@ -455,6 +460,31 @@ namespace Levity
                     case "job_clear":
                         _jobs.ClearFinished();
                         PublishJobs();
+                        break;
+
+                    case "tools_get":
+                        PublishToolsState(clientId);
+                        break;
+
+                    case "tools_set":
+                        if (clientId == null) _ = SetToolsAsync(root.TryGetProperty("on", out var toolsOn) && toolsOn.ValueKind == JsonValueKind.True);
+                        else Reply(clientId, new { type = "toast", text = "Turn the Windows tools on or off from the PC." });
+                        break;
+
+                    case "journal_list":
+                        PublishJournal(clientId);
+                        break;
+
+                    case "journal_revert":
+                    {
+                        string? err = _toolHost.Toolbox.Journal.Revert(GetString(root, "id"));
+                        Reply(clientId, new { type = "toast", text = err ?? "Change reverted." });
+                        PublishJournal(null);
+                        break;
+                    }
+
+                    case "machine_get":
+                        _ = PublishMachineAsync(clientId, root.TryGetProperty("refresh", out var mr) && mr.ValueKind == JsonValueKind.True);
                         break;
 
                     case "job_input":
@@ -1269,6 +1299,69 @@ namespace Levity
             }
         }
 
+        // ---- Windows tools -------------------------------------------------------------------------
+
+        private ToolHost _toolHost = null!;
+
+        private async Task ResumeToolsAsync()
+        {
+            try { await _toolHost.ResumeAsync(); } catch { }
+            if (_settings.WindowsToolsEnabled)
+            {
+                // learn about this PC a little after start-up, so the first message already has the facts and start-up stays quick
+                await Task.Delay(TimeSpan.FromSeconds(20));
+                try { await _toolHost.Toolbox.Profile.GetAsync(); } catch { }
+            }
+            Dispatcher.BeginInvoke(new Action(() => PublishToolsState(null)));
+        }
+
+        private async Task SetToolsAsync(bool on)
+        {
+            var (ok, message) = on ? await _toolHost.EnableAsync() : await _toolHost.DisableAsync();
+            if (!_agyManager.IsBusy) _agyManager.Prepare(null, _agyManager.CurrentConversationId);   // the assistant reads its tool list when it starts
+            Dispatcher.Invoke(() =>
+            {
+                RawPublish(JsonSerializer.Serialize(new { type = "toast", text = message }));
+                PublishToolsState(null);
+            });
+            if (ok && on) _ = _toolHost.Toolbox.Profile.GetAsync();
+        }
+
+        private void PublishToolsState(string? clientId)
+        {
+            var msg = new
+            {
+                type = "tools_state",
+                enabled = _settings.WindowsToolsEnabled,
+                running = _toolHost.Running,
+                count = _toolHost.Toolbox.Registry.All.Count,
+                canElevate = _toolHost.Elevator.WhyNotAvailable == null,
+                elevateNote = _toolHost.Elevator.WhyNotAvailable
+            };
+            if (clientId == null) RawPublish(JsonSerializer.Serialize(msg)); else Reply(clientId, msg);
+        }
+
+        private void PublishJournal(string? clientId)
+        {
+            var msg = new
+            {
+                type = "journal",
+                entries = _toolHost.Toolbox.Journal.List(50).Select(e => new { id = e.Id, time = e.TimeUtc, tool = e.Tool, summary = e.Summary, reverted = e.Reverted, canUndo = _toolHost.Toolbox.Journal.CanUndo(e.UndoKind) && e.UndoKind != "none" })
+            };
+            if (clientId == null) RawPublish(JsonSerializer.Serialize(msg)); else Reply(clientId, msg);
+        }
+
+        private async Task PublishMachineAsync(string? clientId, bool refresh)
+        {
+            try
+            {
+                var profile = await _toolHost.Toolbox.Profile.GetAsync(refresh);
+                var msg = new { type = "machine", summary = MachineProfile.Summary(profile), built = (string?)profile["built_utc"] };
+                Dispatcher.Invoke(() => { if (clientId == null) RawPublish(JsonSerializer.Serialize(msg)); else Reply(clientId, msg); });
+            }
+            catch { Dispatcher.Invoke(() => Reply(clientId, new { type = "toast", text = "Could not read this PC's details." })); }
+        }
+
         // ---- /run and /git buttons -----------------------------------------------------------
 
         /// <summary>Tells the UI which buttons make sense for the current folder (scripts in package.json, a git repository). Sent to one client, or to all.</summary>
@@ -1466,6 +1559,7 @@ namespace Levity
                 effort = AgentLaunch.NormalizeEffort(_settings.Effort)
             });
             PublishActions(clientId);
+            PublishToolsState(clientId);
             if (_lastStatusJson != null) ReplyRaw(clientId, _lastStatusJson);
             ReplyRaw(clientId, _lastSyncJson ?? IdleSyncJson);
             if (_lastQueueJson != null) ReplyRaw(clientId, _lastQueueJson);
@@ -1761,6 +1855,7 @@ namespace Levity
             try { _hub.Dispose(); } catch { }
             try { _jobs.Dispose(); } catch { }
             try { SaveSession(); } catch { }
+            try { _toolHost?.Dispose(); } catch { }
             _hotkeyManager?.Dispose();
             _trayManager?.Dispose();
             System.Windows.Application.Current.Shutdown();

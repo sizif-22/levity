@@ -60,16 +60,16 @@ Risks: a suspended or recreated WebView2 can lose focus or flicker (test the sho
 
 Your assistant already supports extra tools (`mcp_config.json`) and you already have small Windows skills (wallpaper, audio). The plan turns that into one tested, fast, undoable toolbox.
 
-### B1. Machine profile (2 to 3 days)
+### B1. Machine profile (**done**)
 
 - **Why:** the wallpaper chat began by listing drives and searching folders; that is discovery the PC can answer instantly.
 - **Design:** host builds a small profile (Windows edition and build, CPU, RAM, disks and free space, default shell and versions, `winget` list, dev tools found, power plan, display, key folders) and keeps it in `%APPDATA%\Levity\machine.json`. It refreshes in the background after a hash check of what changed and on demand. The first message of a conversation carries a short summary (a few hundred tokens, replacing what the assistant would otherwise discover).
 - **Exit test:** wallpaper task no longer starts with drive and folder discovery; profile builds in under 3 s and adds no idle memory (built, written, released).
 
-### B2. Windows toolbox as an MCP server (1 to 2 weeks)
+### B2. Windows toolbox as an MCP server (**done**: 34 tools, see [WINDOWS.md](WINDOWS.md))
 
 - **Why:** each tool call replaces a model-written PowerShell script plus a shell start (about 8 s).
-- **Design:** a native-AOT shim (`levity-windows-mcp.exe`, a few MB, starts instantly) is registered in `mcp_config.json`. It speaks MCP over standard input and forwards every call over a named pipe to the host, which does the work in-process (no second .NET runtime, no extra memory). Only a running Levity answers; otherwise tools report "Levity is not running".
+- **Design as built (better than the plan):** `agy mcp add` also accepts HTTP servers, so the toolbox is an MCP server inside Levity itself (loopback only, secret token, no browser origins). No shim program and no second process, so zero extra memory; it only runs while you have the switch on. Registration uses the assistant's own `agy mcp add` command, never a hand edit of its files.
 - **Tools:** the full list is in the catalogue below, built in three waves, each tool with its own tests.
 - **Safety:** each tool declares whether it reads or changes things. Changes go through the change journal (B3). Parameters are validated; no tool accepts a command string.
 - **Exit test:** the wallpaper task finishes in **under 60 s with 3 steps or fewer**; every tool has a unit test on real Windows and a refusal test for hostile input.
@@ -98,7 +98,7 @@ Every tool is typed (named parameters, no command strings), says whether it only
 | 3 | `registry` | read a key; change only keys that a runbook or tool names | by key | no free-form registry writes |
 | 3 | `certificates` | list, check expiry, find the one a failing site needs | **yes** to install | |
 
-### B3. Change journal with undo (4 to 5 days)
+### B3. Change journal with undo (**done**)
 
 - **Why:** this is what makes "change things with ease" safe.
 - **Design:** before any change, the host records the previous value (registry export of the key, setting value, file copy, service start type) and the exact undo. A "Windows changes" list on the PC and phone shows what changed, when, and a **Revert** button. Journal entries are plain JSON files, kept for 30 days.
@@ -124,10 +124,10 @@ Every tool is typed (named parameters, no command strings), says whether it only
 
 - **Design:** export apps (`winget`), selected settings, environment variables, PATH and the PowerShell profile into a git repository you own; re-apply on another PC with a dry run first; show what changed on this PC since the last export.
 
-### B8. Elevated helper for admin-only fixes (1 to 2 weeks, after B2 and B3)
+### B8. Administrator changes (**done, by a different design**)
 
 - **Why:** many Windows fixes need administrator rights; Levity runs as you, and a phone cannot click a UAC prompt.
-- **Design:** a small service that accepts only a fixed list of operations from Levity over a protected pipe (caller checked), each operation approved on the PC or phone and written to the journal. No general "run as admin" and no command strings. Needs a security review before release and signed binaries.
+- **Design as built (better than the plan):** no service at all. Levity starts an elevated copy of itself that runs exactly one tool from a short-lived request file, and Windows shows its own approval prompt on the PC: nothing stays running with extra rights, and the person at the PC approving it is the approval. Only offered when Levity is installed in Program Files (an elevated program in a user-writable folder could be replaced). The elevated run refuses anything that is not an administrator tool, any request older than 5 minutes, and any request or result path outside Levity's elevation folder. A security review is still advisable before a public release, and the installer must put Levity in Program Files.
 - **Risk:** this is the most sensitive piece; it ships last and off by default.
 
 ## 6. Workstream C: trust and "walk away"

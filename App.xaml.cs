@@ -15,6 +15,15 @@ namespace Levity
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            // "Levity.exe --run-tool <request file>": the elevated copy that runs one approved Windows tool, then exits. No window, no tray.
+            if (e.Args.Length == 2 && e.Args[0] == "--run-tool")
+            {
+                int code = 1;
+                try { code = Levity.Services.WindowsTools.ElevatedEntry.Run(e.Args[1]); } catch { }
+                Shutdown(code);
+                return;
+            }
+
             Levity.Services.DotEnv.Load(); // before anything reads configuration
             string logFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup.log");
             try { RollingLog.AppendTo(logFile, $"[{DateTime.Now:HH:mm:ss}] OnStartup entered\n"); } catch { }

@@ -41,6 +41,11 @@ namespace Levity.Services
             "[Work efficiently: read several files in one step, prefer one command that does the whole job, use rg or git grep to search " +
             "(not recursive Get-ChildItem), and do not re-verify work that already succeeded.]\n\n";
 
-        public static string WithHint(string prompt, bool firstOfConversation) => firstOfConversation ? EfficiencyHint + prompt : prompt;
+        public static string WithHint(string prompt, bool firstOfConversation, string? pcFacts = null)
+        {
+            if (!firstOfConversation) return prompt;
+            string facts = string.IsNullOrWhiteSpace(pcFacts) ? "" : "[" + pcFacts.Trim() + "]\n\n";
+            return EfficiencyHint + facts + prompt;
+        }
     }
 }
