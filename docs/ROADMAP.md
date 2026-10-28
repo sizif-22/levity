@@ -111,12 +111,37 @@ Your assistant already supports extra tools (`mcp_config.json`) and you already 
 | **T1** | **Undo checkpoint per turn** | Before each assistant turn in a git repo, record a snapshot (a private ref, working tree untouched). "What changed" shows the diff since the snapshot; **Undo that turn** restores it. Outside git, snapshots of the files the turn touched. | removes the fear of unattended runs | 2 to 3 |
 | **T2** | **Push notifications** | Phone web push through the relay for: answer finished, job finished or failed, question waiting. Nothing readable passes through the relay (a generic "Levity has news"; the phone then fetches the details through the encrypted channel). | the "walk away" promise needs it | 1 to 2 |
 | **T3** | **Approvals from the phone** | Run the assistant in a mode that asks before risky actions (it already has permission tools) and show "run X? allow or deny" on the phone and PC. Safe actions stay automatic. | the honest answer to running with permissions skipped | 3 to 5, depends on what the assistant exposes (spike first) |
-| **T4** | **Speed and cost panel** | Per message and per project: time, tokens, slowest steps. The data is already in the stored chats. Flags slow shell starts and repeated work. | your own slowness problem, made visible | 2 |
+| **T4** | **Speed and cost panel** | Per message and per project: time, tokens, slowest steps. The data is already in the stored chats. Flags slow shell starts and repeated work, and includes a read-only size report of `~/.gemini` (what adds input tokens). | your own slowness problem, made visible | 2 |
 | **T5** | **Scheduled tasks and triggers** | "Every morning review open PRs", "when a job fails, diagnose it". Stored as small definitions, run by the host's timer (no extra process), each run shown in a history. | an always-on PC can do this; a chat window cannot | 4 to 6 |
 
-## 7. Later
+## 7. Reach: the other features we discussed
 
-Other backends (Claude Code, Codex, Gemini CLI) to reduce dependence on one tool; voice input on the phone; send a photo or file from the phone; `/preview` (open the PC's dev server on the phone through a tunnel, with a password); a hotkey on selected text anywhere in Windows; several tasks in parallel, each in its own git worktree.
+These were in the first list of ideas. Each follows rule 1 (no idle memory): they load only while used.
+
+| # | Item | Design | Why | Memory note | Effort |
+|---|---|---|---|---|---|
+| **L1** | **Voice input on the phone** | Microphone button next to the message box using the phone browser's built-in speech recognition; the text lands in the box for you to check before sending. Falls back to hiding the button where the browser has no support. | Dictating a task is faster than typing on a phone | none: no model is bundled; the browser vendor's service hears the audio, so the setting says so | 1 to 2 |
+| **L2** | **Send a photo or file from the phone** | Pick or take a photo, it is sealed and sent in chunks through the relay, written straight to `%LOCALAPPDATA%\Levity\inbox` and the assistant is told its path. Size limit (10 MB), file type check, deleted after 7 days. | "Here is a screenshot of the error", a whiteboard, a log file | streamed to disk in chunks; a file is never held whole in memory | 3 to 4 |
+| **L3** | **Hotkey on selected text anywhere in Windows** | A second global hotkey copies the current selection (and restores your clipboard), opens the sidebar with the text shown and buttons: Explain, Fix, Rewrite, Translate. Nothing is sent until you press a button. Apps on a deny list (password managers, banking) are skipped. | A Windows-only advantage over any terminal wrapper | the hotkey hook already exists; no extra process | 3 |
+| **L4** | **`/preview`: open the PC's dev server on the phone** | Starts a tunnel (`cloudflared`, which you already use) to a small password-protected proxy in front of the dev server, shows a link and a QR code, and stops everything when you close it or after 2 hours. | See the app you are building on the real phone | proxy and tunnel exist only while a preview is open | 4 to 5 |
+| **L5** | **Other backends** (Claude Code, Codex, Gemini CLI) | One interface (start, send, stream events, stop, resume) with a small adapter per tool and a list of what each supports (effort levels, resume, permission prompts). The sidebar and phone only see normalised events. Backend picked per project. | Removes the single biggest strategic risk (one vendor's tool) and widens who can use Levity | one process at a time, as now | 7 to 10 for the interface plus the first extra adapter |
+| **L6** | **Several tasks in parallel** | Each task gets its own git worktree and its own assistant process, shown as lanes; finish a lane by merging or discarding it. Default limit of 2 lanes. | Review one change while another is being built | **each assistant process is about 107 MB**, so lanes are capped by a memory budget and idle lanes are stopped (M2) | 8 to 10 (after T1 and L5) |
+
+Not planned unless you ask: a bundled offline speech model (large and slow), and a Mac or Linux version.
+
+## 7b. Loose ends from earlier work
+
+Small items that are not features but should not be forgotten:
+
+| Item | Who | What |
+|---|---|---|
+| Shell profile guard | **you** | Add `if ($env:LEVITY_AGENT) { return }` as the first line of your PowerShell profile(s) so the assistant's shells skip your prompt theme (about 7 s per command). Levity never edits your profile. See [PERFORMANCE.md](PERFORMANCE.md). |
+| Trim `~/.gemini` | you, with a read-only size report from us | `antigravity-backup`, old `brain` data and unused skills add to the input tokens on every turn. A report script that lists sizes (changes nothing) is part of item T4. |
+| Phone app redeploy | you | The phone app only picks up changes after a Vercel redeploy of `web/`. |
+| Old WebView folder | you | `%LOCALAPPDATA%\AntigravitySidebar` can be deleted after the rename to Levity. |
+| `git push` or `pull` asking for credentials | note | They run as plain commands, so a prompt does not appear in the Jobs panel. Use `/cmd$-i git push` (the `-i` flag) when a prompt is likely. |
+| "Review all my projects" threshold | decision | Shown with one project or more today; change to two or more if you prefer. |
+| Diagram font | decision | Plus Jakarta Sans now; Nunito is a one-line change. |
 
 ## 8. Order and calendar
 
@@ -124,11 +149,12 @@ Other backends (Claude Code, Codex, Gemini CLI) to reduce dependence on one tool
 |---|---|---|---|
 | **1. Small and measured** | 1 | M0, M1, M2, M4 | idle memory table before and after; chat stays fast on long days |
 | **2. Foundation** | 2 to 4 | B1, B2 (first eight tools), B3, T4; then M3, M5 | wallpaper in under 60 s; a "Windows changes" list with Revert; the speed panel |
-| **3. Trust** | 4 to 5 | T1, T2, T3 (after the spike) | undo that turn; notifications; allow or deny on the phone |
-| **4. Proactive** | 6 to 8 | B4, B5 (first ten), T5, M6 | PC Doctor; scheduled tasks |
-| **5. Reach** | 9 to 12 | B6, B7, B8, later items | screen help; new-PC setup; admin fixes |
+| **3. Trust and quick wins** | 4 to 5 | T1, T2, T3 (after the spike), L1 voice | undo that turn; notifications; allow or deny on the phone; dictate a task |
+| **4. Proactive** | 6 to 8 | B4, B5 (first ten), T5, L2 attachments, L3 hotkey on selected text, M6 | PC Doctor; scheduled tasks; photo to the assistant; "explain this" anywhere |
+| **5. Reach** | 9 to 12 | B6, B7, B8, L4 preview | screen help; new-PC setup; admin fixes; app on your phone |
+| **6. Bigger bets** | 13 to 16 | L5 other backends, L6 parallel tasks | choose the tool per project; two tasks at once |
 
-Dependencies: B2 needs B3 for any tool that changes things (build them together); B8 needs B2 and B3; T3 needs the permission spike; M3 needs M4 (a recreated page replays a bounded history).
+Dependencies: B2 needs B3 for any tool that changes things (build them together); B8 needs B2 and B3; T3 needs the permission spike; M3 needs M4 (a recreated page replays a bounded history); L6 needs T1 and L5; L2 and L4 need relay message-size limits checked first.
 
 ## 9. How we know it worked
 
