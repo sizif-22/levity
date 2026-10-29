@@ -1,0 +1,31 @@
+web/src/lib/chime.ts
+  s_d7448d4eb56c88::t_cc820ef00d07e2 1-59
+web/public/sw.js
+  s_d7448d4eb56c88::t_cc820ef00d07e2 41-56
+web/tests/chime.spec.tsx
+  s_d7448d4eb56c88::t_cc820ef00d07e2 1-21
+web/src/App.tsx
+  s_d7448d4eb56c88::t_cc820ef00d07e2 18,222
+  s_d7448d4eb56c88::t_90a0c3ec76bffd 223
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b1d8d8f9a07dd6978cabce2516d2366c9af2e53f",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
