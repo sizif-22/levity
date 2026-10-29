@@ -24,6 +24,7 @@
     <Compile Include="..\..\Services\MemoryPolicy.cs" Link="Services\MemoryPolicy.cs" />
     <Compile Include="..\..\Services\Checkpoints.cs" Link="Services\Checkpoints.cs" />
     <Compile Include="..\..\Services\SessionStats.cs" Link="Services\SessionStats.cs" />
+    <Compile Include="..\..\Services\WebPush.cs" Link="Services\WebPush.cs" />
     <Compile Include="..\..\Services\WindowsTools\*.cs" Link="Services\WindowsTools\%(Filename)%(Extension)" />
     <Compile Include="..\..\Services\HistoryCompactor.cs" Link="Services\HistoryCompactor.cs" />
     <Compile Include="..\..\Services\RollingLog.cs" Link="Services\RollingLog.cs" />

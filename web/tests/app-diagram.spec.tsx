@@ -237,3 +237,15 @@ describe('phone App: dictation', () => {
     } finally { delete (window as unknown as Record<string, unknown>).webkitSpeechRecognition; }
   });
 });
+
+describe('phone App: presence', () => {
+  it('tells the PC when the app is on screen and when it is hidden', async () => {
+    const { conn } = await openApp();
+    Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+    await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
+    expect(conn.sent.at(-1)).toEqual({ type: 'presence', visible: false });
+    Object.defineProperty(document, 'hidden', { value: false, configurable: true });
+    await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
+    expect(conn.sent.at(-1)).toEqual({ type: 'presence', visible: true });
+  });
+});

@@ -35,3 +35,21 @@ self.addEventListener('fetch', (event) => {
     return res;
   })));
 });
+
+// Push: the message has no text on purpose. Always show something (iOS cancels subscriptions that stay silent), then open the app on tap.
+self.addEventListener('push', (event) => {
+  event.waitUntil(self.registration.showNotification('Levity has news', {
+    body: 'Open Levity to see it.',
+    icon: '/icon-192.png',
+    badge: '/favicon-32.png',
+    tag: 'levity-news',   // a newer notice replaces an older one instead of piling up
+  }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+    for (const c of list) if ('focus' in c) return c.focus();
+    return self.clients.openWindow('/');
+  }));
+});

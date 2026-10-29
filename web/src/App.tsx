@@ -15,6 +15,7 @@ import { GitSheet, RunSheet } from './components/ActionSheets';
 import { WindowsSheet, type JournalEntryMsg, type ToolsState } from './components/WindowsSheet';
 import { SpeedSheet, type SpeedMsg } from './components/SpeedSheet';
 import { recognizerCtor, appendDictation, finalText, isIosStandalone, micDeniedHelp, type Recognizer } from './lib/voice';
+import { type PushStateMsg } from './components/NotifyRow';
 import { DoctorSheet, type DoctorMsg, type DoctorResultMsg } from './components/DoctorSheet';
 import { CheckpointBar, type CheckpointMsg } from './components/CheckpointBar';
 import type { ActionsMsg, GitStateMsg } from './lib/actions';
@@ -97,6 +98,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const [sync, setSync] = useState<SyncState | null>(null);
   const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs' | 'history' | 'diagram' | 'run' | 'git' | 'windows' | 'speed' | 'doctor'>('none');
   const [speed, setSpeed] = useState<SpeedMsg | null>(null);
+  const [pushState, setPushState] = useState<PushStateMsg | null>(null);
   const [listening, setListening] = useState(false);
   const recog = useRef<Recognizer | null>(null);
   const iosInstalled = isIosStandalone();
@@ -172,6 +174,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         if (type === 'jobs') { setJobs((msg.jobs as Job[]) ?? []); return; }
         if (type === 'checkpoint') { setCheckpoint(msg as unknown as CheckpointMsg); return; }
         if (type === 'speed') { setSpeed(msg as unknown as SpeedMsg); return; }
+        if (type === 'push_state') { setPushState(msg as unknown as PushStateMsg); return; }
         if (type === 'doctor') { setDoctor(msg as unknown as DoctorMsg); setDoctorResult(null); return; }
         if (type === 'doctor_result') { setDoctorResult(msg as unknown as DoctorResultMsg); return; }
         if (type === 'tools_state') { setToolsState(msg as unknown as ToolsState); return; }
@@ -214,6 +217,15 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
 
   const generating = isGenerating(chat);
   const online = linkState === 'online';
+
+  // Tell the PC whether the app is on screen, so it only sends a push when nobody is looking.
+  useEffect(() => {
+    if (!online) return;
+    const tell = () => send({ type: 'presence', visible: !document.hidden });
+    tell();
+    document.addEventListener('visibilitychange', tell);
+    return () => document.removeEventListener('visibilitychange', tell);
+  }, [online, send]);
   const statusText = linkState === 'online' ? chat.status.text
     : linkState === 'host-offline' ? 'PC offline' : linkState === 'connecting' ? 'Connecting…' : 'Reconnecting…';
   const statusState = online ? chat.status.state : 'offline';
@@ -479,7 +491,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
       {sheet === 'history' && <SessionsSheet data={sessions} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'jobs' && <JobsSheet jobs={jobs} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'settings' && (
-        <SettingsSheet device={device} onClose={() => setSheet('none')} onUnpair={onUnpair} confirm={confirm} toast={toast} onOpenWindows={() => setSheet('windows')} />
+        <SettingsSheet device={device} onClose={() => setSheet('none')} onUnpair={onUnpair} confirm={confirm} toast={toast} onOpenWindows={() => setSheet('windows')} push={pushState} send={send} />
       )}
 
       {dialog && <ConfirmDialog {...dialog} onResult={(v) => { dialog.resolve(v); setDialog(null); }} />}

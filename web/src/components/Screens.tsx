@@ -1,3 +1,4 @@
+import { NotifyRow, type PushStateMsg } from './NotifyRow';
 import { Suspense, lazy, useEffect, useRef, useState, type ReactNode } from 'react';
 import { deviceNameGuess, parsePairingText, requestPairing, type PairingLink } from '../lib/pairing';
 // The QR decoder is only needed while pairing, so keep it out of the first load.
@@ -147,7 +148,9 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
   );
 }
 
-export function SettingsSheet({ device, onClose, onUnpair, confirm, toast, onOpenWindows }: {
+export function SettingsSheet({ device, onClose, onUnpair, confirm, toast, onOpenWindows, push, send }: {
+  push?: PushStateMsg | null;
+  send?: (m: Record<string, unknown>) => void;
   device: DeviceRecord;
   onClose: () => void;
   onOpenWindows?: () => void;
@@ -180,7 +183,8 @@ export function SettingsSheet({ device, onClose, onUnpair, confirm, toast, onOpe
             </button>
           </>
         )}
-        <div className="grp-title" style={{ marginTop: onOpenWindows ? 24 : 0 }}>Install</div>
+        {send && <NotifyRow state={push ?? null} send={send} toast={toast} />}
+        <div className="grp-title" style={{ marginTop: onOpenWindows || send ? 24 : 0 }}>Install</div>
         {installed ? (
           <p className="empty" style={{ paddingTop: 0 }}>Running as an installed app.</p>
         ) : canPromptInstall() ? (

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -41,6 +42,7 @@ namespace Levity
         {
             InitializeComponent();
             _hub = new MobileHub(_settings);
+            _push = new PushService(AppSettings.DataDir);
             this.Deactivated += MainWindow_Deactivated;
         }
 
@@ -83,7 +85,7 @@ namespace Levity
             _jobs.Changed += ScheduleJobsPublish;
             _diagrams.Progress += p => Dispatcher.BeginInvoke(new Action(() => PublishDiagramState(p.Root, p.Phase, p.Message)));
             _jobs.BackgroundFinished += j => Dispatcher.BeginInvoke(new Action(() =>
-                RawPublish(JsonSerializer.Serialize(new { type = "toast", text = $"Job #{j.Id} {(j.State == JobState.Stopped ? "stopped" : j.ExitCode == 0 ? "finished" : $"failed (exit {j.ExitCode})")}" }))));
+                { RawPublish(JsonSerializer.Serialize(new { type = "toast", text = $"Job #{j.Id} {(j.State == JobState.Stopped ? "stopped" : j.ExitCode == 0 ? "finished" : $"failed (exit {j.ExitCode})")}" })); PushNews(); }));
 
             // Agy Process Manager
             _agyManager = new AgyProcessManager(_settings.WorkingDirectory!) { Effort = AgentLaunch.NormalizeEffort(_settings.Effort), Mode = AgentLaunch.NormalizeMode(_settings.Mode) };
@@ -679,7 +681,29 @@ namespace Levity
                         break;
 
                     case "device_revoke" when !remote:
+                        _push.Unsubscribe(GetString(root, "id"));
                         _hub.Revoke(GetString(root, "id"));
+                        break;
+
+                    case "presence" when clientId != null:
+                        lock (_visibleClients) { if (root.TryGetProperty("visible", out var vis) && vis.ValueKind == JsonValueKind.True) _visibleClients.Add(clientId); else _visibleClients.Remove(clientId); }
+                        break;
+
+                    case "push_get" when clientId != null:
+                        PublishPushState(clientId);
+                        break;
+
+                    case "push_subscribe" when clientId != null:
+                    {
+                        string? err = _push.Subscribe(DeviceOf(clientId), GetString(root, "endpoint"));
+                        if (err != null) Reply(clientId, new { type = "toast", text = err });
+                        PublishPushState(clientId);
+                        break;
+                    }
+
+                    case "push_unsubscribe" when clientId != null:
+                        _push.Unsubscribe(DeviceOf(clientId));
+                        PublishPushState(clientId);
                         break;
                 }
             }
@@ -1456,6 +1480,8 @@ namespace Levity
         // ---- Windows tools -------------------------------------------------------------------------
 
         private ToolHost _toolHost = null!;
+        private PushService _push = null!;
+        private readonly HashSet<string> _visibleClients = new();
 
         private async Task ResumeToolsAsync()
         {
@@ -1511,6 +1537,21 @@ namespace Levity
         private int _doctorBusy;
 
         /// <summary>Scans the PC (no assistant, no tokens) and sends ranked findings to whoever asked.</summary>
+        private static string DeviceOf(string clientId) { int i = clientId.IndexOf('/'); return i < 0 ? clientId : clientId[..i]; }
+
+        private void PublishPushState(string clientId) =>
+            Reply(clientId, new { type = "push_state", publicKey = _push.PublicKey, subscribed = _push.IsSubscribed(DeviceOf(clientId)) });
+
+        /// <summary>A generic "Levity has news" push, only when no phone is connected to see it already.</summary>
+        private void PushNews()
+        {
+            if (!_push.HasSubscribers) return;
+            // A phone that is connected but not on screen (app in the background) does not count as watching.
+            int visible; lock (_visibleClients) visible = _visibleClients.Count;
+            int phones = Math.Min(_hub.ConnectedPhones, visible);
+            _ = Task.Run(async () => { try { await _push.NotifyIfQuietAsync(phones); } catch { } });
+        }
+
         private async Task RunDoctorAsync(string? clientId)
         {
             if (Interlocked.Exchange(ref _doctorBusy, 1) == 1) { Reply(clientId, new { type = "toast", text = "A scan is already running." }); return; }
@@ -1890,7 +1931,7 @@ namespace Levity
                 if (statusText == "Ready")
                 {
                     Dispatcher.BeginInvoke(new Action(DrainQueue), System.Windows.Threading.DispatcherPriority.Background);
-                    if (_turnSeen) { _turnSeen = false; _ = PublishCheckpointSummaryAsync(); }   // not for the "Ready" the assistant reports when it merely starts
+                    if (_turnSeen) { _turnSeen = false; _ = PublishCheckpointSummaryAsync(); PushNews(); }   // not for the "Ready" the assistant reports when it merely starts
                 }
             });
         }
@@ -2074,6 +2115,7 @@ namespace Levity
             try { _jobs.Dispose(); } catch { }
             try { SaveSession(); } catch { }
             try { _toolHost?.Dispose(); } catch { }
+            try { _push?.Dispose(); } catch { }
             _hotkeyManager?.Dispose();
             _trayManager?.Dispose();
             System.Windows.Application.Current.Shutdown();
