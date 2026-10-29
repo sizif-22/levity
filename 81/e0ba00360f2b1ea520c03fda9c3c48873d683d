@@ -1,0 +1,50 @@
+tests/Levity.Tests/Levity.Tests.csproj
+  s_d7448d4eb56c88::t_a503d6e8201435 27
+tests/Levity.Tests/WebPushTests.cs
+  s_d7448d4eb56c88::t_9423e8e39d8d07 1-240
+web/public/sw.js
+  s_d7448d4eb56c88::t_e2e8f1ab4051ac 38-55
+web/src/components/Screens.tsx
+  s_d7448d4eb56c88::t_df28eac3710591 1,151-153,186-187
+web/src/lib/push.ts
+  s_d7448d4eb56c88::t_e2e8f1ab4051ac 1-76
+Services/WebPush.cs
+  s_d7448d4eb56c88::t_4dc0a5018f6b6e 1-210
+web/tests/push.spec.tsx
+  s_d7448d4eb56c88::t_69f7fc5829721d 1-77
+web/src/App.tsx
+  s_d7448d4eb56c88::t_df28eac3710591 18,101,177,494
+  s_d7448d4eb56c88::t_cfe1e35dee267a 220-228
+web/src/components/NotifyRow.tsx
+  s_d7448d4eb56c88::t_df28eac3710591 1-44
+web/tests/app-diagram.spec.tsx
+  s_d7448d4eb56c88::t_b95482880251bf 248-249
+  s_d7448d4eb56c88::t_53f3d35ff0d920 240-247,250-251
+docs/NOTIFICATIONS.md
+  s_d7448d4eb56c88::t_cf3a78532410af 1-20
+docs/ROADMAP.md
+  s_d7448d4eb56c88::t_cf3a78532410af 139
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_e71d442e9666fa 2,45,88,684,687-707,1483-1484,1540-1554,1934,2118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "81e0ba00360f2b1ea520c03fda9c3c48873d683d",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
