@@ -15,6 +15,7 @@ import { GitSheet, RunSheet } from './components/ActionSheets';
 import { WindowsSheet, type JournalEntryMsg, type ToolsState } from './components/WindowsSheet';
 import { SpeedSheet, type SpeedMsg } from './components/SpeedSheet';
 import { recognizerCtor, appendDictation, finalText, isIosStandalone, micDeniedHelp, type Recognizer } from './lib/voice';
+import { listenForPushChime } from './lib/chime';
 import { type PushStateMsg } from './components/NotifyRow';
 import { DoctorSheet, type DoctorMsg, type DoctorResultMsg } from './components/DoctorSheet';
 import { CheckpointBar, type CheckpointMsg } from './components/CheckpointBar';
@@ -217,6 +218,8 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
 
   const generating = isGenerating(chat);
   const online = linkState === 'online';
+
+  useEffect(() => listenForPushChime(), []);
 
   // Tell the PC whether the app is on screen, so it only sends a push when nobody is looking.
   useEffect(() => {

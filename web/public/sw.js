@@ -38,12 +38,22 @@ self.addEventListener('fetch', (event) => {
 
 // Push: the message has no text on purpose. Always show something (iOS cancels subscriptions that stay silent), then open the app on tap.
 self.addEventListener('push', (event) => {
-  event.waitUntil(self.registration.showNotification('Levity has news', {
-    body: 'Open Levity to see it.',
-    icon: '/icon-192.png',
-    badge: '/favicon-32.png',
-    tag: 'levity-news',   // a newer notice replaces an older one instead of piling up
-  }));
+  event.waitUntil((async () => {
+    // The sound itself is the phone's own notification sound (web push cannot pick a custom one); asking for it
+    // explicitly, with a vibration and a re-alert for each new notice, is everything the page can do.
+    await self.registration.showNotification('Levity has news', {
+      body: 'Open Levity to see it.',
+      icon: '/icon-192.png',
+      badge: '/favicon-32.png',
+      tag: 'levity-news',   // a newer notice replaces an older one instead of piling up
+      renotify: true,       // ...and still makes a sound again
+      silent: false,
+      vibrate: [120, 60, 120],
+    });
+    // An open window plays Levity's own chime as well.
+    const open = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of open) c.postMessage({ type: 'push-received' });
+  })());
 });
 
 self.addEventListener('notificationclick', (event) => {
