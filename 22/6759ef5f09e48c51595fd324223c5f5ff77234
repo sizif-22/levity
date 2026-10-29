@@ -1,0 +1,28 @@
+web/src/App.tsx
+  s_d7448d4eb56c88::t_9ee3407d4e7171 17,102-103,246
+web/src/lib/voice.ts
+  s_d7448d4eb56c88::t_9ee3407d4e7171 31-44
+web/tests/voice.spec.tsx
+  s_d7448d4eb56c88::t_9ee3407d4e7171 24-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "226759ef5f09e48c51595fd324223c5f5ff77234",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
