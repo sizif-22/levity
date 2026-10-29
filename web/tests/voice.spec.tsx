@@ -21,3 +21,20 @@ describe('voice helpers', () => {
     expect(recognizerCtor({})).toBeNull();
   });
 });
+
+import { isIosStandalone, micDeniedHelp } from '../src/lib/voice';
+describe('installed-app microphone', () => {
+  it('spots an iPhone home-screen app, but not Safari in a tab or Android', () => {
+    const iphone = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)';
+    expect(isIosStandalone({ userAgent: iphone, standalone: true }, false)).toBe(true);
+    expect(isIosStandalone({ userAgent: iphone }, true)).toBe(true);
+    expect(isIosStandalone({ userAgent: iphone, standalone: false }, false)).toBe(false);
+    expect(isIosStandalone({ userAgent: 'Mozilla/5.0 (Linux; Android 14)' }, true)).toBe(false);
+    expect(isIosStandalone({ userAgent: 'Macintosh', platform: 'MacIntel', maxTouchPoints: 5, standalone: true }, false)).toBe(true);
+  });
+  it('tells the person what to do, per situation', () => {
+    expect(micDeniedHelp(true, true)).toMatch(/keyboard/);
+    expect(micDeniedHelp(true, false)).toMatch(/App info/);
+    expect(micDeniedHelp(false, false)).toMatch(/lock icon/);
+  });
+});

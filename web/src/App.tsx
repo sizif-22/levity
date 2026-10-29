@@ -14,7 +14,7 @@ import { DiagramSheet } from './components/DiagramSheet';
 import { GitSheet, RunSheet } from './components/ActionSheets';
 import { WindowsSheet, type JournalEntryMsg, type ToolsState } from './components/WindowsSheet';
 import { SpeedSheet, type SpeedMsg } from './components/SpeedSheet';
-import { recognizerCtor, appendDictation, finalText, type Recognizer } from './lib/voice';
+import { recognizerCtor, appendDictation, finalText, isIosStandalone, micDeniedHelp, type Recognizer } from './lib/voice';
 import { DoctorSheet, type DoctorMsg, type DoctorResultMsg } from './components/DoctorSheet';
 import { CheckpointBar, type CheckpointMsg } from './components/CheckpointBar';
 import type { ActionsMsg, GitStateMsg } from './lib/actions';
@@ -99,7 +99,8 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const [speed, setSpeed] = useState<SpeedMsg | null>(null);
   const [listening, setListening] = useState(false);
   const recog = useRef<Recognizer | null>(null);
-  const canDictate = recognizerCtor() !== null;
+  const iosInstalled = isIosStandalone();
+  const canDictate = recognizerCtor() !== null && !iosInstalled;   // the keyboard's own microphone works there instead
   const [doctor, setDoctor] = useState<DoctorMsg | null>(null);
   const [doctorResult, setDoctorResult] = useState<DoctorResultMsg | null>(null);
   const [checkpoint, setCheckpoint] = useState<CheckpointMsg | null>(null);
@@ -242,7 +243,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
     r.continuous = true;
     r.interimResults = true;
     r.onresult = (e) => { const t = finalText(e); if (t) setDraft((d) => appendDictation(d, t)); };
-    r.onerror = (e) => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') toast('Allow the microphone for this site to dictate.'); };
+    r.onerror = (e) => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') toast(micDeniedHelp(window.matchMedia?.('(display-mode: standalone)').matches ?? false, iosInstalled)); };
     r.onend = () => { recog.current = null; setListening(false); };
     recog.current = r;
     setListening(true);

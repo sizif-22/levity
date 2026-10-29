@@ -28,3 +28,17 @@ export function finalText(e: RecognitionEvent): string {
   for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) out += e.results[i][0].transcript + ' ';
   return out.trim();
 }
+
+/** An iPhone or iPad running the installed (home-screen) app. There the microphone prompt for speech recognition never appears and cannot be granted later. */
+export function isIosStandalone(nav: { userAgent?: string; platform?: string; maxTouchPoints?: number; standalone?: boolean } = typeof navigator === 'undefined' ? {} : navigator,
+  displayStandalone: boolean = typeof window !== 'undefined' && !!window.matchMedia?.('(display-mode: standalone)').matches): boolean {
+  const ios = /iPhone|iPad|iPod/.test(nav.userAgent ?? '') || (nav.platform === 'MacIntel' && (nav.maxTouchPoints ?? 0) > 1);
+  return ios && (nav.standalone === true || displayStandalone);
+}
+
+/** What to tell the person when the browser refuses the microphone. */
+export function micDeniedHelp(standalone: boolean, ios: boolean): string {
+  if (ios) return 'This phone does not allow the microphone in an installed app. Tap the microphone on your keyboard to dictate instead.';
+  if (standalone) return 'Microphone is blocked. Long-press the Levity icon > App info > Permissions > Microphone > Allow, or use the microphone on your keyboard.';
+  return 'Microphone is blocked. Tap the lock icon next to the address, allow the microphone, or use the microphone on your keyboard.';
+}
