@@ -13,11 +13,11 @@ namespace Levity.Tests
         {
             var single = MobileImages.AttachImagesToPrompt("Look at this", new[] { @"C:\uploads\img1.jpg" });
             Assert.Contains("Look at this", single);
-            Assert.Contains("[Attached 1 image from mobile:]", single);
+            Assert.Contains("[Attached 1 image:]", single);
             Assert.Contains(@"- Image 1: C:\uploads\img1.jpg", single);
 
             var multi = MobileImages.AttachImagesToPrompt("Compare them", new[] { @"C:\uploads\img1.jpg", @"C:\uploads\img2.png" });
-            Assert.Contains("[Attached 2 images from mobile:]", multi);
+            Assert.Contains("[Attached 2 images:]", multi);
             Assert.Contains(@"- Image 1: C:\uploads\img1.jpg", multi);
             Assert.Contains(@"- Image 2: C:\uploads\img2.png", multi);
 

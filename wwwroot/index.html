@@ -134,7 +134,12 @@
         <span class="cmd-chip" id="gitChip" data-cmd="/git" title="Common git steps: add, commit, push..." hidden>/git</span>
         <span class="cmd-chip" data-cmd="/cmd$" title="Run a CLI command directly (no AI), e.g. /cmd$git status. A slow command moves to the Jobs panel by itself. Without $ the agent runs it.">/cmd</span>
       </div>
+      <div class="attachments-bar" id="attachmentsBar" hidden></div>
       <div class="composer">
+        <input type="file" id="imageFileInput" accept="image/*" multiple style="display: none;">
+        <button class="send-btn attach-btn" id="attachBtn" type="button" title="Attach images">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </button>
         <div class="input-stack">
           <div class="composer-hl" id="promptHl" aria-hidden="true"></div>
           <textarea id="promptInput" placeholder="Ask Levity anything… or /cmd$git status" rows="1" enterkeyhint="send"></textarea>

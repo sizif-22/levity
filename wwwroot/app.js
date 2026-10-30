@@ -379,11 +379,20 @@ function syncPromptHl() {
   $('promptHl').scrollTop = promptInput.scrollTop;
 }
 
-function appendUserMessage(text, source) {
+function appendUserMessage(text, source, images) {
   welcomeScreen.style.display = 'none';
   const row = document.createElement('div');
   row.className = 'message-row user';
-  row.innerHTML = `<div class="user-bubble${CMD_RE.test(text) ? ' cmd-bubble' : ''}">${userBubbleHtml(text)}</div>`;
+  let imagesHtml = '';
+  if (Array.isArray(images) && images.length > 0) {
+    const thumbs = images.map((p, idx) => {
+      const filename = escapeHtml(String(p).split(/[\\/]/).pop());
+      return `<div class="user-image-thumb"><span class="user-image-tag">📷 Image ${idx + 1}</span><span class="user-image-path">${filename}</span></div>`;
+    }).join('');
+    imagesHtml = `<div class="user-images-grid">${thumbs}</div>`;
+  }
+  const textHtml = text ? userBubbleHtml(text) : '';
+  row.innerHTML = `<div class="user-bubble${CMD_RE.test(text) ? ' cmd-bubble' : ''}">${textHtml}${imagesHtml}</div>`;
   // Show where a message came from when it was not typed on this device.
   const fromOther = (source === 'mobile' && isHost) || (source === 'desktop' && !isHost);
   if (fromOther) row.insertAdjacentHTML('beforeend', `<span class="via">from ${source === 'mobile' ? 'your phone' : 'your PC'}</span>`);
@@ -391,23 +400,134 @@ function appendUserMessage(text, source) {
   scrollToBottom();
 }
 
-function sendPrompt(text) {
+// ---------------------------------------------------------------------------
+// Image attachments (desktop & mobile)
+// ---------------------------------------------------------------------------
+
+let pendingAttachments = [];
+const MAX_IMAGE_DIM = 1600;
+const JPEG_QUALITY = 0.85;
+const MAX_TOTAL_IMAGE_BYTES = 10 * 1024 * 1024;
+
+async function processImageFile(file) {
+  const isPng = file.type === 'image/png';
+  const outMime = isPng ? 'image/png' : 'image/jpeg';
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Failed to read image'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Failed to decode image'));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > MAX_IMAGE_DIM || height > MAX_IMAGE_DIM) {
+          if (width > height) {
+            height = Math.round((height * MAX_IMAGE_DIM) / width);
+            width = MAX_IMAGE_DIM;
+          } else {
+            width = Math.round((width * MAX_IMAGE_DIM) / height);
+            height = MAX_IMAGE_DIM;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('Canvas context unavailable'));
+        if (outMime === 'image/jpeg') {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, width, height);
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL(outMime, JPEG_QUALITY);
+        const comma = dataUrl.indexOf(',');
+        const base64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+        resolve({
+          name: file.name || 'image.jpg',
+          type: outMime,
+          data: base64
+        });
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderAttachments() {
+  const bar = $('attachmentsBar');
+  if (!bar) return;
+  if (pendingAttachments.length === 0) {
+    bar.innerHTML = '';
+    bar.hidden = true;
+    return;
+  }
+  bar.hidden = false;
+  bar.innerHTML = pendingAttachments.map((att, idx) => `
+    <div class="attachment-chip" data-idx="${idx}">
+      <img src="data:${escapeHtml(att.type)};base64,${att.data}" alt="${escapeHtml(att.name)}" class="attachment-preview" />
+      <span class="attachment-name">${escapeHtml(att.name)}</span>
+      <button type="button" class="attachment-remove" title="Remove" data-remove="${idx}">×</button>
+    </div>
+  `).join('');
+
+  bar.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.remove, 10);
+      pendingAttachments.splice(idx, 1);
+      renderAttachments();
+    });
+  });
+}
+
+async function addImageFiles(fileList) {
+  if (!fileList || fileList.length === 0) return;
+  let totalBytes = pendingAttachments.reduce((acc, a) => acc + (a.data.length * 3) / 4, 0);
+  let added = 0;
+  for (let i = 0; i < fileList.length; i++) {
+    const file = fileList[i];
+    if (!file.type || !file.type.startsWith('image/')) continue;
+    try {
+      const img = await processImageFile(file);
+      const approxSize = (img.data.length * 3) / 4;
+      if (totalBytes + approxSize > MAX_TOTAL_IMAGE_BYTES) {
+        toast('Images exceed maximum upload limit (10MB)');
+        break;
+      }
+      totalBytes += approxSize;
+      pendingAttachments.push(img);
+      added++;
+    } catch (e) {
+      toast('Failed to process image');
+    }
+  }
+  if (added > 0) renderAttachments();
+}
+
+function sendPrompt(text, images) {
   text = (text || '').trim();
-  if (!text) return;
-  postToHost({ type: 'send_prompt', text });
+  const hasImages = Array.isArray(images) && images.length > 0;
+  if (!text && !hasImages) return;
+  const payload = { type: 'send_prompt', text };
+  if (hasImages) payload.images = images;
+  postToHost(payload);
 }
 
 function sendCurrentPrompt() {
   const text = promptInput.value;
-  if (!text.trim()) return;
-  if (text.trim().toLowerCase() === '/diagram') {   // a view, not a message to the assistant
+  const hasImages = pendingAttachments.length > 0;
+  if (!text.trim() && !hasImages) return;
+  if (text.trim().toLowerCase() === '/diagram' && !hasImages) {   // a view, not a message to the assistant
     promptInput.value = '';
     promptInput.style.height = 'auto';
     syncPromptHl();
     openDiagram(currentCwd);
     return;
   }
-  sendPrompt(text);
+  const images = pendingAttachments.length > 0 ? [...pendingAttachments] : undefined;
+  pendingAttachments = [];
+  renderAttachments();
+  sendPrompt(text, images);
   promptInput.value = '';
   promptInput.style.height = 'auto';
   syncPromptHl();
@@ -441,6 +561,65 @@ promptInput.addEventListener('input', () => {
   promptInput.style.height = Math.min(promptInput.scrollHeight, 180) + 'px';
 });
 sendBtn.addEventListener('click', sendCurrentPrompt);
+
+const attachBtn = $('attachBtn');
+const imageFileInput = $('imageFileInput');
+if (attachBtn && imageFileInput) {
+  attachBtn.addEventListener('click', () => imageFileInput.click());
+  imageFileInput.addEventListener('change', async (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      await addImageFiles(e.target.files);
+      imageFileInput.value = '';
+    }
+  });
+}
+
+// Paste image support on prompt input
+promptInput.addEventListener('paste', async (e) => {
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  const imageFiles = [];
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf('image') !== -1) {
+      const file = items[i].getAsFile();
+      if (file) imageFiles.push(file);
+    }
+  }
+  if (imageFiles.length > 0) {
+    e.preventDefault();
+    await addImageFiles(imageFiles);
+  }
+});
+
+// Drag & drop image files over composer
+const composerWrap = document.querySelector('.composer-wrap');
+if (composerWrap) {
+  let dragCounter = 0;
+  composerWrap.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    dragCounter++;
+    composerWrap.classList.add('drag-over');
+  });
+  composerWrap.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dragCounter--;
+    if (dragCounter <= 0) {
+      dragCounter = 0;
+      composerWrap.classList.remove('drag-over');
+    }
+  });
+  composerWrap.addEventListener('dragover', (e) => {
+    e.preventDefault();
+  });
+  composerWrap.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    composerWrap.classList.remove('drag-over');
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      await addImageFiles(e.dataTransfer.files);
+    }
+  });
+}
 
 document.querySelectorAll('.chip[data-prompt]').forEach(chip => {
   chip.addEventListener('click', () => sendPrompt(chip.dataset.prompt));

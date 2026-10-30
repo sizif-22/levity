@@ -103,8 +103,8 @@ namespace Levity.Services
             }
 
             sb.AppendLine(paths.Count == 1
-                ? "[Attached 1 image from mobile:]"
-                : $"[Attached {paths.Count} images from mobile:]");
+                ? "[Attached 1 image:]"
+                : $"[Attached {paths.Count} images:]");
 
             for (int i = 0; i < paths.Count; i++)
             {
