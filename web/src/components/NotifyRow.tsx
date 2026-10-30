@@ -22,7 +22,7 @@ export function NotifyRow({ state, send, toast }: { state: PushStateMsg | null; 
       } else {
         const r = await subscribeForPush(state.publicKey);
         if ('error' in r) toast(r.error);
-        else send({ type: 'push_subscribe', endpoint: r.endpoint });
+        else send({ type: 'push_subscribe', endpoint: r.endpoint, p256dh: r.p256dh, auth: r.auth });
       }
     } finally { setBusy(false); }
   };

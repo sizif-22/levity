@@ -194,6 +194,23 @@ public class WebPushTests
     }
 
     [Fact]
+    public async Task A_push_with_title_and_body_is_encrypted_when_keys_present()
+    {
+        var fake = new FakePushServer();
+        using var s = new PushService(Dir(), fake);
+        // Valid p256dh (65-byte uncompressed point) and auth (16-byte secret) base64url strings
+        string p256dh = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U";
+        string auth = "140e0gT76y16gT76y16gTw";
+        s.Subscribe("dev1", Chrome, p256dh, auth);
+        Assert.Equal(1, await s.NotifyAsync("Levity · MyProject", "Answer completed: Fixed the notification issue"));
+        var r = fake.Requests.Single();
+        Assert.Equal(HttpMethod.Post, r.Method);
+        Assert.Equal(Chrome, r.RequestUri!.ToString());
+        Assert.True(fake.BodyLengths.Single() > 0);
+        Assert.Equal("aesgcm", r.Content!.Headers.ContentEncoding.Single());
+    }
+
+    [Fact]
     public async Task A_subscription_the_service_says_is_gone_is_forgotten_but_a_hiccup_is_not()
     {
         var fake = new FakePushServer { Reply = u => u.AbsoluteUri.Contains("gone") ? HttpStatusCode.Gone : u.AbsoluteUri.Contains("busy") ? HttpStatusCode.TooManyRequests : HttpStatusCode.Created };

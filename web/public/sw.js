@@ -36,13 +36,29 @@ self.addEventListener('fetch', (event) => {
   })));
 });
 
-// Push: the message has no text on purpose. Always show something (iOS cancels subscriptions that stay silent), then open the app on tap.
+// Push: notifications can include an encrypted payload with title and body. Always show something (iOS cancels subscriptions that stay silent), then open the app on tap.
 self.addEventListener('push', (event) => {
   event.waitUntil((async () => {
+    let title = 'Levity has news';
+    let body = 'Open Levity to see it.';
+
+    if (event.data) {
+      try {
+        const data = event.data.json();
+        if (data && typeof data === 'object') {
+          if (typeof data.title === 'string' && data.title) title = data.title;
+          if (typeof data.body === 'string' && data.body) body = data.body;
+        }
+      } catch {
+        const text = event.data.text();
+        if (text) body = text;
+      }
+    }
+
     // The sound itself is the phone's own notification sound (web push cannot pick a custom one); asking for it
     // explicitly, with a vibration and a re-alert for each new notice, is everything the page can do.
-    await self.registration.showNotification('Levity has news', {
-      body: 'Open Levity to see it.',
+    await self.registration.showNotification(title, {
+      body,
       icon: '/icon-192.png',
       badge: '/favicon-32.png',
       tag: 'levity-news',   // a newer notice replaces an older one instead of piling up

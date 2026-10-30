@@ -31,7 +31,11 @@ describe('push support', () => {
 
 describe('NotifyRow', () => {
   const installFakes = (permission: 'granted' | 'denied') => {
-    const sub = { endpoint: 'https://fcm.googleapis.com/fcm/send/abc', unsubscribe: vi.fn(async () => true) };
+    const sub = {
+      endpoint: 'https://fcm.googleapis.com/fcm/send/abc',
+      toJSON: () => ({ keys: { p256dh: 'test-p256dh', auth: 'test-auth' } }),
+      unsubscribe: vi.fn(async () => true),
+    };
     const reg = { pushManager: { getSubscription: vi.fn(async () => null), subscribe: vi.fn(async () => sub) } };
     Object.defineProperty(navigator, 'serviceWorker', { value: { ready: Promise.resolve(reg) }, configurable: true });
     (window as unknown as Record<string, unknown>).PushManager = class {};
@@ -52,7 +56,12 @@ describe('NotifyRow', () => {
     const send = vi.fn();
     render(<NotifyRow state={{ type: 'push_state', publicKey: 'AQID', subscribed: false }} send={send} toast={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Turn on' }));
-    await waitFor(() => expect(send).toHaveBeenCalledWith({ type: 'push_subscribe', endpoint: 'https://fcm.googleapis.com/fcm/send/abc' }));
+    await waitFor(() => expect(send).toHaveBeenCalledWith({
+      type: 'push_subscribe',
+      endpoint: 'https://fcm.googleapis.com/fcm/send/abc',
+      p256dh: 'test-p256dh',
+      auth: 'test-auth',
+    }));
     const opts = reg.pushManager.subscribe.mock.calls[0][0] as { userVisibleOnly: boolean };
     expect(opts.userVisibleOnly).toBe(true);
   });

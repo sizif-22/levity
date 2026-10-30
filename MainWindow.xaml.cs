@@ -85,7 +85,16 @@ namespace Levity
             _jobs.Changed += ScheduleJobsPublish;
             _diagrams.Progress += p => Dispatcher.BeginInvoke(new Action(() => PublishDiagramState(p.Root, p.Phase, p.Message)));
             _jobs.BackgroundFinished += j => Dispatcher.BeginInvoke(new Action(() =>
-                { RawPublish(JsonSerializer.Serialize(new { type = "toast", text = $"Job #{j.Id} {(j.State == JobState.Stopped ? "stopped" : j.ExitCode == 0 ? "finished" : $"failed (exit {j.ExitCode})")}" })); PushNews(); }));
+            {
+                string jobStatus = j.State == JobState.Stopped ? "stopped" : j.ExitCode == 0 ? "finished" : $"failed (exit {j.ExitCode})";
+                RawPublish(JsonSerializer.Serialize(new { type = "toast", text = $"Job #{j.Id} {jobStatus}" }));
+                string dirName = string.IsNullOrWhiteSpace(j.Cwd) ? "General" : System.IO.Path.GetFileName(j.Cwd.TrimEnd('\\', '/'));
+                if (string.IsNullOrEmpty(dirName)) dirName = j.Cwd;
+                string cmdSnippet = string.IsNullOrWhiteSpace(j.Command) ? "" : j.Command.Length > 60 ? j.Command[..60] + "..." : j.Command;
+                string jobBody = string.IsNullOrEmpty(cmdSnippet) ? $"Job #{j.Id} {jobStatus} in [{dirName}]" : $"Job #{j.Id} {jobStatus} in [{dirName}]: {cmdSnippet}";
+                PushNews($"Levity · {dirName}", jobBody);
+                if (!_isSidebarVisible) _trayManager.ShowNotification($"Levity · {dirName}", jobBody);
+            }));
 
             // Agy Process Manager
             _agyManager = new AgyProcessManager(_settings.WorkingDirectory!) { Effort = AgentLaunch.NormalizeEffort(_settings.Effort), Mode = AgentLaunch.NormalizeMode(_settings.Mode) };
@@ -781,7 +790,7 @@ namespace Levity
 
                     case "push_subscribe" when clientId != null:
                     {
-                        string? err = _push.Subscribe(DeviceOf(clientId), GetString(root, "endpoint"));
+                        string? err = _push.Subscribe(DeviceOf(clientId), GetString(root, "endpoint"), GetString(root, "p256dh"), GetString(root, "auth"));
                         if (err != null) Reply(clientId, new { type = "toast", text = err });
                         PublishPushState(clientId);
                         break;
@@ -1646,14 +1655,14 @@ namespace Levity
         private void PublishPushState(string clientId) =>
             Reply(clientId, new { type = "push_state", publicKey = _push.PublicKey, subscribed = _push.IsSubscribed(DeviceOf(clientId)) });
 
-        /// <summary>A generic "Levity has news" push, only when no phone is connected to see it already.</summary>
-        private void PushNews()
+        /// <summary>Pushes notification to connected phones with project/status/snippet, only when no phone is active on screen.</summary>
+        private void PushNews(string? title = null, string? body = null)
         {
             if (!_push.HasSubscribers) return;
             // A phone that is connected but not on screen (app in the background) does not count as watching.
             int visible; lock (_visibleClients) visible = _visibleClients.Count;
             int phones = Math.Min(_hub.ConnectedPhones, visible);
-            _ = Task.Run(async () => { try { await _push.NotifyIfQuietAsync(phones); } catch { } });
+            _ = Task.Run(async () => { try { await _push.NotifyIfQuietAsync(phones, title, body); } catch { } });
         }
 
         private async Task RunDoctorAsync(string? clientId)
@@ -1981,6 +1990,8 @@ namespace Levity
             });
         }
 
+        private readonly System.Text.StringBuilder _currentTurnResponse = new();
+
         private void HandleAgyEvent(string rawJson)
         {
             Dispatcher.Invoke(() =>
@@ -1988,7 +1999,19 @@ namespace Levity
                 try
                 {
                     using var doc = JsonDocument.Parse(rawJson);
-                    Publish(new { type = "agy_event", payload = doc.RootElement });
+                    var root = doc.RootElement;
+                    if (root.TryGetProperty("event", out var evt) && evt.GetString() == "step_update"
+                        && root.TryGetProperty("step_update", out var su)
+                        && su.TryGetProperty("step_type", out var st) && st.GetString() == "agent_response"
+                        && su.TryGetProperty("text_delta", out var td) && td.ValueKind == JsonValueKind.String)
+                    {
+                        string delta = td.GetString() ?? "";
+                        if (!string.IsNullOrEmpty(delta))
+                        {
+                            if (_currentTurnResponse.Length < 1000) _currentTurnResponse.Append(delta);
+                        }
+                    }
+                    Publish(new { type = "agy_event", payload = root });
                 }
                 catch { }
                 PublishFastLearner(rawJson);
@@ -2036,7 +2059,36 @@ namespace Levity
                 if (statusText == "Ready")
                 {
                     Dispatcher.BeginInvoke(new Action(DrainQueue), System.Windows.Threading.DispatcherPriority.Background);
-                    if (_turnSeen) { _turnSeen = false; _ = PublishCheckpointSummaryAsync(); PushNews(); }   // not for the "Ready" the assistant reports when it merely starts
+                    if (_turnSeen)
+                    {
+                        _turnSeen = false;
+                        _ = PublishCheckpointSummaryAsync();
+
+                        string rawResp = _currentTurnResponse.ToString().Trim();
+                        _currentTurnResponse.Clear();
+
+                        string cwd = _agyManager.CurrentWorkingDirectory;
+                        string dirName = string.IsNullOrWhiteSpace(cwd) ? "General" : System.IO.Path.GetFileName(cwd.TrimEnd('\\', '/'));
+                        if (string.IsNullOrEmpty(dirName)) dirName = cwd;
+
+                        string preview = "";
+                        if (!string.IsNullOrWhiteSpace(rawResp))
+                        {
+                            // Strip common markdown markers (headers, bold, italics, backticks) for a clean notification snippet
+                            string clean = System.Text.RegularExpressions.Regex.Replace(rawResp, @"[#*`_]", "").Trim();
+                            clean = System.Text.RegularExpressions.Regex.Replace(clean, @"\s+", " ");
+                            preview = clean.Length > 120 ? clean[..120] + "..." : clean;
+                        }
+
+                        string title = $"Levity · {dirName}";
+                        string body = string.IsNullOrEmpty(preview) ? $"Assistant finished in [{dirName}]" : $"[{dirName}] {preview}";
+                        PushNews(title, body);
+                        if (!_isSidebarVisible) _trayManager.ShowNotification(title, string.IsNullOrEmpty(preview) ? "Assistant finished work." : preview);
+                    }
+                    else
+                    {
+                        _currentTurnResponse.Clear();
+                    }
                 }
             });
         }

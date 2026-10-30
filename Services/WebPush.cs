@@ -14,11 +14,11 @@ namespace Levity.Services
 {
     public enum PushOutcome { Sent, Gone, Failed, Rejected }
 
-    public sealed record PushSubscription(string Device, string Endpoint, DateTime AddedUtc);
+    public sealed record PushSubscription(string Device, string Endpoint, DateTime AddedUtc, string? P256DH = null, string? Auth = null);
 
     /// <summary>
-    /// Web Push without a payload. The phone's service worker shows a generic "Levity has news" and the app then fetches the details through the
-    /// encrypted channel, so nothing readable ever reaches a push service. Signed with a VAPID key pair that lives only on this PC.
+    /// Web Push notifications for connected devices. Can deliver an encrypted payload (RFC 8291 aes128gcm)
+    /// when the phone provides p256dh and auth keys, or an empty ping if keys are absent. Signed with VAPID (RFC 8292).
     /// </summary>
     public static class WebPushRules
     {
@@ -60,13 +60,15 @@ namespace Levity.Services
     public sealed class VapidKeys
     {
         public string PublicKey { get; }          // 65-byte uncompressed point, base64url: what the browser needs to subscribe
+        public string PrivateKey { get; }         // 32-byte scalar, base64url
         private readonly ECDsa _key;
 
         private VapidKeys(ECDsa key)
         {
             _key = key;
-            var q = key.ExportParameters(false).Q;
-            PublicKey = WebPushRules.Base64Url(new byte[] { 4 }.Concat(q.X!).Concat(q.Y!).ToArray());
+            var p = key.ExportParameters(true);
+            PublicKey = WebPushRules.Base64Url(new byte[] { 4 }.Concat(p.Q.X!).Concat(p.Q.Y!).ToArray());
+            PrivateKey = WebPushRules.Base64Url(p.D!);
         }
 
         public static VapidKeys Generate() => new(ECDsa.Create(ECCurve.NamedCurves.nistP256));
@@ -145,7 +147,7 @@ namespace Levity.Services
         }
 
         /// <summary>Remembers where to push for this device. Returns an error text, or null when stored.</summary>
-        public string? Subscribe(string device, string? endpoint)
+        public string? Subscribe(string device, string? endpoint, string? p256dh = null, string? auth = null)
         {
             if (string.IsNullOrWhiteSpace(device)) return "Unknown device.";
             if (!WebPushRules.IsAllowedEndpoint(endpoint)) return "That push address is not one Levity trusts.";
@@ -155,7 +157,7 @@ namespace Levity.Services
                 var mine = _subs.Where(s => s.Device == device).ToList();
                 while (mine.Count >= WebPushRules.MaxPerDevice) { _subs.Remove(mine[0]); mine.RemoveAt(0); }
                 if (_subs.Count >= WebPushRules.MaxTotal) return "Too many phones are subscribed. Turn it off on one first.";
-                _subs.Add(new PushSubscription(device, endpoint!, _now()));
+                _subs.Add(new PushSubscription(device, endpoint!, _now(), p256dh, auth));
                 Save();
             }
             return null;
@@ -166,15 +168,15 @@ namespace Levity.Services
             lock (_lock) { if (_subs.RemoveAll(s => s.Device == device && (endpoint == null || s.Endpoint == endpoint)) > 0) Save(); }
         }
 
-        /// <summary>Sends one empty push to every subscription of every device. Dead subscriptions (404, 410) are dropped. Returns how many were delivered to the push service.</summary>
-        public async Task<int> NotifyAsync(CancellationToken ct = default)
+        /// <summary>Sends a push to every subscription of every device. Dead subscriptions (404, 410) are dropped. Returns how many were delivered to the push service.</summary>
+        public async Task<int> NotifyAsync(string? title = null, string? body = null, CancellationToken ct = default)
         {
             List<PushSubscription> targets;
             lock (_lock) targets = _subs.ToList();
             int sent = 0;
             foreach (var s in targets)
             {
-                var outcome = await SendAsync(s.Endpoint, ct);
+                var outcome = await SendAsync(s, title, body, ct);
                 if (outcome == PushOutcome.Sent) sent++;
                 else if (outcome == PushOutcome.Gone) { lock (_lock) { _subs.Remove(s); Save(); } }
             }
@@ -182,27 +184,60 @@ namespace Levity.Services
         }
 
         /// <summary>Applies the quiet rules, then pushes. Called from the app's events.</summary>
-        public async Task<int> NotifyIfQuietAsync(int connectedPhones, CancellationToken ct = default)
+        public async Task<int> NotifyIfQuietAsync(int connectedPhones, string? title = null, string? body = null, CancellationToken ct = default)
         {
             DateTime now = _now();
             lock (_lock) { if (!WebPushRules.ShouldNotify(_subs.Count > 0, connectedPhones, _lastSent, now)) return 0; _lastSent = now; }
-            return await NotifyAsync(ct);
+            return await NotifyAsync(title, body, ct);
         }
 
-        public async Task<PushOutcome> SendAsync(string endpoint, CancellationToken ct = default)
+        public Task<PushOutcome> SendAsync(string endpoint, CancellationToken ct = default) =>
+            SendAsync(new PushSubscription("", endpoint, _now()), null, null, ct);
+
+        public async Task<PushOutcome> SendAsync(PushSubscription sub, string? title = null, string? body = null, CancellationToken ct = default)
         {
-            if (!WebPushRules.IsAllowedEndpoint(endpoint)) return PushOutcome.Rejected;
+            if (!WebPushRules.IsAllowedEndpoint(sub.Endpoint)) return PushOutcome.Rejected;
             try
             {
-                using var req = new HttpRequestMessage(HttpMethod.Post, endpoint) { Content = new ByteArrayContent(Array.Empty<byte>()) };
-                req.Headers.TryAddWithoutValidation("Authorization", _keys.AuthorizationFor(endpoint, Subject, _now()));
-                req.Headers.TryAddWithoutValidation("TTL", "3600");
-                req.Headers.TryAddWithoutValidation("Urgency", "normal");
-                using var res = await _http.SendAsync(req, ct);
-                if (res.IsSuccessStatusCode) return PushOutcome.Sent;
-                return res.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Gone ? PushOutcome.Gone : PushOutcome.Failed;
+                HttpRequestMessage req;
+                bool hasPayload = !string.IsNullOrEmpty(title) || !string.IsNullOrEmpty(body);
+                if (hasPayload && !string.IsNullOrWhiteSpace(sub.P256DH) && !string.IsNullOrWhiteSpace(sub.Auth))
+                {
+                    try
+                    {
+                        var client = new global::WebPush.WebPushClient();
+                        client.SetVapidDetails(Subject, _keys.PublicKey, _keys.PrivateKey);
+                        var wpSub = new global::WebPush.PushSubscription(sub.Endpoint, sub.P256DH, sub.Auth);
+                        string jsonPayload = JsonSerializer.Serialize(new { title, body });
+                        req = client.GenerateRequestDetails(wpSub, jsonPayload, null);
+                    }
+                    catch
+                    {
+                        req = BuildEmptyRequest(sub.Endpoint);
+                    }
+                }
+                else
+                {
+                    req = BuildEmptyRequest(sub.Endpoint);
+                }
+
+                using (req)
+                {
+                    using var res = await _http.SendAsync(req, ct);
+                    if (res.IsSuccessStatusCode) return PushOutcome.Sent;
+                    return res.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Gone ? PushOutcome.Gone : PushOutcome.Failed;
+                }
             }
             catch { return PushOutcome.Failed; }
+        }
+
+        private HttpRequestMessage BuildEmptyRequest(string endpoint)
+        {
+            var req = new HttpRequestMessage(HttpMethod.Post, endpoint) { Content = new ByteArrayContent(Array.Empty<byte>()) };
+            req.Headers.TryAddWithoutValidation("Authorization", _keys.AuthorizationFor(endpoint, Subject, _now()));
+            req.Headers.TryAddWithoutValidation("TTL", "3600");
+            req.Headers.TryAddWithoutValidation("Urgency", "normal");
+            return req;
         }
 
         public void Dispose() => _http.Dispose();

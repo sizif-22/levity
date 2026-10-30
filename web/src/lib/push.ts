@@ -51,7 +51,7 @@ export function pushHelp(s: PushSupport, ios: boolean): string {
 }
 
 /** Asks permission (must be called from a tap), subscribes with the PC's key and returns the address to give to the PC. */
-export async function subscribeForPush(publicKey: string): Promise<{ endpoint: string } | { error: string }> {
+export async function subscribeForPush(publicKey: string): Promise<{ endpoint: string; p256dh?: string; auth?: string } | { error: string }> {
   try {
     if (Notification.permission !== 'granted') {
       const p = await Notification.requestPermission();
@@ -62,7 +62,12 @@ export async function subscribeForPush(publicKey: string): Promise<{ endpoint: s
     // A subscription made with another key (a reinstalled PC app) must be replaced.
     if (existing) await existing.unsubscribe().catch(() => undefined);
     const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource });
-    return { endpoint: sub.endpoint };
+    const json = typeof sub.toJSON === 'function' ? sub.toJSON() : null;
+    return {
+      endpoint: sub.endpoint,
+      p256dh: json?.keys?.p256dh,
+      auth: json?.keys?.auth,
+    };
   } catch (e) {
     return { error: 'Could not turn notifications on: ' + (e instanceof Error ? e.message : String(e)) };
   }
