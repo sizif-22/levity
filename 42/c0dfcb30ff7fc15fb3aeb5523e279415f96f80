@@ -1,0 +1,27 @@
+Services/AgentLaunch.cs
+  s_3ec78a8183145b::t_e2918dd9def2e4 48-51
+  s_3ec78a8183145b::t_6550d6b4533e68 52
+Services/SessionStats.cs
+  s_3ec78a8183145b::t_e2918dd9def2e4 81,85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "42c0dfcb30ff7fc15fb3aeb5523e279415f96f80",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_3ec78a8183145b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d8ed9029-7873-4e0e-9446-55e7d54effaa",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
