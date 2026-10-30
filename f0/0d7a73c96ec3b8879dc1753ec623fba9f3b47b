@@ -1,0 +1,26 @@
+Run-Tests.ps1
+  s_3ec78a8183145b::t_6f8c09b4f03b21 15-20,27-28,35-48,60-114,117
+docs/PERFORMANCE.md
+  s_3ec78a8183145b::t_97786f19e6f7dc 69-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f00d7a73c96ec3b8879dc1753ec623fba9f3b47b",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_3ec78a8183145b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d8ed9029-7873-4e0e-9446-55e7d54effaa",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
