@@ -1,0 +1,52 @@
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_f439eef7574d86 415-439,1230,1243,1247,1251,1254,1269,1271-1273,1359
+web/src/App.tsx
+  s_d7448d4eb56c88::t_e136eafa62674e 1,130-131,271-302,305-307,309,417-429,495-505,507-527,548
+web/src/lib/chat.ts
+  s_cc3f3c4e50f86e::t_bdcb5a722eeaf6 21,147
+web/src/styles.css
+  s_d7448d4eb56c88::t_8911e43cff8e9b 324-340
+wwwroot/app.js
+  s_d7448d4eb56c88::t_3dc78fae33c251 80
+wwwroot/style.css
+  s_d7448d4eb56c88::t_6b83286578ba09 325-329
+tests/Levity.Tests/Levity.Tests.csproj
+  s_d7448d4eb56c88::t_e3dec8ebf5bd9c 23
+Services/MobileImages.cs
+  s_d7448d4eb56c88::t_c243c609c6f9a5 1-117
+tests/Levity.Tests/MobileImageTests.cs
+  s_d7448d4eb56c88::t_bec5c6daf79af6 1-55
+web/src/lib/images.ts
+  s_d7448d4eb56c88::t_a01ff5cf5e377e 1-74
+web/tests/images.test.ts
+  s_d7448d4eb56c88::t_9aebcc58fc134b 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e9cfd811b856d603b0e299d6ce38f4e988bac7bf",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_cc3f3c4e50f86e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "aff6ddc9-b2db-47e9-a1e1-fd9c6b94d78b",
+        "model": "unknown"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    },
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
