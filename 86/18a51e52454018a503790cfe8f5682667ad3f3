@@ -1,0 +1,44 @@
+MainWindow.xaml.cs
+  s_3ec78a8183145b::t_39637342ff2d0c 239-296,668-671,1302,1349,1351,1372,1377-1383,1440-1448,1917-1918
+Services/Turbo.cs
+  s_3ec78a8183145b::t_f678b41d487230 1-206
+tests/Levity.Tests/Levity.Tests.csproj
+  s_3ec78a8183145b::t_5d3b467649aca8 25
+Services/AppSettings.cs
+  s_3ec78a8183145b::t_3b21f33285aa19 26-28
+wwwroot/index.html
+  s_3ec78a8183145b::t_39637342ff2d0c 56
+tests/Levity.Tests/TurboTests.cs
+  s_3ec78a8183145b::t_e9baa32fce7fa0 1-172
+Services/AgyOneShot.cs
+  s_3ec78a8183145b::t_12e0509a0a985a 1-58
+web/src/App.tsx
+  s_3ec78a8183145b::t_39637342ff2d0c 115,167,486-488
+  s_3ec78a8183145b::t_f02e599b1c994e 489
+wwwroot/app.js
+  s_3ec78a8183145b::t_39637342ff2d0c 87,148-156
+  s_3ec78a8183145b::t_0f1afbe5e4ed33 157
+docs/PERFORMANCE.md
+  s_3ec78a8183145b::t_8456b87282fac8 77-89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8618a51e52454018a503790cfe8f5682667ad3f3",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_3ec78a8183145b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d8ed9029-7873-4e0e-9446-55e7d54effaa",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
