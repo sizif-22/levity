@@ -45,8 +45,11 @@ namespace Levity.Services
         /// every command costs a shell start, so fewer, bigger steps are much faster.
         /// </summary>
         public const string EfficiencyHint =
-            "[Work efficiently: read several files in one step, prefer one command that does the whole job, use rg or git grep to search " +
-            "(not recursive Get-ChildItem), do not re-verify work that already succeeded, and if a program fails to start or show a window after two tries, stop and tell me what you saw instead of trying more ways.]\n\n";
+            "[Work efficiently: read_file reads one file per call and every call costs a model round trip, so to look at several files use one command that prints them all " +
+            "(for example rg -n pattern, or Get-Content a,b,c) instead of one read_file each. Prefer one command that does the whole job, use rg or git grep to search " +
+            "(not recursive Get-ChildItem), and do not re-verify work that already succeeded. Run only the tests that cover what you changed " +
+            "(dotnet test --filter, vitest run <file>, pnpm test <file>), not the whole suite after every edit. " +
+            "If a program fails to start or show a window after two tries, stop and tell me what you saw instead of trying more ways.]\n\n";
 
         public static string WithHint(string prompt, bool firstOfConversation, string? pcFacts = null)
         {

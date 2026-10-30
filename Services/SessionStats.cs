@@ -78,11 +78,11 @@ namespace Levity.Services
                 list.Add($"{shellCommands} shell commands took {shellSeconds / shellCommands:0.#} seconds each ({shellSeconds:0} s of {totalSeconds:0} s). Every command starts a PowerShell, and a profile that loads a prompt theme or predictions makes that slow. Add \"if ($env:LEVITY_AGENT) {{ return }}\" as the first line of your PowerShell profile (see docs/PERFORMANCE.md).");
             var reads = tools.FirstOrDefault(t => t.Name == "read_file");
             if (reads != null && reads.Count >= 12)
-                list.Add($"{reads.Count} files were read one at a time, and each read waits for the model. Asking for several files in one step is much faster.");
+                list.Add($"{reads.Count} files were read one at a time, and each read waits for the model. One command that prints several files (rg -n, or Get-Content a,b,c) is much faster.");
             var searches = tools.FirstOrDefault(t => t.Name == "search_web");
             if (searches != null && searches.Count >= 8) list.Add($"{searches.Count} separate web searches; each one is a full round trip.");
             if (perTurn.Count > 0 && perTurn[0].InputTokens >= 100_000)
-                list.Add($"The first message used {perTurn[0].InputTokens:N0} input tokens before any work. Skills, rules and tool lists are sent with every turn; the size report below shows what is in ~/.gemini.");
+                list.Add($"The first message used {perTurn[0].InputTokens:N0} input tokens before any work. Most of it is the assistant's own built-in prompt and tool lists, sent with every turn; the size report below shows whether your own skills and rules add to it.");
             var share = totalSeconds > 0 ? tools.Sum(t => t.TotalSeconds) / totalSeconds : 0;
             if (totalSeconds >= 120 && share < 0.35) list.Add($"Only {share:P0} of the time was spent running tools; the rest was the model thinking between steps. Fewer, bigger steps and the Fast setting help most.");
             return list;
