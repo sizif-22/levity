@@ -74,3 +74,16 @@ Measured with the same script, clean runs, sidebar pinned:
 - `.\Run-Tests.ps1 -Changed` runs only the suites your uncommitted changes touch, plus the repo checks. Use this while iterating.
 - `.\Run-Tests.ps1` runs everything in parallel. Use this before a push.
 - `.\Run-Tests.ps1 -Serial` runs one suite after another, for easier reading when something fails.
+
+## Turbo mode
+
+The **Turbo** button (desktop top bar and phone chips) splits a big job and runs the pieces on several assistants at the same time.
+
+- A planner assistant (Fast, changes nothing) splits the request into tasks by file, with the shared names and formats written out as "contracts".
+- Tasks that share a file are merged into one, so two workers never edit the same file. At most 4 workers run at once.
+- Each worker gets the whole request, the contracts, the list of all tasks and only its own task. Workers do not commit and do not run the full test suite.
+- A checkpoint is taken first as usual, so **Undo** rolls back everything the workers did.
+- If the job cannot be split (one task, a bad plan, a failed planner) nothing is changed and the normal assistant takes the message. Plan mode never uses Turbo.
+- Stop cancels the planner and all workers.
+
+Each extra worker carries its own context, so Turbo uses roughly 2-4 times the tokens. Leave it off for small fixes. The wall time of a split job is about the longest single task, plus a short planning step.

@@ -236,6 +236,64 @@ namespace Levity
             Publish(new { type = "config", mode });
         }
 
+        /// <summary>Turbo on or off. Same rule as the other switches: not while an answer is running.</summary>
+        private void SetTurbo(bool on, string? clientId)
+        {
+            if (on == _settings.Turbo) { Reply(clientId, new { type = "config", turbo = on }); return; }
+            if (TurnBusy)
+            {
+                Reply(clientId, new { type = "toast", text = "Switch after the current answer finishes." });
+                Reply(clientId, new { type = "config", turbo = _settings.Turbo });
+                return;
+            }
+            _settings.Turbo = on;
+            _settings.Save();
+            Publish(new { type = "config", turbo = on });
+        }
+
+        private CancellationTokenSource? _turboCts;
+
+        /// <summary>
+        /// Turbo turn: a planner splits the job, several assistants do the pieces at the same time. A job that cannot be split safely
+        /// goes to the normal assistant instead, so Turbo is never worse than off apart from the few seconds of planning.
+        /// </summary>
+        private void StartTurbo(string text)
+        {
+            var cts = _turboCts = new CancellationTokenSource();
+            string cwd = _agyManager.CurrentWorkingDirectory;
+            RawPublish(JsonSerializer.Serialize(new { type = "status", text = "Thinking...", state = "busy" }));
+            _turnSeen = true;
+            _ = Task.Run(async () =>
+            {
+                Turbo.TurboResult? result = null;
+                string? error = null;
+                try
+                {
+                    result = await Turbo.RunAsync(text, cwd, AgyOneShot.RunAsync,
+                        line => Dispatcher.BeginInvoke(new Action(() => Publish(new { type = "agy_event", payload = new { @event = "step_update", step_update = new { step_type = "agent_response", state = "ACTIVE", text_delta = line } } }))),
+                        cts.Token);
+                }
+                catch (OperationCanceledException) { error = "cancelled"; }
+                catch (Exception ex) { error = ex.Message; }
+                Dispatcher.Invoke(() =>
+                {
+                    if (!ReferenceEquals(_turboCts, cts)) return;   // the Stop button already ended this turn
+                    _turboCts = null;
+                    cts.Dispose();
+                    if (error == null && result != null && !result.Split)
+                    {
+                        Publish(new { type = "agy_event", payload = new { @event = "step_update", step_update = new { step_type = "agent_response", state = "DONE", text_delta = "" } } });
+                        _agyManager.SendPrompt(text);   // not worth splitting: the normal assistant does it
+                        return;
+                    }
+                    string md = error != null ? "**Turbo stopped:** " + error : result!.Markdown;
+                    Publish(new { type = "agy_event", payload = new { @event = "step_update", step_update = new { step_type = "agent_response", state = "DONE", text_delta = md } } });
+                    Publish(new { type = "agy_event", payload = new { @event = "result", result = new { status = error != null ? "ERROR" : "DONE", error = error ?? "", duration_seconds = result?.Seconds ?? 0 } } });
+                    HandleAgyStatus("Ready");
+                });
+            });
+        }
+
         private bool _diagramExpanded;
         private bool _diagramAutoPinned;
 
@@ -605,6 +663,10 @@ namespace Levity
 
                     case "set_mode":
                         SetMode(GetString(root, "value"), clientId);
+                        break;
+
+                    case "set_turbo":
+                        SetTurbo(GetString(root, "value") == "on", clientId);
                         break;
 
                     case "toggle_pin" when !remote:
@@ -1237,7 +1299,7 @@ namespace Levity
         private string? _lastJobsJson;
         private bool _inlineShell;
 
-        private bool TurnBusy => _agyManager.IsBusy || _inlineShell || _checkpointing;
+        private bool TurnBusy => _agyManager.IsBusy || _inlineShell || _checkpointing || _turboCts != null;
 
         /// <summary>Entry point for every typed message: runs it now, or queues it while a turn is in progress.</summary>
         private void HandlePrompt(string prompt, bool remote, string? clientId, string? directCommand = null, List<string>? imagePaths = null)
@@ -1284,9 +1346,9 @@ namespace Levity
         /// <summary>Takes a snapshot first (quick; gives up after 15 seconds) and then sends the message. Folders that are not git repositories skip straight to sending.</summary>
         private void StartAiTurn(string text)
         {
-            if (!MemoryPolicy.CheckpointsEnabled) { _agyManager.SendPrompt(text); return; }
+            if (!MemoryPolicy.CheckpointsEnabled) { SendToAgents(text); return; }
             string cwd = _agyManager.CurrentWorkingDirectory;
-            if (ProjectActions.FindGitDir(cwd) == null) { _agyManager.SendPrompt(text); return; }
+            if (ProjectActions.FindGitDir(cwd) == null) { SendToAgents(text); return; }
             _checkpointing = true;
             RawPublish(JsonSerializer.Serialize(new { type = "status", text = "Saving a checkpoint...", state = "busy" }));
             _ = Task.Run(async () =>
@@ -1307,9 +1369,16 @@ namespace Levity
                     _checkpointId = id;
                     _summaryDue = id != null;
                     _turnSeen = false;
-                    _agyManager.SendPrompt(text);
+                    SendToAgents(text);
                 });
             });
+        }
+
+        /// <summary>The message goes to the normal assistant, or to Turbo when it is on (Plan mode never uses Turbo: it changes nothing, so there is nothing to split).</summary>
+        private void SendToAgents(string text)
+        {
+            if (_settings.Turbo && AgentLaunch.NormalizeMode(_settings.Mode) != AgentLaunch.Plan) StartTurbo(text);
+            else _agyManager.SendPrompt(text);
         }
 
         /// <summary>After a turn: what changed in the folder since the snapshot, for the "Undo" bar.</summary>
@@ -1368,6 +1437,15 @@ namespace Levity
         /// <summary>Cancels the AI's current response. The conversation is kept; queued messages carry on.</summary>
         private void StopResponse()
         {
+            if (_turboCts != null)
+            {
+                var cts = _turboCts;
+                _turboCts = null;
+                try { cts.Cancel(); } catch { }
+                FinishDirectTurn("_Stopped._", 0, cancelled: true);
+                Dispatcher.BeginInvoke(new Action(DrainQueue), System.Windows.Threading.DispatcherPriority.Background);
+                return;
+            }
             if (!_agyManager.IsBusy) return;
             _agyManager.Interrupt();
             FinishDirectTurn("_Stopped._", 0, cancelled: true);
@@ -1836,7 +1914,8 @@ namespace Levity
                 cwd = _agyManager.CurrentWorkingDirectory,
                 isPinned = _settings.IsPinned,
                 effort = AgentLaunch.NormalizeEffort(_settings.Effort),
-                mode = AgentLaunch.NormalizeMode(_settings.Mode)
+                mode = AgentLaunch.NormalizeMode(_settings.Mode),
+                turbo = _settings.Turbo
             });
             PublishActions(clientId);
             PublishToolsState(clientId);

@@ -23,6 +23,9 @@ namespace Levity.Services
         /// <summary>"auto" (the assistant works normally) or "plan" (it only plans and proposes, changing nothing).</summary>
         public string Mode { get; set; } = AgentLaunch.Auto;
 
+        /// <summary>Turbo: big jobs are split by file and done by several assistants at the same time (see Services/Turbo.cs).</summary>
+        public bool Turbo { get; set; }
+
         // Mobile access through the relay (off until the user turns it on)
         public bool RemoteEnabled { get; set; } = false;
         public string? RelayUrl { get; set; } = DotEnv.Get("LEVITY_RELAY_URL"); // wss://levity-relay.<account>.workers.dev

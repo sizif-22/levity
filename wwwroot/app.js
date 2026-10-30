@@ -84,6 +84,7 @@ function handleHostMessage(msg) {
       if (msg.isPinned !== undefined) updatePinState(msg.isPinned);
       if (msg.effort !== undefined) updateEffort(msg.effort);
       if (msg.mode !== undefined) updateMode(msg.mode);
+      if (msg.turbo !== undefined) updateTurbo(msg.turbo);
       break;
     case 'clear_chat': resetChatUI(); break;
     case 'focus_input':
@@ -143,6 +144,16 @@ function updateMode(mode) {
   btn.setAttribute('aria-pressed', String(modeLevel === 'plan'));
 }
 $('modeBtn').addEventListener('click', () => postToHost({ type: 'set_mode', value: modeLevel === 'plan' ? 'auto' : 'plan' }));
+
+// Turbo: several assistants work on a split job at the same time.
+let turboOn = false;
+function updateTurbo(on) {
+  turboOn = !!on;
+  const btn = $('turboBtn');
+  btn.classList.toggle('deep', turboOn);
+  btn.setAttribute('aria-pressed', String(turboOn));
+}
+$('turboBtn').addEventListener('click', () => postToHost({ type: 'set_turbo', value: turboOn ? 'off' : 'on' }));
 
 $('effortBtn').addEventListener('click', () => postToHost({ type: 'set_effort', value: effortLevel === 'low' ? 'high' : 'low' }));
 

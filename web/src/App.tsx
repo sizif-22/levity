@@ -112,6 +112,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const [journal, setJournal] = useState<JournalEntryMsg[]>([]);
   const [machine, setMachine] = useState<string | null>(null);
   const [actions, setActions] = useState<ActionsMsg | null>(null);
+  const [turbo, setTurbo] = useState(false);   // Turbo: big jobs are split and done by several assistants at once
   const [mode, setMode] = useState<'auto' | 'plan'>('auto');   // Plan: the assistant only plans and proposes
   const [effort, setEffort] = useState<'low' | 'medium' | 'high'>('low');   // Fast (low) or Deep (medium/high), set on the PC
   const [gitState, setGitState] = useState<GitStateMsg | null>(null);
@@ -163,6 +164,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
       onMessage: (msg) => {
         const type = msg.type as string;
         if (type === 'config' && msg.mode !== undefined) setMode(msg.mode === 'plan' ? 'plan' : 'auto');
+        if (type === 'config' && msg.turbo !== undefined) setTurbo(!!msg.turbo);
         if (type === 'config' && msg.effort !== undefined) setEffort(msg.effort === 'high' || msg.effort === 'medium' ? msg.effort : 'low');
         if (type === 'sessions') { setSessions(msg as unknown as SessionsMsg); return; }
         if (type === 'diagram' || type === 'diagram_none' || type === 'diagram_prepared' || type === 'diagram_state') {
@@ -480,6 +482,10 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           <button className={`cmd-chip effort-chip ${mode === 'plan' ? 'deep' : ''}`} aria-pressed={mode === 'plan'}
             title="Plan: the assistant only plans and proposes, it changes nothing. Work: it does the task." onClick={() => send({ type: 'set_mode', value: mode === 'plan' ? 'auto' : 'plan' })}>
             {mode === 'plan' ? 'Plan' : 'Work'}
+          </button>
+          <button className={`cmd-chip effort-chip ${turbo ? 'deep' : ''}`} aria-pressed={turbo}
+            title="Turbo: big jobs are split by file and done by several assistants at the same time." onClick={() => send({ type: 'set_turbo', value: turbo ? 'off' : 'on' })}>
+            Turbo
           </button>
           <button className={`cmd-chip effort-chip ${effort !== 'low' ? 'deep' : ''}`} aria-pressed={effort !== 'low'}
             title="Fast: quick answers. Deep: thinks harder, slower." onClick={() => send({ type: 'set_effort', value: effort === 'low' ? 'high' : 'low' })}>
