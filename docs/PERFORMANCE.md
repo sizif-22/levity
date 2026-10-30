@@ -66,3 +66,11 @@ Measured with the same script, clean runs, sidebar pinned:
 | .NET `GCConserveMemory`, non-concurrent GC, no PGO | 466 MB | same | no effect |
 | ReadyToRun (precompiled) build | 473 MB | 36 MB | no effect on memory (and a bigger file) |
 | Removing WinForms (tray icon, folder picker) | not built | not built | the host is only 11 MB when hidden and WinForms is mostly mapped, not resident; the saving while visible would be a few MB at the price of rewriting the tray, so it is not worth the risk |
+
+## Running the tests faster
+
+`Run-Tests.ps1` now runs the suites in parallel (they do not depend on each other), so a full run takes as long as the slowest suite (the desktop build and tests) instead of the sum of all of them.
+
+- `.\Run-Tests.ps1 -Changed` runs only the suites your uncommitted changes touch, plus the repo checks. Use this while iterating.
+- `.\Run-Tests.ps1` runs everything in parallel. Use this before a push.
+- `.\Run-Tests.ps1 -Serial` runs one suite after another, for easier reading when something fails.
