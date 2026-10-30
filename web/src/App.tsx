@@ -1,3 +1,4 @@
+import { MobileImage, processImageFile, MAX_TOTAL_IMAGE_BYTES } from './lib/images';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { SecureChannel } from './lib/crypto';
 import { applyHostMessage, initialChat, isGenerating, type Msg } from './lib/chat';
@@ -126,6 +127,8 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const [toastText, setToastText] = useState('');
   const [dialog, setDialog] = useState<{ title: string; text: string; ok: string; resolve: (v: boolean) => void } | null>(null);
   const [draft, setDraft] = useState('');
+  const [attachments, setAttachments] = useState<MobileImage[]>([]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const conn = useRef<RelayConnection | null>(null);
   const viewport = useRef<HTMLElement | null>(null);
@@ -265,12 +268,45 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
     try { r.start(); } catch { recog.current = null; setListening(false); }
   };
 
+  const onPickImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    try {
+      const processed: MobileImage[] = [];
+      let totalBytes = attachments.reduce((acc, a) => acc + (a.data.length * 3) / 4, 0);
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) continue;
+        const img = await processImageFile(file);
+        const approxSize = (img.data.length * 3) / 4;
+        if (totalBytes + approxSize > MAX_TOTAL_IMAGE_BYTES) {
+          toast('Images exceed maximum upload limit (10MB)');
+          break;
+        }
+        totalBytes += approxSize;
+        processed.push(img);
+      }
+      if (processed.length > 0) {
+        setAttachments((prev) => [...prev, ...processed]);
+      }
+    } catch {
+      toast('Failed to process image');
+    } finally {
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const submit = () => {
     const text = draft.trim();
-    if (!text || !online) return; // while busy the PC queues it
-    if (text.toLowerCase() === '/diagram') { setDraft(''); openDiagram(chat.cwd); return; } // a view, not a chat message
-    send({ type: 'send_prompt', text });
+    if ((!text && attachments.length === 0) || !online) return; // while busy the PC queues it
+    if (text.toLowerCase() === '/diagram' && attachments.length === 0) { setDraft(''); openDiagram(chat.cwd); return; } // a view, not a chat message
+    send({ type: 'send_prompt', text, images: attachments.length > 0 ? attachments : undefined });
     setDraft('');
+    setAttachments([]);
   };
 
   const openProjects = () => {
@@ -378,7 +414,19 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           <div className="messages-list">
             {chat.msgs.filter(visible).map((m) => m.role === 'user' ? (
               <div key={m.id} className="message-row user">
-                <div className={`user-bubble${CMD_RE.test(m.text) ? ' cmd-bubble' : ''}`}><UserText text={m.text} /></div>
+                <div className={`user-bubble${CMD_RE.test(m.text) ? ' cmd-bubble' : ''}`}>
+                  {m.text && <UserText text={m.text} />}
+                  {m.images && m.images.length > 0 && (
+                    <div className="user-images-grid">
+                      {m.images.map((imgSrc, idx) => (
+                        <div key={idx} className="user-image-thumb">
+                          <span className="user-image-tag">📷 Image {idx + 1}</span>
+                          <span className="user-image-path">{imgSrc.split(/[\\/]/).pop()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 {m.source === 'desktop' && <span className="via">from your PC</span>}
               </div>
             ) : (
@@ -444,7 +492,39 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           {!!actions?.git.repo && <span className="cmd-chip" title="Common git steps: add, commit, push..." onClick={() => { setGitState(null); setSheet('git'); }}>/git</span>}
           <span className="cmd-chip" title="Run a CLI command directly (no AI), e.g. /cmd$git status. A slow command moves to the Jobs panel by itself." onClick={() => { setDraft('/cmd$'); setTimeout(() => { composer.current?.focus(); composer.current?.setSelectionRange(5, 5); }, 0); }}>/cmd</span>
         </div>
+        {attachments.length > 0 && (
+          <div className="attachments-bar">
+            {attachments.map((att, idx) => (
+              <div key={idx} className="attachment-chip">
+                <img src={`data:${att.type};base64,${att.data}`} alt={att.name} className="attachment-preview" />
+                <span className="attachment-name">{att.name}</span>
+                <button type="button" className="attachment-remove" title="Remove" onClick={() => removeAttachment(idx)}>×</button>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="composer">
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            onChange={onPickImages}
+          />
+          <button
+            type="button"
+            className="send-btn attach-btn"
+            disabled={!online}
+            title="Attach images to prompt"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+          </button>
           <div className="input-stack">
           <div className="composer-hl" ref={hl} aria-hidden="true">{CMD_RE.test(draft) && <><UserText text={draft} />{'\u200b'}</>}</div>
           <textarea
@@ -465,7 +545,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
               <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" /></svg>
             </button>
           )}
-          <button className="send-btn" disabled={!draft.trim() || !online} onClick={submit} title="Send (queued while Levity is busy)">
+          <button className="send-btn" disabled={(!draft.trim() && attachments.length === 0) || !online} onClick={submit} title="Send (queued while Levity is busy)">
             <svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>
           </button>
         </div>

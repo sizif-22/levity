@@ -77,7 +77,7 @@ if (isHost) {
 function handleHostMessage(msg) {
   switch (msg.type) {
     case 'agy_event': processAgyEvent(msg.payload); break;
-    case 'user_message': appendUserMessage(msg.text, msg.source); ensureAssistantMessageRow(); break;
+    case 'user_message': appendUserMessage(msg.text, msg.source, msg.images); ensureAssistantMessageRow(); break;
     case 'status': updateStatus(msg.text, msg.state); break;
     case 'config':
       if (msg.cwd) setCwd(msg.cwd);

@@ -412,7 +412,31 @@ namespace Levity
 
                     case "send_prompt":
                         string prompt = GetString(root, "text").Trim();
-                        if (prompt.Length > 0) HandlePrompt(prompt, remote, clientId);
+                        List<string>? imagePaths = null;
+                        if (root.TryGetProperty("images", out var imagesProp) && imagesProp.ValueKind == JsonValueKind.Array)
+                        {
+                            var incoming = new List<MobileImages.IncomingImage>();
+                            foreach (var item in imagesProp.EnumerateArray())
+                            {
+                                if (item.ValueKind != JsonValueKind.Object) continue;
+                                string? name = item.TryGetProperty("name", out var n) ? n.GetString() : null;
+                                string? type = item.TryGetProperty("type", out var t) ? t.GetString() : null;
+                                string? data = item.TryGetProperty("data", out var d) ? d.GetString() : null;
+                                if (!string.IsNullOrWhiteSpace(data))
+                                {
+                                    incoming.Add(new MobileImages.IncomingImage(name, type, data));
+                                }
+                            }
+                            if (incoming.Count > 0)
+                            {
+                                imagePaths = MobileImages.SaveIncomingImages(incoming);
+                            }
+                        }
+
+                        if (prompt.Length > 0 || (imagePaths != null && imagePaths.Count > 0))
+                        {
+                            HandlePrompt(prompt, remote, clientId, imagePaths: imagePaths);
+                        }
                         break;
 
                     case "list_sessions":
@@ -1203,7 +1227,7 @@ namespace Levity
 
         // ---- Prompts: queue, direct commands, background jobs, stop -----------------------
 
-        private record QueuedPrompt(int Id, string Text, bool Remote, string? ClientId, string? DirectCommand = null);
+        private record QueuedPrompt(int Id, string Text, bool Remote, string? ClientId, string? DirectCommand = null, List<string>? ImagePaths = null);
 
         private readonly List<QueuedPrompt> _queue = new();
         private readonly JobManager _jobs = new();
@@ -1216,18 +1240,18 @@ namespace Levity
         private bool TurnBusy => _agyManager.IsBusy || _inlineShell || _checkpointing;
 
         /// <summary>Entry point for every typed message: runs it now, or queues it while a turn is in progress.</summary>
-        private void HandlePrompt(string prompt, bool remote, string? clientId, string? directCommand = null)
+        private void HandlePrompt(string prompt, bool remote, string? clientId, string? directCommand = null, List<string>? imagePaths = null)
         {
             if (TurnBusy)
             {
-                _queue.Add(new QueuedPrompt(_nextQueueId++, prompt, remote, clientId, directCommand));
+                _queue.Add(new QueuedPrompt(_nextQueueId++, prompt, remote, clientId, directCommand, imagePaths));
                 PublishQueue();
                 return;
             }
-            RunPrompt(prompt, remote, clientId, directCommand);
+            RunPrompt(prompt, remote, clientId, directCommand, imagePaths);
         }
 
-        private void RunPrompt(string prompt, bool remote, string? clientId, string? directCommand = null)
+        private void RunPrompt(string prompt, bool remote, string? clientId, string? directCommand = null, List<string>? imagePaths = null)
         {
             if (directCommand != null)
             {
@@ -1242,9 +1266,11 @@ namespace Levity
                 return;
             }
             _settings.RecordProjectUse(_agyManager.CurrentWorkingDirectory);
-            Publish(new { type = "user_message", text = prompt, source = remote ? "mobile" : "desktop" });
+            Publish(new { type = "user_message", text = prompt, source = remote ? "mobile" : "desktop", images = imagePaths });
             RawPublish(JsonSerializer.Serialize(new { type = "checkpoint", none = true }));   // the previous answer's undo bar goes away
-            StartAiTurn(CommandShortcut.Expand(prompt, _agyManager.CurrentWorkingDirectory));
+            string expandedPrompt = CommandShortcut.Expand(prompt, _agyManager.CurrentWorkingDirectory);
+            string promptForAgent = MobileImages.AttachImagesToPrompt(expandedPrompt, imagePaths ?? (IReadOnlyList<string>)Array.Empty<string>());
+            StartAiTurn(promptForAgent);
         }
 
         // ---- Undo for an AI turn ---------------------------------------------------------------------
@@ -1330,7 +1356,7 @@ namespace Levity
             var next = _queue[0];
             _queue.RemoveAt(0);
             PublishQueue();
-            RunPrompt(next.Text, next.Remote, next.ClientId, next.DirectCommand);
+            RunPrompt(next.Text, next.Remote, next.ClientId, next.DirectCommand, next.ImagePaths);
         }
 
         private void PublishQueue()

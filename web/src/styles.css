@@ -321,7 +321,23 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
 .send-btn { width: 32px; height: 32px; flex-shrink: 0; display: grid; place-items: center; border-radius: calc(var(--radius) - 2px); background: var(--primary); color: var(--primary-foreground); transition: opacity 0.12s; }
 .send-btn svg { width: 16px; height: 16px; }
 .send-btn:hover { opacity: 0.9; }
-.send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Image attachments */
+.attachments-bar { display: flex; gap: 8px; margin-bottom: 8px; overflow-x: auto; padding: 2px 0; }
+.attachment-chip { display: flex; align-items: center; gap: 6px; padding: 4px 8px; background: var(--muted); border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; }
+.attachment-preview { width: 28px; height: 28px; object-fit: cover; border-radius: 4px; }
+.attachment-name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--foreground); }
+.attachment-remove { background: transparent; border: 0; font-size: 16px; line-height: 1; cursor: pointer; color: var(--muted-foreground); padding: 0 2px; }
+.attachment-remove:hover { color: var(--destructive); }
+
+.attach-btn { background: transparent; color: var(--muted-foreground); border: 1px solid var(--border); }
+.attach-btn:hover { background: var(--accent); color: var(--foreground); }
+
+.user-images-grid { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.user-image-thumb { display: flex; align-items: center; gap: 6px; font-size: 12px; background: rgba(255, 255, 255, 0.1); padding: 3px 8px; border-radius: 4px; }
+.user-image-tag { font-weight: 600; opacity: 0.9; }
+.user-image-path { font-family: var(--mono); font-size: 11px; opacity: 0.8; word-break: break-all; }
+
 
 /* ---------- Sheet (full-pane dialog) ---------- */
 

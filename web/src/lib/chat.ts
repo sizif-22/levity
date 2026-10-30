@@ -18,6 +18,7 @@ export interface Msg {
   id: number;
   role: 'user' | 'agent';
   text: string;
+  images?: string[];
   thinking: string;
   tools: ToolCall[];
   learn?: Learn[];
@@ -143,7 +144,7 @@ function applyHost(s: ChatState, msg: Json): ChatState {
       return (msg.items as Json[]).reduce<ChatState>((acc, item) => applyHostMessage(acc, item), s);
 
     case 'user_message': {
-      const user: Msg = { id: s.nextId, role: 'user', text: String(msg.text ?? ''), thinking: '', tools: [], done: true, source: msg.source };
+      const user: Msg = { id: s.nextId, role: 'user', text: String(msg.text ?? ''), images: Array.isArray(msg.images) ? (msg.images as string[]) : undefined, thinking: '', tools: [], done: true, source: msg.source };
       const agent: Msg = { id: s.nextId + 1, role: 'agent', text: '', thinking: '', tools: [], done: false };
       return { ...s, nextId: s.nextId + 2, msgs: [...s.msgs, user, agent] };
     }
