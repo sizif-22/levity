@@ -1,0 +1,56 @@
+Levity.csproj
+  s_2b721c8e5a3df4::t_4d636c105b88cd 26,30
+MainWindow.xaml.cs
+  s_d7448d4eb56c88::t_02f39f73e2fbf9 88-97,793,1658-1659,1665,1993-1994,2002-2014,2062-2091
+Services/WebPush.cs
+  s_2b721c8e5a3df4::t_efadeb1612d650 17,20-21,63,69-71,150,160,171-172,179,187,191,194-197,199,202-229,234-242
+web/public/sw.js
+  s_2b721c8e5a3df4::t_eeb6a4452ed163 39,42-57,60-61
+web/src/components/NotifyRow.tsx
+  s_d7448d4eb56c88::t_e71326fba0072a 25
+web/src/lib/push.ts
+  s_d7448d4eb56c88::t_cad543aed3b0c9 54,65-70
+web/tests/push.spec.tsx
+  s_d7448d4eb56c88::t_713faaff10f04f 34-38,59-64
+tests/Levity.Tests/Levity.Tests.csproj
+  s_3ec78a8183145b::t_aaca259afb580d 14-15
+tests/Levity.Tests/WebPushTests.cs
+  s_d7448d4eb56c88::t_082ddb9f2cccc8 196-212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ed94d416e630515a03546c40cbcd5bf42a9a1b2b",
+  "prompts": {},
+  "humans": {
+    "h_7a38498e9490a1": {
+      "author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_2b721c8e5a3df4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "896c2fc2-ec08-45d8-87f8-7760e931f44c",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    },
+    "s_3ec78a8183145b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d8ed9029-7873-4e0e-9446-55e7d54effaa",
+        "model": "unknown"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    },
+    "s_d7448d4eb56c88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "abf07bae-5aa9-4bdc-9889-169109bc89f2",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
