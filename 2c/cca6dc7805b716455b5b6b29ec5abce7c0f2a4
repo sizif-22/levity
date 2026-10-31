@@ -1,0 +1,33 @@
+Services/AgentLaunch.cs
+  s_c7aa67ed730191::t_a4c10914366589 48-54
+docs/PERFORMANCE.md
+  s_c7aa67ed730191::t_a4c10914366589 12-20
+tests/Levity.Tests/StoreAndScannerTests.cs
+  s_c7aa67ed730191::t_a4c10914366589 181-190
+tests/Levity.Tests/DataFolderTests.cs
+  s_c7aa67ed730191::t_a4c10914366589 154-170
+docs/USING.md
+  s_c7aa67ed730191::t_a4c10914366589 75-76
+Services/ProjectSyncService.cs
+  s_c7aa67ed730191::t_a4c10914366589 54-59
+agent/skills/fast-learner/SKILL.md
+  s_c7aa67ed730191::t_a4c10914366589 34-40
+agent/fast-learner.rule.md
+  s_c7aa67ed730191::t_a4c10914366589 10-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2ccca6dc7805b716455b5b6b29ec5abce7c0f2a4",
+  "prompts": {},
+  "sessions": {
+    "s_c7aa67ed730191": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c1d9107a-67f7-4659-96f7-acfd5cebdb32",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Sherif <127263385+sizif-22@users.noreply.github.com>"
+    }
+  }
+}
