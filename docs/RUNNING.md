@@ -66,6 +66,7 @@ Copy `.env.example` to `.env`. All values are optional.
 | `LEVITY_WEBVIEW_RELEASE_SECONDS` | Same in seconds, for testing | not set |
 | `LEVITY_CHECKPOINTS` | `0` stops the snapshot taken before each assistant answer in a git folder (what Undo restores) | on |
 | `LEVITY_DEBUG_LOG` | `1` writes every assistant message and event to `debug.log` (contains your conversations; logs rotate at 1 MB) | off |
+| `LEVITY_PUSH_DETAILS` | `0` makes phone notices a plain "Levity has news" instead of the project, what you asked, how the answer starts, steps, time and files changed (a lock screen shows that text; see [NOTIFICATIONS.md](NOTIFICATIONS.md)) | on |
 | `LEVITY_SETTINGS_DIR` | Settings, chat history and WebView cache | `%APPDATA%\Levity` |
 | `LEVITY_SKILLS_DIR` | Target for `Install-Skills.ps1` | `%USERPROFILE%\.gemini\config\skills` |
 | `LEVITY_ENV_FILE` | Use this file instead of searching | not set |

@@ -88,12 +88,9 @@ namespace Levity
             {
                 string jobStatus = j.State == JobState.Stopped ? "stopped" : j.ExitCode == 0 ? "finished" : $"failed (exit {j.ExitCode})";
                 RawPublish(JsonSerializer.Serialize(new { type = "toast", text = $"Job #{j.Id} {jobStatus}" }));
-                string dirName = string.IsNullOrWhiteSpace(j.Cwd) ? "General" : System.IO.Path.GetFileName(j.Cwd.TrimEnd('\\', '/'));
-                if (string.IsNullOrEmpty(dirName)) dirName = j.Cwd;
-                string cmdSnippet = string.IsNullOrWhiteSpace(j.Command) ? "" : j.Command.Length > 60 ? j.Command[..60] + "..." : j.Command;
-                string jobBody = string.IsNullOrEmpty(cmdSnippet) ? $"Job #{j.Id} {jobStatus} in [{dirName}]" : $"Job #{j.Id} {jobStatus} in [{dirName}]: {cmdSnippet}";
-                PushNews($"Levity · {dirName}", jobBody);
-                if (!_isSidebarVisible) _trayManager.ShowNotification($"Levity · {dirName}", jobBody);
+                var (jobTitle, jobBody) = NotificationText.ForJob(j.Id, jobStatus, j.Cwd, j.Command);
+                PushNews(jobTitle, jobBody, NotificationText.FolderName(j.Cwd));
+                if (!_isSidebarVisible) _trayManager.ShowNotification(jobTitle, jobBody);
             }));
 
             // Agy Process Manager
@@ -296,6 +293,11 @@ namespace Levity
                         return;
                     }
                     string md = error != null ? "**Turbo stopped:** " + error : result!.Markdown;
+                    // Turbo's progress is made of synthetic events, so the notice is told its outcome directly.
+                    _finalStepKey = "turbo";
+                    _finalAnswer.Clear();
+                    _finalAnswer.Append(md.Length > 2000 ? md[..2000] : md);
+                    _turnFailed = error != null || (result?.Failed ?? 0) > 0;
                     Publish(new { type = "agy_event", payload = new { @event = "step_update", step_update = new { step_type = "agent_response", state = "DONE", text_delta = md } } });
                     Publish(new { type = "agy_event", payload = new { @event = "result", result = new { status = error != null ? "ERROR" : "DONE", error = error ?? "", duration_seconds = result?.Seconds ?? 0 } } });
                     HandleAgyStatus("Ready");
@@ -1341,7 +1343,7 @@ namespace Levity
             RawPublish(JsonSerializer.Serialize(new { type = "checkpoint", none = true }));   // the previous answer's undo bar goes away
             string expandedPrompt = CommandShortcut.Expand(prompt, _agyManager.CurrentWorkingDirectory);
             string promptForAgent = MobileImages.AttachImagesToPrompt(expandedPrompt, imagePaths ?? (IReadOnlyList<string>)Array.Empty<string>());
-            StartAiTurn(promptForAgent);
+            StartAiTurn(promptForAgent, prompt);   // the original text (not the expanded one) is what the "finished" notice quotes
         }
 
         // ---- Undo for an AI turn ---------------------------------------------------------------------
@@ -1353,8 +1355,9 @@ namespace Levity
         private bool _turnSeen;
 
         /// <summary>Takes a snapshot first (quick; gives up after 15 seconds) and then sends the message. Folders that are not git repositories skip straight to sending.</summary>
-        private void StartAiTurn(string text)
+        private void StartAiTurn(string text, string? request = null)
         {
+            BeginTurnFacts(request);
             if (!MemoryPolicy.CheckpointsEnabled) { SendToAgents(text); return; }
             string cwd = _agyManager.CurrentWorkingDirectory;
             if (ProjectActions.FindGitDir(cwd) == null) { SendToAgents(text); return; }
@@ -1390,17 +1393,17 @@ namespace Levity
             else _agyManager.SendPrompt(text);
         }
 
-        /// <summary>After a turn: what changed in the folder since the snapshot, for the "Undo" bar.</summary>
-        private async Task PublishCheckpointSummaryAsync()
+        /// <summary>After a turn: what changed in the folder since the snapshot, for the "Undo" bar. Returns the file and line counts for the "finished" notice (zeros when nothing changed or there is no snapshot).</summary>
+        private async Task<(int Files, int Added, int Removed)> PublishCheckpointSummaryAsync()
         {
             var c = _checkpoints;
             string? id = _checkpointId;
-            if (c == null || id == null || !_summaryDue) return;
+            if (c == null || id == null || !_summaryDue) return (0, 0, 0);
             _summaryDue = false;
             try
             {
                 var diff = await c.DiffAsync(id);
-                if (diff == null || diff.Changes.Count == 0) { Dispatcher.Invoke(() => RawPublish(JsonSerializer.Serialize(new { type = "checkpoint", none = true }))); return; }
+                if (diff == null || diff.Changes.Count == 0) { Dispatcher.Invoke(() => RawPublish(JsonSerializer.Serialize(new { type = "checkpoint", none = true }))); return (0, 0, 0); }
                 var msg = new
                 {
                     type = "checkpoint", none = false, id, root = c.Root, added = diff.Added, modified = diff.Modified, deleted = diff.Deleted,
@@ -1409,8 +1412,72 @@ namespace Levity
                     more = Math.Max(0, diff.Changes.Count - 200)
                 };
                 Dispatcher.Invoke(() => RawPublish(JsonSerializer.Serialize(msg)));
+                return (diff.Changes.Count, diff.Insertions, diff.Deletions);
             }
-            catch { }
+            catch { return (0, 0, 0); }
+        }
+
+        // ---- What a turn did, for the "finished" notice ---------------------------------------------
+
+        private string? _turnRequest;
+        private DateTime _turnStartedUtc = DateTime.UtcNow;
+        private readonly HashSet<string> _turnToolSteps = new();
+        private string? _finalStepKey;
+        private readonly System.Text.StringBuilder _finalAnswer = new();
+        private bool _turnFailed;
+
+        private void BeginTurnFacts(string? request)
+        {
+            _turnRequest = request;
+            _turnStartedUtc = DateTime.UtcNow;
+            _turnToolSteps.Clear();
+            _finalStepKey = null;
+            _finalAnswer.Clear();
+            _turnFailed = false;
+        }
+
+        /// <summary>Reads one assistant event: counts finished tool steps, keeps the text of the LAST answer step (the conclusion, not the opening "let me look"), notes a failed result.</summary>
+        private void NoteTurnEvent(JsonElement root)
+        {
+            if (!root.TryGetProperty("event", out var evt)) return;
+            string? name = evt.GetString();
+            if (name == "result")
+            {
+                if (root.TryGetProperty("result", out var res) && res.TryGetProperty("status", out var s) && s.GetString() == "ERROR") _turnFailed = true;
+                return;
+            }
+            if (name != "step_update" || !root.TryGetProperty("step_update", out var su)) return;
+            string type = su.TryGetProperty("step_type", out var st) ? st.GetString() ?? "" : "";
+            string key = su.TryGetProperty("step_index", out var si) ? si.ToString() : "";
+            if (type == "agent_response")
+            {
+                // Many answer steps carry no text (they only mark a step done): those must not wipe the last real answer.
+                if (!su.TryGetProperty("text_delta", out var td) || td.ValueKind != JsonValueKind.String || td.GetString() is not { Length: > 0 } text) return;
+                if (key != _finalStepKey) { _finalStepKey = key; _finalAnswer.Clear(); }   // a new answer step starts: the earlier one was not the last
+                if (_finalAnswer.Length < 2000) _finalAnswer.Append(text);
+            }
+            else if (type == "tool" && su.TryGetProperty("state", out var state) && state.GetString() == "DONE" && key.Length > 0)
+            {
+                _turnToolSteps.Add(key);
+            }
+        }
+
+        private TurnSummary TakeTurnSummary() =>
+            new(NotificationText.FolderName(_agyManager.CurrentWorkingDirectory), _turnRequest, _finalAnswer.ToString(),
+                _turnToolSteps.Count, DateTime.UtcNow - _turnStartedUtc, 0, 0, 0, _turnFailed);
+
+        /// <summary>
+        /// The turn is over: shows the Undo summary, then tells the phone and Windows what happened (project, what was asked, how the answer
+        /// starts, steps, time, files changed). It waits at most 4 seconds for the file counts, so a slow diff never delays the notice much.
+        /// </summary>
+        private async Task FinishTurnNoticeAsync()
+        {
+            var facts = TakeTurnSummary();   // before the first await: the next queued message resets these as soon as it starts
+            var summary = PublishCheckpointSummaryAsync();
+            var changes = await Task.WhenAny(summary, Task.Delay(TimeSpan.FromSeconds(4))) == summary ? summary.Result : (Files: 0, Added: 0, Removed: 0);
+            var (title, body) = NotificationText.ForTurn(facts with { Files = changes.Files, Added = changes.Added, Removed = changes.Removed });
+            PushNews(title, body, facts.Folder);
+            if (!_isSidebarVisible) _trayManager.ShowNotification(title, body);
         }
 
         private async Task UndoCheckpointAsync(string id, string? clientId)
@@ -1653,16 +1720,22 @@ namespace Levity
         private static string DeviceOf(string clientId) { int i = clientId.IndexOf('/'); return i < 0 ? clientId : clientId[..i]; }
 
         private void PublishPushState(string clientId) =>
-            Reply(clientId, new { type = "push_state", publicKey = _push.PublicKey, subscribed = _push.IsSubscribed(DeviceOf(clientId)) });
+            Reply(clientId, new { type = "push_state", publicKey = _push.PublicKey, subscribed = _push.IsSubscribed(DeviceOf(clientId)), detailed = _push.IsDetailed(DeviceOf(clientId)) });
 
-        /// <summary>Pushes notification to connected phones with project/status/snippet, only when no phone is active on screen.</summary>
-        private void PushNews(string? title = null, string? body = null)
+        /// <summary>
+        /// Pushes a notice to the phones when none of them has the app on screen. The text rides in the encrypted push; a phone whose
+        /// subscription has no keys gets the plain "Levity has news" until its app renews the subscription. LEVITY_PUSH_DETAILS=0 keeps every push plain.
+        /// </summary>
+        private void PushNews(string? title = null, string? body = null, string? folder = null)
         {
             if (!_push.HasSubscribers) return;
+            string? tag = null;
+            if (!NotificationText.PushDetailsEnabled) { title = null; body = null; }
+            else if (folder != null) tag = NotificationText.Tag(folder);   // one notice per project, so two projects do not replace each other
             // A phone that is connected but not on screen (app in the background) does not count as watching.
             int visible; lock (_visibleClients) visible = _visibleClients.Count;
             int phones = Math.Min(_hub.ConnectedPhones, visible);
-            _ = Task.Run(async () => { try { await _push.NotifyIfQuietAsync(phones, title, body); } catch { } });
+            _ = Task.Run(async () => { try { await _push.NotifyIfQuietAsync(phones, title, body, default, tag); } catch { } });
         }
 
         private async Task RunDoctorAsync(string? clientId)
@@ -1990,8 +2063,6 @@ namespace Levity
             });
         }
 
-        private readonly System.Text.StringBuilder _currentTurnResponse = new();
-
         private void HandleAgyEvent(string rawJson)
         {
             Dispatcher.Invoke(() =>
@@ -2000,17 +2071,7 @@ namespace Levity
                 {
                     using var doc = JsonDocument.Parse(rawJson);
                     var root = doc.RootElement;
-                    if (root.TryGetProperty("event", out var evt) && evt.GetString() == "step_update"
-                        && root.TryGetProperty("step_update", out var su)
-                        && su.TryGetProperty("step_type", out var st) && st.GetString() == "agent_response"
-                        && su.TryGetProperty("text_delta", out var td) && td.ValueKind == JsonValueKind.String)
-                    {
-                        string delta = td.GetString() ?? "";
-                        if (!string.IsNullOrEmpty(delta))
-                        {
-                            if (_currentTurnResponse.Length < 1000) _currentTurnResponse.Append(delta);
-                        }
-                    }
+                    NoteTurnEvent(root);
                     Publish(new { type = "agy_event", payload = root });
                 }
                 catch { }
@@ -2062,32 +2123,7 @@ namespace Levity
                     if (_turnSeen)
                     {
                         _turnSeen = false;
-                        _ = PublishCheckpointSummaryAsync();
-
-                        string rawResp = _currentTurnResponse.ToString().Trim();
-                        _currentTurnResponse.Clear();
-
-                        string cwd = _agyManager.CurrentWorkingDirectory;
-                        string dirName = string.IsNullOrWhiteSpace(cwd) ? "General" : System.IO.Path.GetFileName(cwd.TrimEnd('\\', '/'));
-                        if (string.IsNullOrEmpty(dirName)) dirName = cwd;
-
-                        string preview = "";
-                        if (!string.IsNullOrWhiteSpace(rawResp))
-                        {
-                            // Strip common markdown markers (headers, bold, italics, backticks) for a clean notification snippet
-                            string clean = System.Text.RegularExpressions.Regex.Replace(rawResp, @"[#*`_]", "").Trim();
-                            clean = System.Text.RegularExpressions.Regex.Replace(clean, @"\s+", " ");
-                            preview = clean.Length > 120 ? clean[..120] + "..." : clean;
-                        }
-
-                        string title = $"Levity · {dirName}";
-                        string body = string.IsNullOrEmpty(preview) ? $"Assistant finished in [{dirName}]" : $"[{dirName}] {preview}";
-                        PushNews(title, body);
-                        if (!_isSidebarVisible) _trayManager.ShowNotification(title, string.IsNullOrEmpty(preview) ? "Assistant finished work." : preview);
-                    }
-                    else
-                    {
-                        _currentTurnResponse.Clear();
+                        _ = FinishTurnNoticeAsync();
                     }
                 }
             });

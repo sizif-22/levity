@@ -18,6 +18,7 @@ import { SpeedSheet, type SpeedMsg } from './components/SpeedSheet';
 import { recognizerCtor, appendDictation, finalText, isIosStandalone, micDeniedHelp, type Recognizer } from './lib/voice';
 import { listenForPushChime } from './lib/chime';
 import { type PushStateMsg } from './components/NotifyRow';
+import { needsKeyUpgrade, pushSupport, readEnv, subscribeForPush } from './lib/push';
 import { DoctorSheet, type DoctorMsg, type DoctorResultMsg } from './components/DoctorSheet';
 import { CheckpointBar, type CheckpointMsg } from './components/CheckpointBar';
 import type { ActionsMsg, GitStateMsg } from './lib/actions';
@@ -234,6 +235,20 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
     document.addEventListener('visibilitychange', tell);
     return () => document.removeEventListener('visibilitychange', tell);
   }, [online, send]);
+
+  // Ask the PC whether this phone's push subscription can carry text (not only when Settings is open).
+  useEffect(() => { if (online) send({ type: 'push_get' }); }, [online, send]);
+
+  // An old subscription has no encryption keys, so notices stay generic ("Levity has news"). Renew it once, quietly: the permission is already granted, so there is no prompt.
+  const upgradedPush = useRef(false);
+  useEffect(() => {
+    const env = readEnv();
+    if (upgradedPush.current || !needsKeyUpgrade(pushState, pushSupport(env), env.permission)) return;
+    upgradedPush.current = true;   // once per page load: a failed renewal must not loop
+    void subscribeForPush(pushState!.publicKey).then((r) => {
+      if (!('error' in r) && r.p256dh && r.auth) send({ type: 'push_subscribe', endpoint: r.endpoint, p256dh: r.p256dh, auth: r.auth });
+    });
+  }, [pushState, send]);
   const statusText = linkState === 'online' ? chat.status.text
     : linkState === 'host-offline' ? 'PC offline' : linkState === 'connecting' ? 'Connecting…' : 'Reconnecting…';
   const statusState = online ? chat.status.state : 'offline';

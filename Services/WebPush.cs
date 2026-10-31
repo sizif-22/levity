@@ -118,6 +118,19 @@ namespace Levity.Services
         public bool HasSubscribers => Count > 0;
         public bool IsSubscribed(string device) { lock (_lock) return _subs.Any(s => s.Device == device); }
 
+        /// <summary>
+        /// True when this device can receive text: its newest subscription has the keys the message is encrypted with. A subscription made
+        /// before pushes carried text has no keys, so only an empty ping can be sent to it until the phone subscribes again.
+        /// </summary>
+        public bool IsDetailed(string device)
+        {
+            lock (_lock)
+            {
+                var mine = _subs.LastOrDefault(s => s.Device == device);
+                return mine != null && !string.IsNullOrWhiteSpace(mine.P256DH) && !string.IsNullOrWhiteSpace(mine.Auth);
+            }
+        }
+
         private sealed class Disk { public string? PrivateKey { get; set; } public List<PushSubscription> Subs { get; set; } = new(); }
 
         private void Load()
@@ -169,14 +182,14 @@ namespace Levity.Services
         }
 
         /// <summary>Sends a push to every subscription of every device. Dead subscriptions (404, 410) are dropped. Returns how many were delivered to the push service.</summary>
-        public async Task<int> NotifyAsync(string? title = null, string? body = null, CancellationToken ct = default)
+        public async Task<int> NotifyAsync(string? title = null, string? body = null, CancellationToken ct = default, string? tag = null)
         {
             List<PushSubscription> targets;
             lock (_lock) targets = _subs.ToList();
             int sent = 0;
             foreach (var s in targets)
             {
-                var outcome = await SendAsync(s, title, body, ct);
+                var outcome = await SendAsync(s, title, body, ct, tag);
                 if (outcome == PushOutcome.Sent) sent++;
                 else if (outcome == PushOutcome.Gone) { lock (_lock) { _subs.Remove(s); Save(); } }
             }
@@ -184,17 +197,18 @@ namespace Levity.Services
         }
 
         /// <summary>Applies the quiet rules, then pushes. Called from the app's events.</summary>
-        public async Task<int> NotifyIfQuietAsync(int connectedPhones, string? title = null, string? body = null, CancellationToken ct = default)
+        public async Task<int> NotifyIfQuietAsync(int connectedPhones, string? title = null, string? body = null, CancellationToken ct = default, string? tag = null)
         {
             DateTime now = _now();
             lock (_lock) { if (!WebPushRules.ShouldNotify(_subs.Count > 0, connectedPhones, _lastSent, now)) return 0; _lastSent = now; }
-            return await NotifyAsync(title, body, ct);
+            return await NotifyAsync(title, body, ct, tag);
         }
 
         public Task<PushOutcome> SendAsync(string endpoint, CancellationToken ct = default) =>
             SendAsync(new PushSubscription("", endpoint, _now()), null, null, ct);
 
-        public async Task<PushOutcome> SendAsync(PushSubscription sub, string? title = null, string? body = null, CancellationToken ct = default)
+        /// <summary>The text rides in the encrypted payload; <paramref name="tag"/> lets the phone keep one notice per project instead of replacing them all.</summary>
+        public async Task<PushOutcome> SendAsync(PushSubscription sub, string? title = null, string? body = null, CancellationToken ct = default, string? tag = null)
         {
             if (!WebPushRules.IsAllowedEndpoint(sub.Endpoint)) return PushOutcome.Rejected;
             try
@@ -205,15 +219,18 @@ namespace Levity.Services
                 {
                     try
                     {
-                        var client = new global::WebPush.WebPushClient();
-                        client.SetVapidDetails(Subject, _keys.PublicKey, _keys.PrivateKey);
-                        var wpSub = new global::WebPush.PushSubscription(sub.Endpoint, sub.P256DH, sub.Auth);
-                        string jsonPayload = JsonSerializer.Serialize(new { title, body });
-                        req = client.GenerateRequestDetails(wpSub, jsonPayload, null);
+                        byte[] message = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new { title, body, tag }));
+                        byte[] encrypted = WebPushCrypto.Encrypt(message, WebPushRules.FromBase64Url(sub.P256DH), WebPushRules.FromBase64Url(sub.Auth));
+                        req = new HttpRequestMessage(HttpMethod.Post, sub.Endpoint) { Content = new ByteArrayContent(encrypted) };
+                        req.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                        req.Content.Headers.ContentEncoding.Add("aes128gcm");
+                        req.Headers.TryAddWithoutValidation("Authorization", _keys.AuthorizationFor(sub.Endpoint, Subject, _now()));
+                        req.Headers.TryAddWithoutValidation("TTL", "3600");
+                        req.Headers.TryAddWithoutValidation("Urgency", "normal");
                     }
                     catch
                     {
-                        req = BuildEmptyRequest(sub.Endpoint);
+                        req = BuildEmptyRequest(sub.Endpoint);   // unreadable keys or a message that is too long: still tell the phone something happened
                     }
                 }
                 else

@@ -207,7 +207,7 @@ public class WebPushTests
         Assert.Equal(HttpMethod.Post, r.Method);
         Assert.Equal(Chrome, r.RequestUri!.ToString());
         Assert.True(fake.BodyLengths.Single() > 0);
-        Assert.Equal("aesgcm", r.Content!.Headers.ContentEncoding.Single());
+        Assert.Equal("aes128gcm", r.Content!.Headers.ContentEncoding.Single());   // RFC 8291, the encoding Apple's push service documents
     }
 
     [Fact]

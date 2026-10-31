@@ -41,6 +41,7 @@ self.addEventListener('push', (event) => {
   event.waitUntil((async () => {
     let title = 'Levity has news';
     let body = 'Open Levity to see it.';
+    let tag = 'levity-news';
 
     if (event.data) {
       try {
@@ -48,6 +49,8 @@ self.addEventListener('push', (event) => {
         if (data && typeof data === 'object') {
           if (typeof data.title === 'string' && data.title) title = data.title;
           if (typeof data.body === 'string' && data.body) body = data.body;
+          // One notice per project: a newer one replaces the older one of the SAME project, never another project's.
+          if (typeof data.tag === 'string' && /^[a-z0-9-]{1,40}$/.test(data.tag)) tag = data.tag;
         }
       } catch {
         const text = event.data.text();
@@ -61,7 +64,7 @@ self.addEventListener('push', (event) => {
       body,
       icon: '/icon-192.png',
       badge: '/favicon-32.png',
-      tag: 'levity-news',   // a newer notice replaces an older one instead of piling up
+      tag,                  // a newer notice replaces an older one of the same project instead of piling up
       renotify: true,       // ...and still makes a sound again
       silent: false,
       vibrate: [120, 60, 120],

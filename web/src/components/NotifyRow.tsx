@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { pushHelp, pushSupport, readEnv, subscribeForPush, unsubscribeFromPush } from '../lib/push';
 
-export interface PushStateMsg { type: 'push_state'; publicKey: string; subscribed: boolean }
+/** `detailed`: the PC holds this phone's keys, so notices can carry text. Absent from an older PC app. */
+export interface PushStateMsg { type: 'push_state'; publicKey: string; subscribed: boolean; detailed?: boolean }
 type Send = (m: Record<string, unknown>) => void;
 
 /** The "Notify me" switch in Settings. The permission prompt only appears from a tap, as phones require. */

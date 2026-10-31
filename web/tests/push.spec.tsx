@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { pushHelp, pushSupport, urlBase64ToUint8Array } from '../src/lib/push';
+import { needsKeyUpgrade, pushHelp, pushSupport, urlBase64ToUint8Array } from '../src/lib/push';
 import { NotifyRow } from '../src/components/NotifyRow';
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
@@ -21,7 +21,19 @@ describe('push support', () => {
     expect(pushHelp('needs-install', true)).toMatch(/Add to Home Screen/);
     expect(pushHelp('denied', true)).toMatch(/iPhone Settings/);
     expect(pushHelp('denied', false)).toMatch(/App info/);
-    expect(pushHelp('ok', false)).toMatch(/never contains your text/);
+    expect(pushHelp('ok', false)).toMatch(/encrypted to this phone/);
+    expect(pushHelp('ok', false)).toMatch(/LEVITY_PUSH_DETAILS=0/);   // the way to keep notices plain is named
+  });
+  it('an old subscription without keys is renewed quietly, and only when that is safe', () => {
+    const old = { subscribed: true, detailed: false };
+    expect(needsKeyUpgrade(old, 'ok', 'granted')).toBe(true);
+    expect(needsKeyUpgrade({ subscribed: true, detailed: true }, 'ok', 'granted')).toBe(false);   // already has keys
+    expect(needsKeyUpgrade({ subscribed: true }, 'ok', 'granted')).toBe(false);                   // an older PC app does not say: do nothing
+    expect(needsKeyUpgrade({ subscribed: false, detailed: false }, 'ok', 'granted')).toBe(false); // the user turned it off
+    expect(needsKeyUpgrade(old, 'ok', 'default')).toBe(false);                                    // would need a prompt: only a tap may do that
+    expect(needsKeyUpgrade(old, 'denied', 'denied')).toBe(false);
+    expect(needsKeyUpgrade(old, 'needs-install', 'granted')).toBe(false);
+    expect(needsKeyUpgrade(null, 'ok', 'granted')).toBe(false);
   });
   it('decodes the PC key from base64url', () => {
     expect(Array.from(urlBase64ToUint8Array('AQID'))).toEqual([1, 2, 3]);

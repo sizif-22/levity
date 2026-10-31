@@ -1,5 +1,5 @@
 // Web Push on the phone: subscribe with the PC's key, hand the address to the PC, never to anything else.
-// The push itself carries no text; the service worker shows a generic notice and the app then loads the details over the encrypted link.
+// The PC encrypts the notice text to this phone's keys (p256dh, auth), so the push services only relay bytes. With no keys the PC can only send an empty ping and the service worker shows a generic notice.
 
 export type PushSupport = 'ok' | 'unsupported' | 'needs-install' | 'denied';
 
@@ -46,8 +46,16 @@ export function pushHelp(s: PushSupport, ios: boolean): string {
     case 'denied': return ios
       ? 'Notifications are blocked. Open the iPhone Settings app, find Levity, and allow notifications.'
       : 'Notifications are blocked. Long-press the Levity icon, then App info > Notifications > Allow.';
-    default: return 'You get a short "Levity has news" notice when an answer or a job finishes and the app is not open. It never contains your text.';
+    default: return 'When an answer or a job finishes and the app is not open, you get a notice with the project, what you asked, how the answer starts, the steps and time it took, and how many files changed. The text is encrypted to this phone. To keep notices plain ("Levity has news"), set LEVITY_PUSH_DETAILS=0 on the PC.';
   }
+}
+
+/**
+ * An old subscription (made before notices carried text) has no keys, so the PC can only send an empty ping. When notifications are already
+ * allowed on this phone it can be renewed without a prompt: the PC says `detailed: false` for it.
+ */
+export function needsKeyUpgrade(state: { subscribed: boolean; detailed?: boolean } | null, support: PushSupport, permission: string): boolean {
+  return !!state && state.subscribed && state.detailed === false && support === 'ok' && permission === 'granted';
 }
 
 /** Asks permission (must be called from a tap), subscribes with the PC's key and returns the address to give to the PC. */

@@ -12,7 +12,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
-    <PackageReference Include="WebPush" Version="1.0.13" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
@@ -29,6 +28,8 @@
     <Compile Include="..\..\Services\Checkpoints.cs" Link="Services\Checkpoints.cs" />
     <Compile Include="..\..\Services\SessionStats.cs" Link="Services\SessionStats.cs" />
     <Compile Include="..\..\Services\WebPush.cs" Link="Services\WebPush.cs" />
+    <Compile Include="..\..\Services\WebPushCrypto.cs" Link="Services\WebPushCrypto.cs" />
+    <Compile Include="..\..\Services\NotificationText.cs" Link="Services\NotificationText.cs" />
     <Compile Include="..\..\Services\WindowsTools\*.cs" Link="Services\WindowsTools\%(Filename)%(Extension)" />
     <Compile Include="..\..\Services\HistoryCompactor.cs" Link="Services\HistoryCompactor.cs" />
     <Compile Include="..\..\Services\RollingLog.cs" Link="Services\RollingLog.cs" />
