@@ -52,9 +52,6 @@
         <button class="icon-btn" id="newChatBtn" title="New conversation">
           <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
-        <button class="effort-btn" id="modeBtn" title="Plan: the assistant only plans and proposes, it changes nothing. Work: it does the task." aria-pressed="false">Work</button>
-        <button class="effort-btn" id="turboBtn" title="Turbo: big jobs are split by file and done by several assistants at the same time. Small jobs run normally." aria-pressed="false">Turbo</button>
-        <button class="effort-btn" id="effortBtn" title="Fast: quick answers. Deep: thinks harder, slower." aria-pressed="false">Fast</button>
         <button class="icon-btn desktop-only" id="pinBtn" title="Pin (always on top)">
           <svg viewBox="0 0 24 24"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-2l-2-2V5a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v8l-2 2v2z"/></svg>
         </button>
@@ -63,6 +60,13 @@
         </button>
       </div>
     </header>
+
+    <!-- The three switches get their own row: on one line with eight icons they pushed Pin and Close off a narrow sidebar -->
+    <div class="mode-row">
+      <button class="effort-btn" id="modeBtn" title="Plan: the assistant only plans and proposes, it changes nothing. Work: it does the task." aria-pressed="false">Work</button>
+      <button class="effort-btn" id="turboBtn" title="Turbo: big jobs are split by file and done by several assistants at the same time. Small jobs run normally." aria-pressed="false">Turbo</button>
+      <button class="effort-btn" id="effortBtn" title="Fast: quick answers. Deep: thinks harder, slower." aria-pressed="false">Fast</button>
+    </div>
 
     <button class="cwd-pill" id="cwdButton" title="Current working folder — click to change">
       <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>

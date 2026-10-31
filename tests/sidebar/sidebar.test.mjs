@@ -328,6 +328,17 @@ test('slow tool steps show how long they took, quick ones do not', async () => {
   assert.deepEqual(times, ['8s']);
 });
 
+test('the Plan, Turbo and Fast switches sit in their own row, not in the crowded top bar', async () => {
+  const ui = await open();
+  for (const id of ['modeBtn', 'turboBtn', 'effortBtn']) {
+    assert.ok(ui.$(id).closest('.mode-row'), id + ' should be in the mode row');
+    assert.equal(ui.$(id).closest('.header-actions'), null, id + ' should not be in the header icons');
+  }
+  // Every icon the bar keeps is still there, so none was lost in the move.
+  const bar = ui.qa('.header-actions > .icon-btn').map((b) => b.id);
+  assert.deepEqual(bar, ['projectsBtn', 'settingsBtn', 'sessionsBtn', 'jobsBtn', 'newChatBtn', 'pinBtn', 'closeBtn']);
+});
+
 test('the Plan/Work switch shows the mode the PC reports and asks the PC to change it', async () => {
   const ui = await open();
   assert.equal(ui.$('modeBtn').textContent, 'Work');

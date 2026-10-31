@@ -117,7 +117,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
   flex-shrink: 0;
 }
 
-.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1 1 auto; overflow: hidden; }
 .logo-wrap { position: relative; width: 32px; height: 32px; flex-shrink: 0; display: grid; place-items: center; border-radius: 8px; background: var(--primary); color: var(--primary-foreground); }
 .logo { width: 20px; height: 20px; }
 .logo-orb { fill: currentColor; stroke: none; }
@@ -135,10 +135,10 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
 @keyframes pulse { 50% { opacity: 0.45; } }
 
 .brand-text { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
-.brand-title { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+.brand-title { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .status-label { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.header-actions { display: flex; gap: 2px; }
+.header-actions { display: flex; gap: 2px; flex-shrink: 0; }
 
 .icon-btn {
   position: relative;
@@ -542,6 +542,10 @@ body.remote { font-size: 15px; }
 body.remote .composer textarea, body.remote .root-row input { font-size: 16px; } /* stops iOS zoom on focus */
 body.remote .icon-btn { width: 40px; height: 40px; }
 body.remote .icon-btn svg { width: 18px; height: 18px; }
+@media (max-width: 360px) {   /* small phones: keep the title readable next to the icons */
+  body.remote .icon-btn { width: 34px; height: 34px; }
+  body.remote .app-header { gap: 4px; padding-left: 10px; padding-right: 10px; }
+}
 body.remote .cwd-pill { height: 40px; }
 body.remote .btn { height: 40px; }
 body.remote .proj { padding: 12px; }
@@ -661,6 +665,9 @@ body.remote .composer-hl { font-size: 16px; } /* match the textarea (iOS zoom gu
 /* Fast / Deep switch and step timings */
 .effort-btn { height: 28px; padding: 0 10px; border-radius: var(--radius); border: 1px solid var(--border); font-size: 12px; font-weight: 500; color: var(--muted-foreground); }
 .effort-btn:hover { background: var(--accent); color: var(--foreground); }
+.mode-row { display: flex; gap: 6px; padding: 10px 12px 0; flex-shrink: 0; }
+.mode-row .effort-btn { flex: 1 1 0; min-width: 0; white-space: nowrap; }
+body.remote .effort-btn { height: 36px; font-size: 13px; }
 .effort-btn.deep { color: var(--foreground); border-color: var(--foreground); }
 .tool-time { margin-left: 6px; color: var(--muted-foreground); font-size: 11px; }
 
