@@ -51,6 +51,12 @@ namespace Levity.Services
 1. Inspect the project read-only: structure, stack, entry points, how to build / run / test, deploy or env setup, and what changed recently (git log if available).
 2. README.md: create it if missing; otherwise fix anything stale and keep what is still correct.
 3. AGENTS.md: create or update with purpose, stack, folder layout, exact commands, conventions, and known gotchas.
+   Keep every part that is still correct, including a section the file already has called ""Where things live"".
+   Add or refresh a final section `## Where things live`: the features of this project, one line each, in the form
+   `- <feature>: path/a (what it does), path/b (what it does), ...`. List the files a change to that feature touches end to end
+   (screen or entry point, server or backend code, data model or schema, limits or config, tests). Find them with one repo-wide search per feature
+   (`rg -n -i`), cover the 8 to 15 features people change most (publishing, auth, payments, each integration, and so on), names and paths only:
+   no code, no secrets, no line numbers. Fix a line that is wrong instead of adding a second one. Future sessions read this section first and skip searching.
 4. Skills: create or update 2-5 project skills at .agent/skills/<skill-name>/SKILL.md (frontmatter: name, description). Pick recurring tasks specific to this project, such as build and run, test, release, or data setup. If the project already uses another skills location or format, follow that instead.
 
 Hard rules:

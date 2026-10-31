@@ -151,6 +151,23 @@ public class AgentLaunchTests
         Assert.Equal("and another thing", AgentLaunch.WithHint("and another thing", false));
     }
 
+    [Theory]
+    [InlineData("Where things live")]   // read the project's feature map before searching
+    [InlineData("WHOLE")]               // no slicing a file into many reads
+    [InlineData("-Skip/-First")]
+    [InlineData("rg -n -i")]            // one repo-wide search instead of a chain of narrower greps
+    [InlineData("once at the end")]     // type-check or build once, not after every edit
+    public void The_efficiency_hint_tells_the_assistant_how_to_avoid_repeat_reads(string rule)
+    {
+        Assert.Contains(rule, AgentLaunch.EfficiencyHint, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_efficiency_hint_stays_short_because_it_is_paid_for_once_per_conversation()
+    {
+        Assert.InRange(AgentLaunch.EfficiencyHint.Length, 200, 2200);
+    }
+
     [Fact]
     public void The_marker_a_shell_profile_looks_for_is_stable()
     {

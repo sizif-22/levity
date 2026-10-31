@@ -9,8 +9,15 @@ A typical slow session looked like this (measured from saved chats): 29 shell co
 - **Fast / Deep switch** (top bar). Fast (the default) asks the assistant for low effort: quicker and cheaper, enough for most tasks.
   Deep asks for high effort for hard problems. The assistant restarts on the same conversation when you switch, so context is kept.
   You can only switch between answers.
-- **One-line efficiency hint** added to the first message of each conversation: read several files at once, prefer one command that does
-  the whole job, search with `rg` or `git grep`, do not re-verify what already worked. You never see it in the chat.
+- **Efficiency hint** added to the first message of each conversation. You never see it in the chat. It tells the assistant to:
+  start from the "Where things live" section of `AGENTS.md`, read a file whole in one call (never in `-Skip/-First` slices), search once
+  across the repo with `rg -n -i "a|b|c"` instead of a chain of narrower greps, not re-read files it already read, and type-check or build
+  once at the end. Measured on a TikTok change in PostPilot: 94 steps and 667 s for one message, mostly the same two files read in about
+  14 slices and 36 `git grep` calls.
+- **Feature map ("Where things live").** The Fast Learner rule now also records, in the project's `AGENTS.md`, the files each feature
+  spans whenever a task needed more than about 10 steps just to find the code. A new conversation then goes straight to those files.
+  Keep follow-up changes in the same chat: it already holds what was read. Start a new chat (or switch folder) only for unrelated work.
+  After updating the rule, run `Install-Skills.ps1 -Force` so the installed copy matches.
 - **Step timings.** A tool step that took 3 seconds or more shows its time, so slow steps stand out.
 
 ## The one thing you do: skip your PowerShell profile for the assistant's shells

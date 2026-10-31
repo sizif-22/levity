@@ -72,7 +72,8 @@ Header grid icon (or tray, **Review All Projects...**). It keeps README, `AGENTS
 - **Update docs**: the agent edits documentation and skill files only (never source, configs or `.env`; no commits). **Report only**: nothing is written.
 - Runs one project at a time (20 minutes each) with a progress banner, per-project summaries and **Stop**.
 - It uses one agent session per project, so tick only the projects you want.
-- The prompt is `ProjectSyncService.DefaultPrompt`; override it with `SyncPrompt` in `settings.json`.
+- It also keeps a **`## Where things live`** section at the end of each `AGENTS.md`: for each feature, the files a change touches end to end. New chats are told to start there, so they skip the searching that makes a first request slow. Running a review refreshes it and keeps lines that are still correct.
+- The prompt is `ProjectSyncService.DefaultPrompt`; override it with `SyncPrompt` in `settings.json`. A custom prompt replaces this too, so keep that step if you rewrite it.
 
 ## Skills that make it faster over time
 

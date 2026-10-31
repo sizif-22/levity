@@ -31,6 +31,13 @@ Activate when:
 
 If a note from an earlier task now has a verified solution, promote it to a skill.
 
+### Feature map ("Where things live")
+Trigger: a code task took more than about 10 steps only to locate the code (many greps, the same file read in slices). The cost was exploration, not the change itself, so record the map once.
+1. Open the project's `AGENTS.md` and find the `## Where things live` section (create it at the end if missing).
+2. Add or update one line per feature: `- <feature>: path/a.ts (what it does), path/b.tsx (what it does), ...`. List the files a change to that feature touches end to end (UI, server action, backend function, schema, limits or config, tests).
+3. Names and paths only: no code, no secrets, no line numbers (they go stale). Fix a line that was wrong instead of adding a second one.
+4. Announce it as a **docs** update (section 3), then continue.
+
 ### Making a skill
 1. Identify the ground truth: what failed first, and the minimal command or script that works every time.
 2. Write `SKILL.md` with YAML front matter (`name` matching the folder, a third-person `description` saying exactly when to use it), the root cause, and copy-paste commands. If the automation needs more than 3-4 lines, put it in a script under `scripts\`.

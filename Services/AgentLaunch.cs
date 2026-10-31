@@ -45,10 +45,13 @@ namespace Levity.Services
         /// every command costs a shell start, so fewer, bigger steps are much faster.
         /// </summary>
         public const string EfficiencyHint =
-            "[Work efficiently: read_file reads one file per call and every call costs a model round trip, so to look at several files use one command that prints them all " +
-            "(for example rg -n pattern, or Get-Content a,b,c) instead of one read_file each. Prefer one command that does the whole job, use rg or git grep to search " +
-            "(not recursive Get-ChildItem), and do not re-verify work that already succeeded. Run only the tests that cover what you changed " +
-            "(dotnet test --filter, vitest run <file>, pnpm test <file>), not the whole suite after every edit. " +
+            "[Work efficiently: every tool call costs a model round trip (several seconds), so use as few as possible. " +
+            "If AGENTS.md has a \"Where things live\" section, start there and go straight to the files it names; do not search for what it already tells you. " +
+            "Read a file WHOLE in one call (Get-Content -Raw, up to about 800 lines) and never read it again in slices with -Skip/-First; " +
+            "to look at several files use one command that prints them all (Get-Content a,b,c) instead of one read_file each, and do not re-read a file you already read in this conversation. " +
+            "Search once for the whole repo with a case-insensitive pattern (rg -n -i \"a|b|c\"), then read the files it found; do not run a series of narrower greps. " +
+            "Prefer one command that does the whole job (not recursive Get-ChildItem) and do not re-verify work that already succeeded. " +
+            "Run only the tests that cover what you changed (dotnet test --filter, vitest run <file>, pnpm test <file>), and type-check or build once at the end, not after every edit. " +
             "If a program fails to start or show a window after two tries, stop and tell me what you saw instead of trying more ways.]\n\n";
 
         public static string WithHint(string prompt, bool firstOfConversation, string? pcFacts = null)

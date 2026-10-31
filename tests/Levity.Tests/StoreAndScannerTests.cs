@@ -179,6 +179,16 @@ public class ProjectSyncPromptTests
     }
 
     [Fact]
+    public void The_default_prompt_asks_for_a_feature_map_and_keeps_an_existing_one()
+    {
+        string update = ProjectSyncService.BuildPrompt(ProjectSyncService.UpdateMode, null);
+        Assert.Contains("## Where things live", update);
+        Assert.Contains("Keep every part that is still correct", update);
+        Assert.Contains("no code, no secrets, no line numbers", update);
+        Assert.Contains("Never read out or write secret values", update);   // the map must not weaken the secrets rule
+    }
+
+    [Fact]
     public void A_custom_prompt_replaces_the_default_body_but_keeps_the_guard()
     {
         string text = ProjectSyncService.BuildPrompt(ProjectSyncService.ReportMode, "Only list TODOs.");
