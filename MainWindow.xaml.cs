@@ -27,6 +27,7 @@ namespace Levity
 
         private readonly MobileHub _hub;
         private readonly ProjectSyncService _sync = new();
+        private readonly NotebookStore _notebook = new();
         private readonly List<string> _history = new();
         private const int MaxHistory = 4000;
         private string? _lastStatusJson;
@@ -802,6 +803,35 @@ namespace Levity
                         _push.Unsubscribe(DeviceOf(clientId));
                         PublishPushState(clientId);
                         break;
+
+                    case "notebook_list":
+                        Reply(clientId, new { type = "notebook_data", notes = _notebook.GetNotes() });
+                        break;
+
+                    case "notebook_save":
+                    {
+                        if (root.TryGetProperty("note", out var noteProp))
+                        {
+                            var note = JsonSerializer.Deserialize<NotebookStore.NoteItem>(noteProp.GetRawText());
+                            if (note != null)
+                            {
+                                var updated = _notebook.SaveNote(note);
+                                Publish(new { type = "notebook_data", notes = updated });
+                            }
+                        }
+                        break;
+                    }
+
+                    case "notebook_delete":
+                    {
+                        string noteId = GetString(root, "id");
+                        if (!string.IsNullOrWhiteSpace(noteId))
+                        {
+                            var remaining = _notebook.DeleteNote(noteId);
+                            Publish(new { type = "notebook_data", notes = remaining });
+                        }
+                        break;
+                    }
                 }
             }
             catch (Exception ex)

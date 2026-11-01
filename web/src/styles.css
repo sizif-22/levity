@@ -757,3 +757,126 @@ body.remote .job-input, body.remote .git-form textarea, body.remote .git-form in
 .mic-btn svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .mic-btn.listening { background: var(--destructive, #d33); color: #fff; border-color: transparent; animation: micPulse 1.2s ease-in-out infinite; }
 @keyframes micPulse { 50% { opacity: .65; } }
+
+
+/* ---------- Notebook Sheet & Editor ---------- */
+.notebook-sheet .sheet-body { display: flex; flex-direction: column; padding: 12px 16px; }
+.notebook-body { flex: 1; overflow-y: auto; }
+.notebook-top-bar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+.notebook-search-wrap {
+  flex: 1; position: relative; display: flex; align-items: center;
+  background: var(--muted); border-radius: var(--radius); border: 1px solid var(--border);
+  padding: 0 10px; height: 34px;
+}
+.notebook-search-wrap svg { color: var(--muted-foreground); flex-shrink: 0; }
+.notebook-search {
+  flex: 1; background: transparent; border: none; outline: none;
+  color: var(--foreground); font-size: 13px; margin-left: 8px;
+}
+.notebook-clear-search {
+  background: none; border: none; color: var(--muted-foreground);
+  font-size: 16px; cursor: pointer; padding: 0 4px;
+}
+.notebook-new-btn { height: 34px; white-space: nowrap; font-size: 13px; font-weight: 500; }
+
+.notebook-empty {
+  text-align: center; padding: 48px 16px; color: var(--muted-foreground);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.notebook-empty svg { stroke: var(--muted-foreground); opacity: 0.7; }
+.notebook-empty h4 { color: var(--foreground); font-size: 15px; font-weight: 600; margin-top: 4px; }
+.notebook-empty p { font-size: 13px; max-width: 260px; line-height: 1.4; }
+
+.notebook-cards { display: flex; flex-direction: column; gap: 10px; }
+.notebook-card {
+  position: relative; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px; cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.notebook-card:hover { border-color: var(--primary); background: var(--accent); }
+.notebook-card.is-pinned { border-left: 3px solid var(--primary); }
+
+.notebook-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.notebook-card-title { font-size: 14.5px; font-weight: 600; color: var(--foreground); margin: 0; }
+.notebook-card-actions { display: flex; align-items: center; gap: 2px; }
+.notebook-card-btn {
+  background: none; border: none; padding: 4px; border-radius: 4px;
+  color: var(--muted-foreground); cursor: pointer; display: grid; place-items: center;
+}
+.notebook-card-btn:hover { background: var(--muted); color: var(--foreground); }
+.notebook-card-btn.active { color: var(--primary); }
+.notebook-card-btn.del:hover { color: var(--destructive, #f43f5e); }
+
+.notebook-card-snippet {
+  font-size: 13px; color: var(--muted-foreground); margin: 6px 0 10px;
+  line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden; text-overflow: ellipsis;
+}
+
+.notebook-card-images { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+.notebook-card-thumb {
+  width: 48px; height: 48px; border-radius: 6px; overflow: hidden;
+  border: 1px solid var(--border); background: var(--muted);
+}
+.notebook-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.notebook-card-more {
+  font-size: 11.5px; font-weight: 600; color: var(--muted-foreground);
+  background: var(--muted); padding: 4px 6px; border-radius: 4px;
+}
+
+.notebook-card-foot { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--muted-foreground); }
+.notebook-card-tag { font-size: 10.5px; font-weight: 600; text-transform: uppercase; color: var(--primary); }
+
+.notebook-confirm-del {
+  position: absolute; inset: 0; background: rgba(9, 9, 11, 0.95);
+  backdrop-filter: blur(4px); border-radius: var(--radius);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; z-index: 5;
+}
+.notebook-confirm-del span { font-size: 13px; font-weight: 500; }
+.notebook-confirm-btns { display: flex; gap: 8px; }
+
+/* Editor */
+.notebook-editor { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.notebook-editor-top { display: flex; gap: 8px; align-items: center; }
+.notebook-title-input {
+  flex: 1; font-size: 17px; font-weight: 600; background: var(--muted);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 8px 12px; color: var(--foreground); outline: none;
+}
+.notebook-title-input:focus { border-color: var(--primary); }
+.notebook-pin-btn {
+  background: var(--muted); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 8px 10px; cursor: pointer; color: var(--muted-foreground); display: grid; place-items: center;
+}
+.notebook-pin-btn.pinned { color: var(--primary); border-color: var(--primary); }
+
+.notebook-toolbar { display: flex; gap: 6px; align-items: center; }
+.notebook-toolbar-spacer { flex: 1; }
+.notebook-toolbar .btn.sm { height: 28px; padding: 0 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 5px; }
+
+.notebook-editor-images { display: flex; flex-wrap: wrap; gap: 8px; }
+.notebook-img-badge {
+  position: relative; width: 64px; height: 64px; border-radius: 6px;
+  overflow: hidden; border: 1px solid var(--border); background: var(--muted);
+}
+.notebook-img-badge img { width: 100%; height: 100%; object-fit: cover; }
+.notebook-img-del {
+  position: absolute; top: 2px; right: 2px; width: 18px; height: 18px;
+  background: rgba(0, 0, 0, 0.7); color: #fff; border: none; border-radius: 50%;
+  font-size: 13px; line-height: 1; display: grid; place-items: center; cursor: pointer;
+}
+
+.notebook-textarea {
+  flex: 1; min-height: 220px; font-size: 14px; font-family: inherit; line-height: 1.5;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px; color: var(--foreground); outline: none; resize: vertical;
+}
+.notebook-textarea:focus { border-color: var(--primary); }
+
+.notebook-preview {
+  flex: 1; min-height: 220px; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px; overflow-y: auto; font-size: 14px;
+}
+.notebook-empty-preview { color: var(--muted-foreground); font-style: italic; }
+.notebook-editor-actions { display: flex; gap: 8px; margin-top: 4px; }

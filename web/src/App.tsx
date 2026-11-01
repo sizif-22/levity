@@ -25,6 +25,8 @@ import type { ActionsMsg, GitStateMsg } from './lib/actions';
 import { onboardingChips } from './lib/onboarding';
 import { sameFolder, type DiagramMsg, type DiagramPrepared, type DiagramState } from './lib/diagram';
 import { ProjectsSheet, syncCounts, type ProjectsMsg, type SyncState } from './components/ProjectsSheet';
+import { NotebookSheet } from './components/NotebookSheet';
+import { loadCachedNotes, saveCachedNotes, type NoteItem } from './lib/notebook';
 import { ConfirmDialog, Logo, LockScreen, PairScreen, SettingsSheet } from './components/Screens';
 
 type Phase = 'loading' | 'pair' | 'locked' | 'main';
@@ -99,7 +101,8 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const [projects, setProjects] = useState<ProjectsMsg | null>(null);
   const [scanning, setScanning] = useState(false);
   const [sync, setSync] = useState<SyncState | null>(null);
-  const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs' | 'history' | 'diagram' | 'run' | 'git' | 'windows' | 'speed' | 'doctor'>('none');
+  const [sheet, setSheet] = useState<'none' | 'projects' | 'settings' | 'jobs' | 'history' | 'diagram' | 'run' | 'git' | 'windows' | 'speed' | 'doctor' | 'notebook'>('none');
+  const [notebookNotes, setNotebookNotes] = useState<NoteItem[]>([]);
   const [speed, setSpeed] = useState<SpeedMsg | null>(null);
   const [pushState, setPushState] = useState<PushStateMsg | null>(null);
   const [listening, setListening] = useState(false);
@@ -154,6 +157,12 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
   const send = useCallback((m: Json) => { void conn.current?.send(m); }, []);
 
   useEffect(() => {
+    void loadCachedNotes().then((cached) => {
+      if (cached && cached.length > 0) setNotebookNotes(cached);
+    });
+  }, []);
+
+  useEffect(() => {
     const channel = new SecureChannel(device.key);
     const c = new RelayConnection(device.relay, device.roomId, channel, {
       onState: setLinkState,
@@ -161,6 +170,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         dispatch({ type: 'clear_chat' });        // the PC replays the whole conversation after "ready"
         void c.send({ type: 'ready' });
         void c.send({ type: 'list_projects' });
+        void c.send({ type: 'notebook_list' });
       },
       onMessage: (msg) => {
         const type = msg.type as string;
@@ -189,6 +199,12 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
         if (type === 'machine') { setMachine(String(msg.summary ?? '')); return; }
         if (type === 'actions') { setActions(msg as unknown as ActionsMsg); return; }
         if (type === 'git_state') { setGitState(msg as unknown as GitStateMsg); return; }
+        if (type === 'notebook_data') {
+          const list = (msg.notes as NoteItem[]) ?? [];
+          setNotebookNotes(list);
+          void saveCachedNotes(list);
+          return;
+        }
         if (type === 'jobs_open') { setSheet('jobs'); return; }   // a command is waiting for an answer
         if (type === 'projects') { setProjects(msg as unknown as ProjectsMsg); setScanning(false); return; }
         if (type === 'sync_state') {
@@ -359,6 +375,9 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
           </button>
           <button className="icon-btn" onClick={() => { setSheet('history'); send({ type: 'list_sessions' }); }} title="Chat history">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><polyline points="12 7 12 12 15 14" /></svg>
+          </button>
+          <button className={`icon-btn ${sheet === 'notebook' ? 'active' : ''}`} onClick={() => { setSheet('notebook'); send({ type: 'notebook_list' }); }} title="Notebook">
+            <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /><line x1="8" y1="7" x2="16" y2="7" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
           </button>
           <button className="icon-btn" onClick={() => setSheet('jobs')} title="Background jobs">
             <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" /></svg>
@@ -593,6 +612,7 @@ function Session({ device, onUnpair }: { device: DeviceRecord; onUnpair: () => v
       {sheet === 'run' && <RunSheet actions={actions} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'git' && <GitSheet state={gitState} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'history' && <SessionsSheet data={sessions} send={send} onClose={() => setSheet('none')} />}
+      {sheet === 'notebook' && <NotebookSheet notes={notebookNotes} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'jobs' && <JobsSheet jobs={jobs} send={send} onClose={() => setSheet('none')} />}
       {sheet === 'settings' && (
         <SettingsSheet device={device} onClose={() => setSheet('none')} onUnpair={onUnpair} confirm={confirm} toast={toast} onOpenWindows={() => setSheet('windows')} push={pushState} send={send} />

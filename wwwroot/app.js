@@ -106,6 +106,7 @@ function handleHostMessage(msg) {
       if (typeof diagramOnMessage === 'function') diagramOnMessage(msg);
       break;
     case 'sessions': renderSessions(msg); break;
+    case 'notebook_data': renderNotebook(msg); break;
     case 'queue': renderQueue(msg); break;
     case 'jobs': renderJobs(msg); break;
     case 'projects': renderProjects(msg); break;
@@ -811,6 +812,7 @@ function renderJobs(msg) {
 }
 
 $('sessionsBtn').addEventListener('click', () => openSheet('sessionsSheet'));
+$('notebookBtn').addEventListener('click', () => { openSheet('notebookSheet'); postToHost({ type: 'notebook_list' }); });
 $('jobsBtn').addEventListener('click', () => openSheet('jobsSheet'));
 $('jobsClearBtn').addEventListener('click', () => postToHost({ type: 'job_clear' }));
 $('stopBtn').addEventListener('click', () => postToHost({ type: 'stop_response' }));
@@ -1337,3 +1339,273 @@ function updateStatusFromSync(state) {
     updateStatus('Ready', 'online');
   }
 }
+
+
+// ---------------------------------------------------------------------------
+// Notebook
+// ---------------------------------------------------------------------------
+
+let currentNotes = [];
+let editingNote = null;
+let editorImages = [];
+let isPinned = false;
+let confirmDeleteNoteId = null;
+
+function renderNotebook(msg) {
+  currentNotes = msg.notes || [];
+  const q = ($('nbSearch').value || '').trim().toLowerCase();
+  const filtered = q ? currentNotes.filter(n => (n.title || '').toLowerCase().includes(q) || (n.content || '').toLowerCase().includes(q)) : currentNotes;
+
+  $('nbSub').textContent = `${currentNotes.length} personal note${currentNotes.length === 1 ? '' : 's'}`;
+  const cards = $('nbCards');
+  const empty = $('nbEmpty');
+  cards.innerHTML = '';
+
+  if (filtered.length === 0) {
+    empty.hidden = false;
+    $('nbEmptyTitle').textContent = q ? 'No matching notes' : 'Your notebook is empty';
+    $('nbEmptyText').textContent = q ? 'Try different search keywords.' : 'Notes are private and not tied to any project directory.';
+    $('nbEmptyNewBtn').hidden = !!q;
+  } else {
+    empty.hidden = true;
+    filtered.forEach(n => {
+      const card = document.createElement('div');
+      card.className = `notebook-card ${n.pinned ? 'is-pinned' : ''}`;
+      
+      const header = document.createElement('div');
+      header.className = 'notebook-card-header';
+      const title = document.createElement('h4');
+      title.className = 'notebook-card-title';
+      title.textContent = n.title || 'Untitled Note';
+      
+      const actions = document.createElement('div');
+      actions.className = 'notebook-card-actions';
+
+      const pinBtn = document.createElement('button');
+      pinBtn.className = `notebook-card-btn ${n.pinned ? 'active' : ''}`;
+      pinBtn.title = n.pinned ? 'Unpin' : 'Pin to top';
+      pinBtn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="${n.pinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M16 2v5l2 3v2H6v-2l2-3V2z"/><line x1="12" y1="12" x2="12" y2="21"/></svg>`;
+      pinBtn.onclick = (e) => {
+        e.stopPropagation();
+        postToHost({ type: 'notebook_save', note: { ...n, pinned: !n.pinned, updatedAt: Date.now() } });
+      };
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'notebook-card-btn del';
+      delBtn.title = 'Delete note';
+      delBtn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+      delBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (confirmDeleteNoteId === n.id) {
+          postToHost({ type: 'notebook_delete', id: n.id });
+          confirmDeleteNoteId = null;
+        } else {
+          confirmDeleteNoteId = n.id;
+          renderNotebook({ notes: currentNotes });
+        }
+      };
+
+      actions.appendChild(pinBtn);
+      actions.appendChild(delBtn);
+      header.appendChild(title);
+      header.appendChild(actions);
+      card.appendChild(header);
+
+      const snippet = document.createElement('p');
+      snippet.className = 'notebook-card-snippet';
+      snippet.textContent = n.content ? (n.content.length > 150 ? n.content.slice(0, 150) + '...' : n.content) : '(No text)';
+      card.appendChild(snippet);
+
+      if (n.images && n.images.length > 0) {
+        const imgRow = document.createElement('div');
+        imgRow.className = 'notebook-card-images';
+        n.images.slice(0, 3).forEach(img => {
+          const thumb = document.createElement('div');
+          thumb.className = 'notebook-card-thumb';
+          const i = document.createElement('img');
+          i.src = img.url || (img.data ? `data:${img.mimeType};base64,${img.data}` : '');
+          i.alt = img.name || 'image';
+          thumb.appendChild(i);
+          imgRow.appendChild(thumb);
+        });
+        if (n.images.length > 3) {
+          const more = document.createElement('span');
+          more.className = 'notebook-card-more';
+          more.textContent = `+${n.images.length - 3}`;
+          imgRow.appendChild(more);
+        }
+        card.appendChild(imgRow);
+      }
+
+      const foot = document.createElement('div');
+      foot.className = 'notebook-card-foot';
+      const dt = document.createElement('span');
+      dt.className = 'notebook-card-date';
+      dt.textContent = n.updatedAt ? new Date(n.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+      foot.appendChild(dt);
+      if (n.pinned) {
+        const tag = document.createElement('span');
+        tag.className = 'notebook-card-tag';
+        tag.textContent = 'Pinned';
+        foot.appendChild(tag);
+      }
+      card.appendChild(foot);
+
+      if (confirmDeleteNoteId === n.id) {
+        const conf = document.createElement('div');
+        conf.className = 'notebook-confirm-del';
+        conf.onclick = (e) => e.stopPropagation();
+        conf.innerHTML = `<span>Delete this note?</span><div class="notebook-confirm-btns"><button class="btn sm primary" id="confDelYes">Delete</button><button class="btn sm ghost" id="confDelNo">Cancel</button></div>`;
+        card.appendChild(conf);
+        conf.querySelector('#confDelYes').onclick = () => {
+          postToHost({ type: 'notebook_delete', id: n.id });
+          confirmDeleteNoteId = null;
+        };
+        conf.querySelector('#confDelNo').onclick = () => {
+          confirmDeleteNoteId = null;
+          renderNotebook({ notes: currentNotes });
+        };
+      }
+
+      card.onclick = () => openNoteEditor(n);
+      cards.appendChild(card);
+    });
+  }
+}
+
+function openNoteEditor(note) {
+  editingNote = note || { id: '', title: '', content: '', images: [], createdAt: Date.now(), updatedAt: Date.now(), pinned: false };
+  $('nbTitleInput').value = editingNote.title || '';
+  $('nbContentInput').value = editingNote.content || '';
+  editorImages = editingNote.images ? [...editingNote.images] : [];
+  isPinned = !!editingNote.pinned;
+  updatePinButton();
+  renderEditorImages();
+  switchEditorTab('write');
+  $('nbListView').hidden = true;
+  $('nbEditorView').hidden = false;
+  $('nbTitleInput').focus();
+}
+
+function closeNoteEditor() {
+  editingNote = null;
+  $('nbEditorView').hidden = true;
+  $('nbListView').hidden = false;
+  renderNotebook({ notes: currentNotes });
+}
+
+function updatePinButton() {
+  const btn = $('nbPinBtn');
+  btn.className = `notebook-pin-btn ${isPinned ? 'pinned' : ''}`;
+  btn.querySelector('svg').setAttribute('fill', isPinned ? 'currentColor' : 'none');
+}
+
+function renderEditorImages() {
+  const container = $('nbEditorImages');
+  container.innerHTML = '';
+  editorImages.forEach((img, idx) => {
+    const badge = document.createElement('div');
+    badge.className = 'notebook-img-badge';
+    const el = document.createElement('img');
+    el.src = img.url || (img.data ? `data:${img.mimeType};base64,${img.data}` : '');
+    el.alt = img.name || 'image';
+    badge.appendChild(el);
+
+    const del = document.createElement('button');
+    del.className = 'notebook-img-del';
+    del.innerHTML = '&times;';
+    del.onclick = () => {
+      editorImages.splice(idx, 1);
+      renderEditorImages();
+    };
+    badge.appendChild(del);
+    container.appendChild(badge);
+  });
+}
+
+function switchEditorTab(tab) {
+  const isWrite = tab === 'write';
+  $('nbTabWrite').className = `btn sm ${isWrite ? 'primary' : 'ghost'}`;
+  $('nbTabPreview').className = `btn sm ${!isWrite ? 'primary' : 'ghost'}`;
+  $('nbContentInput').hidden = !isWrite;
+  const prev = $('nbPreviewArea');
+  prev.hidden = isWrite;
+  if (!isWrite) {
+    const txt = $('nbContentInput').value.trim();
+    prev.innerHTML = txt ? (typeof marked !== 'undefined' ? marked.parse(txt) : txt) : '<p class="notebook-empty-preview">Nothing to preview yet.</p>';
+  }
+}
+
+async function addImagesFromFileList(files) {
+  if (!files || files.length === 0) return;
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (!file.type.startsWith('image/')) continue;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      const comma = dataUrl.indexOf(',');
+      const base64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+      editorImages.push({
+        id: 'img_' + Math.random().toString(36).slice(2, 10),
+        name: file.name || 'image.jpg',
+        mimeType: file.type || 'image/jpeg',
+        url: dataUrl,
+        data: base64
+      });
+      renderEditorImages();
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+// Attach event listeners
+$('nbNewBtn')?.addEventListener('click', () => openNoteEditor(null));
+$('nbEmptyNewBtn')?.addEventListener('click', () => openNoteEditor(null));
+$('nbCancelBtn')?.addEventListener('click', closeNoteEditor);
+$('nbPinBtn')?.addEventListener('click', () => { isPinned = !isPinned; updatePinButton(); });
+$('nbTabWrite')?.addEventListener('click', () => switchEditorTab('write'));
+$('nbTabPreview')?.addEventListener('click', () => switchEditorTab('preview'));
+$('nbAttachBtn')?.addEventListener('click', () => $('nbFileInput').click());
+$('nbFileInput')?.addEventListener('change', (e) => { addImagesFromFileList(e.target.files); e.target.value = ''; });
+
+$('nbSearch')?.addEventListener('input', () => {
+  $('nbClearSearch').hidden = !$('nbSearch').value;
+  renderNotebook({ notes: currentNotes });
+});
+$('nbClearSearch')?.addEventListener('click', () => {
+  $('nbSearch').value = '';
+  $('nbClearSearch').hidden = true;
+  renderNotebook({ notes: currentNotes });
+});
+
+$('nbSaveBtn')?.addEventListener('click', () => {
+  if (!editingNote) return;
+  const toSave = {
+    id: editingNote.id,
+    title: $('nbTitleInput').value.trim() || 'Untitled Note',
+    content: $('nbContentInput').value,
+    images: editorImages,
+    createdAt: editingNote.createdAt || Date.now(),
+    updatedAt: Date.now(),
+    pinned: isPinned
+  };
+  postToHost({ type: 'notebook_save', note: toSave });
+  closeNoteEditor();
+});
+
+$('nbEditorView')?.addEventListener('paste', (e) => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  const imgFiles = [];
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf('image') !== -1) {
+      const f = items[i].getAsFile();
+      if (f) imgFiles.push(f);
+    }
+  }
+  if (imgFiles.length > 0) {
+    e.preventDefault();
+    addImagesFromFileList(imgFiles);
+  }
+});
